@@ -987,7 +987,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v14';
+const APP_VERSION='v15';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
@@ -1257,6 +1257,10 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 applyTheme();
 renderProfileBtn();
 render();
+/* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
+(function(){ const h=decodeURIComponent(location.hash||''); if(!/EXP1-/.test(h)) return; const o=parseCode(h);
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  if(o){ saveCloudCfg(o); cloudRev=null; cloudDirty=true; setTimeout(()=>toast('Cloud sync connected on this device'),600); } })();
 initSync();
 startupLock();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
