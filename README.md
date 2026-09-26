@@ -34,7 +34,7 @@ Go to **Budget**. Enter your monthly salary and a budget for each category (you 
 
 ## Profiles (several people on one device)
 
-Tap the name at the top-left (it starts as **Me**) to switch profile or add one. Each profile has its own expenses, salary, budgets and sync file (`expenses-sync-<name>.json`). You can give a profile a 4-digit PIN so others can't open it in the app. The PIN doesn't encrypt the data on the device. Use the **same profile name** on the Mac and the phone so their sync files match.
+Tap the name at the top-left (it starts as **Me**) to switch profile or add one. Each profile has its own expenses, salary, budgets, currency and sync file (`expenses-sync-<name>.json`). When adding or editing a profile, choose its **expense currency** (e.g. SGD, USD, INR) and **home currency** for Money sent home; that day's exchange rate between the two is filled in automatically. You can give a profile a 4-digit PIN so others can't open it in the app. The PIN doesn't encrypt the data on the device. Use the **same profile name** on the Mac and the phone so their sync files match.
 
 ## 4. Sync between Mac and phone (Google Drive or OneDrive)
 
@@ -61,4 +61,4 @@ Syncing always **merges**. Entries from both devices are combined. If the same e
 
 ## Updating the app later
 
-Replace `index.html` on GitHub, and increase the number in `expenses-v5` inside `sw.js` (e.g. to `expenses-v6`) so your phone picks up the new version. Your data isn't affected.
+Replace `index.html` on GitHub, and increase the number in `expenses-v6` inside `sw.js` (e.g. to `expenses-v7`) so your phone picks up the new version. Your data isn't affected.
