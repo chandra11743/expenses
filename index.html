@@ -304,9 +304,26 @@ function ymLabel(ym,short){ const [y,m]=ym.split('-').map(Number); return new Da
 function dayLabel(s){ const [y,m,d]=s.split('-').map(Number); const dt=new Date(y,m-1,d); const t=todayStr(); if(s===t) return 'Today'; const yd=new Date(); yd.setDate(yd.getDate()-1); if(s===dstr(yd)) return 'Yesterday'; return dt.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'}); }
 function daysElapsed(ym){ const c=curYM(); if(ym<c) return dim(ym); if(ym>c) return 0; return new Date().getDate(); }
 function daysLeft(ym){ const c=curYM(); if(ym<c) return 0; if(ym>c) return dim(ym); return dim(ym)-new Date().getDate()+1; }
-const sgd = n => (n<0?'−':'')+'S$'+Math.abs(n||0).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
-const sgd0 = n => (n<0?'−':'')+'S$'+Math.abs(Math.round(n||0)).toLocaleString('en-SG');
-const inr = n => '₹'+Math.round(n||0).toLocaleString('en-IN');
+/* Currencies: each profile picks the currency its expenses are in, and a home currency for "Money sent home". */
+const CURRENCIES = {
+  SGD:{sym:'S$',name:'Singapore dollar'}, INR:{sym:'₹',name:'Indian rupee',loc:'en-IN'}, USD:{sym:'US$',name:'US dollar'},
+  EUR:{sym:'€',name:'Euro'}, GBP:{sym:'£',name:'British pound'}, AUD:{sym:'A$',name:'Australian dollar'},
+  CAD:{sym:'C$',name:'Canadian dollar'}, NZD:{sym:'NZ$',name:'New Zealand dollar'}, MYR:{sym:'RM',name:'Malaysian ringgit'},
+  AED:{sym:'AED ',name:'UAE dirham'}, SAR:{sym:'SAR ',name:'Saudi riyal'}, QAR:{sym:'QAR ',name:'Qatari riyal'},
+  JPY:{sym:'¥',name:'Japanese yen',dec:0}, CNY:{sym:'CN¥',name:'Chinese yuan'}, HKD:{sym:'HK$',name:'Hong Kong dollar'},
+  THB:{sym:'฿',name:'Thai baht'}, PHP:{sym:'₱',name:'Philippine peso'}, IDR:{sym:'Rp',name:'Indonesian rupiah',dec:0},
+  KRW:{sym:'₩',name:'South Korean won',dec:0}, CHF:{sym:'CHF ',name:'Swiss franc'},
+  LKR:{sym:'Rs ',name:'Sri Lankan rupee',loc:'en-IN'}, BDT:{sym:'৳',name:'Bangladeshi taka',loc:'en-IN'},
+  NPR:{sym:'Rs ',name:'Nepalese rupee',loc:'en-IN'}, PKR:{sym:'Rs ',name:'Pakistani rupee',loc:'en-IN'},
+};
+function curInfo(c){ return CURRENCIES[c] || {sym:c+' ',name:c}; }
+function money(n, c, dec){ const i=curInfo(c); const d = dec===undefined ? (i.dec??2) : Math.min(dec, i.dec??2);
+  return (n<0?'−':'')+i.sym+Math.abs(d===0?Math.round(n||0):(n||0)).toLocaleString(i.loc||'en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function curCode(){ return (typeof curProfile==='function' && curProfile().currency) || 'SGD'; }
+function homeCode(){ return (typeof curProfile==='function' && curProfile().homeCur) || 'INR'; }
+const sgd  = n => money(n, curCode());        // amount in this profile's currency
+const sgd0 = n => money(n, curCode(), 0);     // same, rounded
+const inr  = (n, c) => money(n, c || homeCode(), 0);   // amount in the home currency
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r2 = n => Math.round(n*100)/100;
 
@@ -329,7 +346,7 @@ function stats(ym){
   for(const e of es){
     by[e.cat] = (by[e.cat]||0) + e.amt;
     if(e.cat==='food' && e.sub) sub[e.sub]=(sub[e.sub]||0)+e.amt;
-    if(e.cat==='home') inrHome += e.inr||0;
+    if(e.cat==='home' && (e.homeCur||'INR')===homeCode()) inrHome += e.inr||0;
     const sign = CAT[e.cat]?.income ? -1 : 1;
     daily[e.date]=(daily[e.date]||0)+sign*e.amt;
     if(!FIXED.has(e.cat)) dailyLiving[e.date]=(dailyLiving[e.date]||0)+sign*e.amt;
@@ -360,19 +377,20 @@ function status(spent,budget,cat){
   if(p>1) return 'bad'; if(p>=0.85) return 'warn'; return 'good';
 }
 
-/* ============ Exchange rate (SGD -> INR) ============ */
+/* ============ Exchange rate (profile currency -> home currency) ============ */
 async function fetchRate(date){
-  const today = todayStr();
-  if(date!==today && DB.rates[date]) return DB.rates[date];
+  const base=curCode(), to=homeCode(); if(base===to) return 1;
+  const today = todayStr(), key = date+'|'+base+to;
+  if(date!==today && DB.rates[key]) return DB.rates[key];
   const tag = date>=today ? 'latest' : date;
   const urls = [
-    `https://api.frankfurter.dev/v1/${tag}?base=SGD&symbols=INR`,
-    `https://api.frankfurter.app/${tag}?from=SGD&to=INR`
+    `https://api.frankfurter.dev/v1/${tag}?base=${base}&symbols=${to}`,
+    `https://api.frankfurter.app/${tag}?from=${base}&to=${to}`
   ];
   for(const u of urls){
-    try{ const r = await fetch(u,{cache:'no-store'}); if(r.ok){ const j = await r.json(); const v = j?.rates?.INR; if(v){ if(date<today){ DB.rates[date]=v; persist(); } DB.meta.lastRate=v; return v; } } }catch(e){}
+    try{ const r = await fetch(u,{cache:'no-store'}); if(r.ok){ const j = await r.json(); const v = j?.rates?.[to]; if(v){ if(date<today){ DB.rates[key]=v; persist(); } DB.meta.lastRate=v; DB.meta.lastRatePair=base+to; return v; } } }catch(e){}
   }
-  try{ const r = await fetch('https://open.er-api.com/v6/latest/SGD'); if(r.ok){ const j=await r.json(); const v=j?.rates?.INR; if(v){ DB.meta.lastRate=v; return v; } } }catch(e){}
+  try{ const r = await fetch('https://open.er-api.com/v6/latest/'+base); if(r.ok){ const j=await r.json(); const v=j?.rates?.[to]; if(v){ DB.meta.lastRate=v; DB.meta.lastRatePair=base+to; return v; } } }catch(e){}
   return null;
 }
 
@@ -459,7 +477,7 @@ function entRow(e){
   const s = e.sub && k.subs ? k.subs.find(x=>x.id===e.sub) : null;
   const title = s ? s.name : (e.cat==='refund' ? 'Refund · '+(CAT[e.refFor]||CAT.medical).name : k.name);
   const extra = [];
-  if(e.cat==='home' && e.inr) extra.push(inr(e.inr)+(e.rate?' @ '+e.rate.toFixed(2):''));
+  if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
   if(!extra.length) extra.push(s? k.name : dayLabel(e.date));
   return `<div class="ent" onclick="openEntry('${e.id}')"><div class="ic">${s?s.icon:k.icon}</div><div class="t"><div>${title}</div><div>${extra.join(' · ')}</div></div>
@@ -530,7 +548,7 @@ function calendarView(es, days, signed, cat=S.histCat){
   const noSpend = elapsed ? Array.from({length:elapsed},(_,i)=>ym+'-'+pad(i+1)).filter(d=>!(val[d]>0)).length : 0;
   const top = Object.entries(val).sort((a,b)=>b[1]-a[1])[0];
   const sum = counted.reduce((a,b)=>a+b,0);
-  h += `<div class="calleg"><span>S$0</span><i style="background:linear-gradient(90deg,color-mix(in srgb,var(--series-1) 12%,var(--surface)),var(--series-1))"></i><span>${sgd0(mx)}</span><span class="muted" style="margin-left:auto">Amounts in S$${excl?' · excl. '+FIXED_TXT:''}</span></div>
+  h += `<div class="calleg"><span>${sgd0(0)}</span><i style="background:linear-gradient(90deg,color-mix(in srgb,var(--series-1) 12%,var(--surface)),var(--series-1))"></i><span>${sgd0(mx)}</span><span class="muted" style="margin-left:auto">Amounts in ${curCode()}${excl?' · excl. '+FIXED_TXT:''}</span></div>
     <div class="kpis" style="margin-top:12px">
       <div class="kpi"><div class="l">Total</div><div class="v num">${sgd(sum)}</div></div>
       <div class="kpi"><div class="l">Avg per day</div><div class="v num">${sgd(elapsed?sum/elapsed:0)}</div><div class="s">over ${elapsed} days</div></div>
@@ -703,7 +721,7 @@ function renderBudget(){
   const prevCfg = cfg(addMonths(S.ym,-1));
   let h = `<div class="card"><h2>Monthly budget — ${ymLabel(S.ym)}</h2>
     <div class="small muted">${c.inherited?`Showing the budget from ${ymLabel(c.inherited)}. Save to set it for ${ymLabel(S.ym,true)}.`:`Later months reuse this budget until you change it.`}</div>
-    <label class="f" for="bSalary">Monthly salary (S$)</label>
+    <label class="f" for="bSalary">Monthly salary (${curCode()})</label>
     <input class="in num" type="number" inputmode="decimal" min="0" id="bSalary" value="${c.salary||''}" placeholder="0">
   </div>`;
 
@@ -773,7 +791,7 @@ function renderSettings(){
   let h='';
   const fsa = 'showOpenFilePicker' in window;
   h += `<div class="card"><h2>Sync with Google Drive / OneDrive</h2>
-    <div class="small" style="margin-bottom:10px">Your data lives on this device. To use it on your Mac and phone, keep one sync file (<b>expenses-sync.json</b>) in your Google Drive or OneDrive. Syncing merges both sides — nothing is overwritten or lost.</div>
+    <div class="small" style="margin-bottom:10px">Your data lives on this device. To use it on your Mac and phone, keep one sync file (<b>${syncFileName()}</b>) in your Google Drive or OneDrive. Syncing merges both sides — nothing is overwritten or lost.</div>
     <div id="syncStatus" class="small" style="margin-bottom:10px"></div>
     ${fsa?`<div class="btns" style="margin-bottom:10px">
       <button class="btn primary" id="sLink">Link sync file</button>
@@ -783,7 +801,7 @@ function renderSettings(){
       <div class="small muted" style="margin-bottom:10px">Auto-sync: once linked, the app merges on open and saves after every change.</div>`:''}
     <div class="small" style="font-weight:600;margin-bottom:6px">${fsa?'Manual (for phones)':'Phone sync'}</div>
     <div class="btns"><button class="btn ${fsa?'':'primary'}" id="sImport">Merge from Drive file…</button><button class="btn" id="sExport">Save sync file to Drive…</button></div>
-    ${fsa?'':'<div class="small muted" style="margin-top:8px">1) Tap <b>Merge from Drive file</b>, choose Drive → expenses-sync.json. 2) After adding expenses, tap <b>Save sync file to Drive</b> → Drive, and replace the old file.</div>'}
+    ${fsa?'':'<div class="small muted" style="margin-top:8px">1) Tap <b>Merge from Drive file</b>, choose Drive → '+syncFileName()+'. 2) After adding expenses, tap <b>Save sync file to Drive</b> → Drive, and replace the old file.</div>'}
   </div>`;
 
   h += `<div class="card"><h2>Data</h2><div class="btns">
@@ -792,7 +810,7 @@ function renderSettings(){
     <button class="btn" id="dTheme">Theme: ${DB.settings.theme||'auto'}</button>
     ${hasSample()?'<button class="btn" id="dSampleOff">Remove sample data</button>':''}
     <button class="btn danger" id="dClear">Erase ${esc(curProfile().name)}'s data on this device</button></div>
-    <div class="small muted" style="margin-top:8px">${Object.values(DB.entries).filter(e=>!e.del).length} expenses stored · Last SGD→INR rate: ${DB.meta.lastRate? '₹'+DB.meta.lastRate.toFixed(2):'not fetched yet'}</div></div>`;
+    <div class="small muted" style="margin-top:8px">${Object.values(DB.entries).filter(e=>!e.del).length} expenses stored · Currency: ${curCode()} · home currency ${homeCode()}</div></div>`;
   $('#tab-settings').innerHTML = h;
 
   if(fsa){ $('#sLink').onclick=()=>linkSync(false); $('#sCreate').onclick=()=>linkSync(true); $('#sNow').onclick=()=>syncNow(true); $('#sUnlink').onclick=unlinkSync; }
@@ -835,10 +853,10 @@ function drawSheet(){
     h += `<label class="f">Daily food</label><div class="chips">${k.subs.filter(s=>!s.group).map(chip).join('')}</div>
           <label class="f">Other food</label><div class="chips">${k.subs.filter(s=>s.group).map(chip).join('')}</div>`; }
   h += `<div class="grid2"><div><label class="f">Date</label><input class="in" type="date" id="eDate" value="${E.date}"></div>
-    <div><label class="f">${k.income?'Refund received':'Amount'} (S$)</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="eAmt" value="${E.amt}" placeholder="0.00"></div></div>`;
-  if(E.cat==='home') h += `<div class="grid2"><div><label class="f">Amount in INR (₹)</label><input class="in num" type="number" inputmode="decimal" id="eInr" value="${E.inr?Math.round(E.inr):''}" placeholder="0"></div>
-    <div><label class="f">Rate: 1 SGD = ₹</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
-    <div class="small muted" id="rateNote" style="margin-top:6px">Enter either SGD or INR — the other is calculated.</div>`;
+    <div><label class="f">${k.income?'Refund received':'Amount'} (${curCode()})</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="eAmt" value="${E.amt}" placeholder="0.00"></div></div>`;
+  if(E.cat==='home' && curCode()!==homeCode()) h += `<div class="grid2"><div><label class="f">Amount in ${homeCode()} (${curInfo(homeCode()).sym.trim()})</label><input class="in num" type="number" inputmode="decimal" id="eInr" value="${E.inr?Math.round(E.inr):''}" placeholder="0"></div>
+    <div><label class="f">Rate: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
+    <div class="small muted" id="rateNote" style="margin-top:6px">Enter either ${curCode()} or ${homeCode()} — the other is calculated.</div>`;
   const ph = {travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
   h += `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label><input class="in" id="eNote" value="${esc(E.note)}" placeholder="${ph}" ${k.reason?'required':''}>
   <div class="btns" style="margin-top:14px"><button class="btn primary" id="eSave">Save</button>${E.id?'':'<button class="btn" id="eSaveMore">Save &amp; add another</button>'}${E.id?'<button class="btn danger" id="eDel">Delete</button>':''}</div>`;
@@ -847,7 +865,7 @@ function drawSheet(){
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat==='food'&&!E.sub) E.sub=guessMeal(); drawSheet(); });
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; drawSheet(); });
   document.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{ readSheet(); E.refFor=b.dataset.rf; drawSheet(); });
-  if(E.cat==='home'){
+  if(E.cat==='home' && $('#eInr')){
     const ie=$('#eInr'), re=$('#eRate');
     amt.oninput=()=>{ const r=+re.value; if(r&&amt.value) ie.value=Math.round(+amt.value*r); };
     ie.oninput=()=>{ const r=+re.value; if(r&&ie.value) amt.value=(+ie.value/r).toFixed(2); };
@@ -862,10 +880,10 @@ function drawSheet(){
 }
 async function loadRate(){
   const d=$('#eDate').value, note=$('#rateNote'), re=$('#eRate');
-  if(note) note.textContent='Fetching SGD→INR rate for '+d+'…';
+  if(note) note.textContent=`Fetching ${curCode()}→${homeCode()} rate for ${d}…`;
   const r = await fetchRate(d);
   if(!$('#eRate') || E.cat!=='home') return;
-  if(r){ re.value=r.toFixed(4); E.rate=r; note.textContent=`Rate for ${d>=todayStr()?'today (live)':d}: 1 SGD = ₹${r.toFixed(2)}. You can edit it to match your transfer.`;
+  if(r){ re.value=r.toFixed(4); E.rate=r; note.textContent=`Rate for ${d>=todayStr()?'today (live)':d}: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}${r.toFixed(2)}. You can edit it to match your transfer.`;
          if($('#eAmt').value) $('#eAmt').oninput(); else if($('#eInr').value) $('#eInr').oninput(); }
   else { if(DB.meta.lastRate && !re.value) re.value=DB.meta.lastRate.toFixed(4); note.textContent='Could not fetch a rate (offline?). Enter the rate your transfer used.'; }
 }
@@ -883,7 +901,8 @@ function commitEntry(more){
   const rec = {id:E.id||uid(), date:E.date, cat:E.cat, amt, note:(E.note||'').trim(), upd:now, cr:E.cr||now};
   if(E.cat==='food') rec.sub=E.sub||'lunch';
   if(E.cat==='refund') rec.refFor=E.refFor||'medical';
-  if(E.cat==='home'){ rec.rate=+E.rate||null; rec.inr= +E.inr || (rec.rate? Math.round(amt*rec.rate):null); }
+  rec.cur = curCode();
+  if(E.cat==='home'){ if(curCode()===homeCode()){ rec.rate=1; rec.inr=amt; } else { rec.rate=+E.rate||null; rec.inr= +E.inr || (rec.rate? Math.round(amt*rec.rate):null); } rec.homeCur=homeCode(); }
   DB.entries[rec.id]=rec; S.lastCat=E.cat;
   save();
   const m=ymOf(rec.date); if(m!==S.ym) S.ym=m;
@@ -898,11 +917,13 @@ const idb = (()=>{ let dbp=null; const open=()=>dbp||(dbp=new Promise((res,rej)=
   return { get:k=>tx('readonly',s=>s.get(k)).catch(()=>null), set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null), del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>null) };
 })();
 let SH = null, syncState='none', syncTimer=null, syncing=false;
-function exportObj(){ return {app:'daily-expense-tracker', version:1, profileName:curProfile().name, exported:new Date().toISOString(), entries:DB.entries, months:DB.months, rates:DB.rates, settings:DB.settings}; }
+function exportObj(){ return {app:'daily-expense-tracker', version:1, profileName:curProfile().name, currency:curCode(), exported:new Date().toISOString(), entries:DB.entries, months:DB.months, rates:DB.rates, settings:DB.settings}; }
 function merge(r){
   if(!r || typeof r!=='object' || !r.entries) throw new Error('Not an expense sync file');
   if(r.profileName && r.profileName.trim().toLowerCase()!==curProfile().name.trim().toLowerCase())
     throw new Error(`this file belongs to "${r.profileName}". Switch to that profile first (or rename this profile to "${r.profileName}")`);
+  if(r.currency && r.currency!==curCode())
+    throw new Error(`this file is in ${r.currency} but this profile uses ${curCode()}. Set the profile's currency to ${r.currency} first`);
   let n=0;
   for(const [id,e] of Object.entries(r.entries)){ const l=DB.entries[id]; if(!l || (e.upd||0)>(l.upd||0)){ DB.entries[id]=e; n++; } }
   for(const [m,c] of Object.entries(r.months||{})){ const l=DB.months[m]; if(!l || (c.upd||0)>(l.upd||0)){ DB.months[m]=c; n++; } }
@@ -965,7 +986,7 @@ function renderSyncStatus(){
   el.innerHTML = syncState==='ok'? `<span class="syncdot ok"></span>Linked to <b>${esc(SH?.name||DB.meta.syncName)}</b> · last synced ${last}`
     : syncState==='need'? `<span class="syncdot need"></span>Linked to <b>${esc(SH?.name||DB.meta.syncName||'sync file')}</b>, but the app still needs permission to edit it.<div class="btns" style="margin-top:8px"><button class="btn primary" onclick="syncNow(true)">Allow access</button></div><div class="small muted" style="margin-top:6px">Chrome will ask "Let site edit files?" — choose <b>Edit files</b> (or <b>Allow on every visit</b>). No pop-up? See the permission icon at the right of the address bar.</div>`
     : syncState==='manual'? `<span class="syncdot"></span>Last merge/save: ${DB.meta.lastManual? new Date(DB.meta.lastManual).toLocaleString('en-SG'):'never'}`
-    : `<span class="syncdot"></span>Not linked. On your Mac, use <b>Link sync file</b> and choose (or create) expenses-sync.json inside your Google Drive / OneDrive folder.`;
+    : `<span class="syncdot"></span>Not linked. On your Mac, use <b>Link sync file</b> and choose (or create) ${syncFileName()} inside your Google Drive / OneDrive folder.`;
 }
 $('#syncBtn').onclick=()=>{ if(syncState==='ok'||syncState==='need') syncNow(true); else go('settings'); };
 $('#fileIn').onchange=async ev=>{
@@ -986,7 +1007,7 @@ function download(blob,name){ const a=document.createElement('a'); a.href=URL.cr
 function exportCSV(ym){
   const es = Object.values(DB.entries).filter(e=>!e.del && (!ym||e.date.startsWith(ym))).sort((a,b)=>a.date.localeCompare(b.date));
   const q=v=>{ v=String(v??''); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; };
-  const rows=[['Date','Category','Food type','Amount SGD','Amount INR','SGD-INR rate','Note']].concat(es.map(e=>[e.date,e.cat==='refund'?'Refund ('+(CAT[e.refFor]||CAT.medical).name+')':(CAT[e.cat]?.name||e.cat),e.sub?CAT.food.subs.find(s=>s.id===e.sub)?.name:'',(CAT[e.cat]?.income?-e.amt:e.amt).toFixed(2),e.inr||'',e.rate||'',e.note||'']));
+  const rows=[['Date','Category','Food type','Amount '+curCode(),'Amount sent home','Home currency','Rate','Note']].concat(es.map(e=>[e.date,e.cat==='refund'?'Refund ('+(CAT[e.refFor]||CAT.medical).name+')':(CAT[e.cat]?.name||e.cat),e.sub?CAT.food.subs.find(s=>s.id===e.sub)?.name:'',(CAT[e.cat]?.income?-e.amt:e.amt).toFixed(2),e.cat==='home'?(e.inr||''):'',e.cat==='home'?(e.homeCur||'INR'):'',e.cat==='home'?(e.rate||''):'',e.note||'']));
   download(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}), `expenses-${slug(curProfile().name)}-${ym||'all'}.csv`);
 }
 
@@ -998,12 +1019,13 @@ async function hashPin(pin, salt){
   try{ const d = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
   catch(e){ let h=0; for(const c of data) h=(h*31+c)>>>0; return 'x'+h.toString(16); }
 }
+function curOptions(sel){ return Object.entries(CURRENCIES).map(([c,i])=>`<option value="${c}" ${c===sel?'selected':''}>${c} — ${i.name}</option>`).join(''); }
 function renderProfileBtn(){ const p=curProfile(); $('#profBtn').innerHTML = `${avatar(p)}<span class="nm">${esc(p.name)}</span><span class="muted" style="font-size:11px">▾</span>`; }
 
 function profileSheet(){
   const h = `<div class="row" style="justify-content:space-between"><h3>Profiles</h3><button class="btn sm" onclick="dismissSheet()">Close</button></div>
     <div class="small muted" style="margin-bottom:8px">Each person gets their own expenses, salary, budgets and sync file on this device.</div>
-    <div>${PROFILES.list.map(p=>`<div class="prow" data-pid="${p.id}">${avatar(p,true)}<div class="grow"><b>${esc(p.name)}</b><span class="small muted">${p.id===PROFILES.current?'Using now':'Tap to switch'}${p.pin?' · 🔒 PIN':''}</span></div>
+    <div>${PROFILES.list.map(p=>`<div class="prow" data-pid="${p.id}">${avatar(p,true)}<div class="grow"><b>${esc(p.name)}</b><span class="small muted">${p.id===PROFILES.current?'Using now':'Tap to switch'} · ${p.currency||'SGD'}${p.pin?' · 🔒 PIN':''}</span></div>
       <button class="btn sm" data-pedit="${p.id}">Edit</button></div>`).join('')}</div>
     <div class="btns" style="margin-top:12px"><button class="btn primary" id="pAdd">+ Add profile</button></div>`;
   openSheet(h);
@@ -1018,6 +1040,12 @@ function editProfile(id){
     <label class="f" for="pPin">${p&&p.pin?'New 4-digit PIN (leave empty to keep the current PIN)':'4-digit PIN (optional)'}</label>
     <input class="in num" id="pPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="new-password">
     <div class="small muted" style="margin-top:6px">A PIN stops others opening this profile in the app. It doesn't encrypt the data on the device.</div>
+    <div class="grid2">
+      <div><label class="f" for="pCur">Expense currency</label><select class="in" id="pCur">${curOptions(p?.currency||(p?'SGD':curCode()))}</select></div>
+      <div><label class="f" for="pHome">Home currency</label><select class="in" id="pHome">${curOptions(p?.homeCur||(p?'INR':homeCode()))}</select></div>
+    </div>
+    <div class="small muted" style="margin-top:6px">Home currency is used for <b>Money sent home</b>, with that day's exchange rate.</div>
+    ${p&&Object.keys(p.id===PROFILES.current?DB.entries:{}).length?'<div class="small muted" style="margin-top:6px">Changing the currency doesn’t convert amounts you’ve already entered.</div>':''}
     <div class="btns" style="margin-top:14px"><button class="btn primary" id="pSave">${p?'Save':'Create profile'}</button>
       ${p&&p.pin?'<button class="btn" id="pNoPin">Remove PIN</button>':''}
       ${p&&PROFILES.list.length>1?`<button class="btn danger" id="pDel">Delete profile</button>`:''}</div>`;
@@ -1029,13 +1057,14 @@ function editProfile(id){
     if(!name){ toast('Enter a name'); $('#pName').focus(); return; }
     if(PROFILES.list.some(x=>x.id!==id && x.name.toLowerCase()===name.toLowerCase())){ toast('Another profile already has that name'); return; }
     if(pin && !/^\d{4}$/.test(pin)){ toast('The PIN must be 4 digits'); $('#pPin').focus(); return; }
+    const cur=$('#pCur').value, home=$('#pHome').value;
     let target = p;
     if(!target){ target={id:'p'+uid(), name, color:PROFILES.list.length}; PROFILES.list.push(target); }
-    target.name=name;
+    target.name=name; target.currency=cur; target.homeCur=home;
     if(pin){ target.salt=uid(); target.pin=await hashPin(pin,target.salt); }
     saveProfiles(); renderProfileBtn();
     if(!p){ toast(`Profile "${name}" created`); switchProfile(target.id, true); }
-    else { toast('Profile saved'); profileSheet(); if(S.tab==='settings') renderSettings(); }
+    else { toast('Profile saved'); profileSheet(); if(id===PROFILES.current) render(); }
   };
   if($('#pNoPin')) $('#pNoPin').onclick=()=>{ delete p.pin; delete p.salt; saveProfiles(); toast('PIN removed'); profileSheet(); };
   if($('#pDel')) confirmBtn($('#pDel'),`Tap again to delete ${p.name} and all their data here`,async()=>{
