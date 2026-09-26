@@ -925,7 +925,7 @@ function syncFileName(){ return PROFILES.list.length>1 || curProfile().name!=='M
 async function initSync(){
   /* The old "linked file" method is retired: it made phones ask for file permission on every refresh.
      Forget any remembered file so the browser never asks again. Cloud sync does the syncing. */
-  SH=null; syncState='none';
+  SH=null; syncState='none'; cloudRev=null; cloudDirty=true;
   try{ await idb.del(syncKeyFor(PROFILES.current)); }catch(e){}
   if(cloudOn()) cloudSync(false);
   renderSyncDot();
@@ -984,31 +984,37 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v11';
+const APP_VERSION='v12';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function cloudOn(){ const c=cloudCfg(); return !!(c&&c.u&&c.k); }
-let cloudState='off', cloudBusy=false, cloudTimer=null, cloudAgain=false;
+let cloudState='off', cloudBusy=false, cloudTimer=null, cloudAgain=false, cloudDirty=true, cloudFull=0, cloudRev=null;
 function connCode(c){ return 'EXP1-'+btoa(JSON.stringify({u:c.u,k:c.k})); }
 function parseCode(t){ const m=String(t||'').replace(/\s+/g,'').match(/EXP1-([A-Za-z0-9+/=]+)/); if(!m) return null; try{ const o=JSON.parse(atob(m[1])); return o&&o.u&&o.k?o:null; }catch(e){ return null; } }
-async function cloudSync(manual){
+/* Sends this device's data only when something changed here (or once a minute as a safety net).
+   Otherwise it just asks "anything new since version X?", which the script answers without reading Drive. */
+async function cloudSync(manual, poll){
   if(!cloudOn()){ if(manual) toast('Connect cloud sync first'); return false; }
-  if(cloudBusy){ cloudAgain=true; return false; } cloudBusy=true; cloudAgain=false; const c=cloudCfg(), prof=curProfile();
+  if(cloudBusy){ if(!poll) cloudAgain=true; return false; } cloudBusy=true; cloudAgain=false; const c=cloudCfg(), prof=curProfile();
+  const full = manual || cloudDirty || !cloudRev || Date.now()-cloudFull>60000;
+  if(full) cloudDirty=false;
   try{
     const r = await fetch(c.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({key:c.k, profile:prof.name, profileName:prof.name, currency:curCode(), data:exportObj()})});
+      body:JSON.stringify({key:c.k, profile:prof.name, profileName:prof.name, currency:curCode(), since: full?null:cloudRev, data: full?exportObj():null})});
     const j = await r.json();
     if(!j.ok) throw new Error(j.error||'sync failed');
-    const n = merge(j.data);
-    DB.meta.lastCloud=Date.now(); persist(); cloudState='ok';
+    const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
+    if(j.same){ if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } if(manual) toast('Synced'); return true; }
+    const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
+    persist();
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual) toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced');
     return true;
-  }catch(e){ cloudState='err'; renderSyncDot(); renderCloudStatus(); if(manual) toast('Cloud sync failed: '+e.message); return false; }
-  finally{ cloudBusy=false; if(cloudAgain){ cloudAgain=false; setTimeout(()=>cloudSync(false),300); } }
+  }catch(e){ if(full) cloudDirty=true; cloudState='err'; renderSyncDot(); renderCloudStatus(); if(manual) toast('Cloud sync failed: '+e.message); return false; }
+  finally{ cloudBusy=false; if(cloudAgain){ cloudAgain=false; setTimeout(()=>cloudSync(false),200); } }
 }
-function scheduleCloud(){ if(!cloudOn()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSync(false),800); }
-setInterval(()=>{ if(cloudOn() && document.visibilityState==='visible') cloudSync(false); }, 20000);
+function scheduleCloud(){ if(!cloudOn()) return; cloudDirty=true; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSync(false),300); }
+setInterval(()=>{ if(cloudOn() && document.visibilityState==='visible') cloudSync(false,true); }, 5000);
 window.addEventListener('focus',()=>{ if(cloudOn()) cloudSync(false); });
 window.addEventListener('online',()=>{ if(cloudOn()) cloudSync(false); });
 function renderCloudStatus(){
@@ -1018,7 +1024,7 @@ function renderCloudStatus(){
     box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync (offline?). It will retry automatically.':'Connected'} · last synced ${last}</div>
       <div class="btns"><button class="btn primary" id="cSync">Sync now</button><button class="btn" id="cCopy">Copy connection code</button><button class="btn danger" id="cOff">Disconnect</button></div>
       <input class="in small hidden" id="cShow" readonly style="margin-top:8px">
-      <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, a couple of seconds after each change, and every 20 seconds while open. To add another device, copy the connection code and paste it into the app on that device.</div>`;
+      <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, right after each change, and checks for updates every 5 seconds while open. To add another device, copy the connection code and paste it into the app on that device.</div>`;
     $('#cSync').onclick=()=>cloudSync(true);
     $('#cCopy').onclick=async()=>{ const code=connCode(cloudCfg()); try{ await navigator.clipboard.writeText(code); toast('Connection code copied'); }catch(e){ const i=$('#cShow'); i.value=code; i.classList.remove('hidden'); i.select(); toast('Copy the code shown below'); } };
     confirmBtn($('#cOff'),'Tap again to disconnect this device',()=>{ try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Cloud sync disconnected on this device'); render(); });
