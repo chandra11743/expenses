@@ -52,6 +52,26 @@ button,input,select,textarea{font:inherit;color:inherit}
 .num{font-variant-numeric:tabular-nums}
 header.top{position:sticky;top:0;z-index:20;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border)}
 header.top h1{font-size:17px;margin:0;font-weight:650}
+.profbtn{display:flex;align-items:center;gap:7px;border:0;background:transparent;cursor:pointer;padding:4px 8px 4px 4px;border-radius:20px;font-weight:650;font-size:15px;color:var(--text);min-width:0;max-width:40vw}
+.profbtn:hover{background:var(--surface-2)}
+.profbtn .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.av.lg{width:40px;height:40px;font-size:17px}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--border);cursor:pointer;border-radius:8px}
+.prow:first-child{border-top:0}
+.prow:hover{background:var(--surface-2)}
+.prow .grow{flex:1;min-width:0}
+.prow .grow b{display:block}
+.pinpad{display:grid;grid-template-columns:repeat(3,64px);gap:10px;justify-content:center;margin:14px 0}
+.pinpad button{height:56px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:22px;font-weight:600;cursor:pointer}
+.pinpad button:active{background:var(--surface-2)}
+.pindots{display:flex;gap:12px;justify-content:center;margin:10px 0}
+.pindots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--text-2)}
+.pindots i.on{background:var(--text)}
+.lock{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+.lock .box{width:100%;max-width:340px;text-align:center}
+body.locked main,body.locked nav.tabs,body.locked .fab,body.locked .monthnav,body.locked #syncBtn{visibility:hidden}
+body.locked::after{content:"Locked. Tap the name at the top to unlock or switch profile.";position:fixed;left:16px;right:16px;top:40%;text-align:center;color:var(--text-2)}
 .monthnav{display:flex;align-items:center;gap:2px}
 .monthnav button{border:0;background:transparent;width:34px;height:34px;border-radius:8px;font-size:20px;cursor:pointer;color:var(--text-2)}
 .monthnav button:hover{background:var(--surface-2)}
@@ -176,7 +196,7 @@ svg.chart text{fill:var(--muted);font-size:11px}
 </head>
 <body>
 <header class="top">
-  <h1>Expenses</h1>
+  <button class="profbtn" id="profBtn" aria-label="Switch profile"></button>
   <div class="monthnav">
     <button id="mPrev" aria-label="Previous month">‹</button>
     <button id="mLabel" class="mlabel num" aria-label="Show calendar for this month"></button>
@@ -244,7 +264,22 @@ const FOOD_PARTS = [
   {id:'groceries', name:'Groceries (to cook)', hint:'Shopping to cook at home', icon:'🥬', subs:['groceries']},
   {id:'delivery', name:'Online delivery', hint:'GrabFood, foodpanda, Deliveroo', icon:'🛵', subs:['delivery']},
 ];
-const KEY = 'dailyExpenseTracker.v1';
+const KEY_BASE = 'dailyExpenseTracker.v1';
+const PKEY = 'dailyExpenseTracker.profiles';
+/* Profiles: each person on this device gets their own data store + sync file.
+   The first profile ('default') keeps the original storage key, so existing data carries over. */
+function loadProfiles(){
+  let P=null; try{ P=JSON.parse(localStorage.getItem(PKEY)||'null'); }catch(e){}
+  if(!P || !Array.isArray(P.list) || !P.list.length) P={list:[{id:'default', name:'Me', color:0}], current:'default'};
+  if(!P.list.some(p=>p.id===P.current)) P.current=P.list[0].id;
+  return P;
+}
+let PROFILES = loadProfiles();
+function saveProfiles(){ try{ localStorage.setItem(PKEY, JSON.stringify(PROFILES)); }catch(e){} }
+function curProfile(){ return PROFILES.list.find(p=>p.id===PROFILES.current) || PROFILES.list[0]; }
+function keyFor(id){ return id==='default' ? KEY_BASE : KEY_BASE+'.'+id; }
+function syncKeyFor(id){ return id==='default' ? 'syncHandle' : 'syncHandle:'+id; }
+let KEY = keyFor(PROFILES.current);
 
 /* ============ Storage ============ */
 function blankDB(){ return {entries:{}, months:{}, rates:{}, settings:{upd:0, theme:'auto'}, meta:{}}; }
@@ -753,7 +788,7 @@ function renderSettings(){
     <button class="btn" id="dCsvAll">Export all as CSV</button>
     <button class="btn" id="dTheme">Theme: ${DB.settings.theme||'auto'}</button>
     ${hasSample()?'<button class="btn" id="dSampleOff">Remove sample data</button>':''}
-    <button class="btn danger" id="dClear">Erase all data on this device</button></div>
+    <button class="btn danger" id="dClear">Erase ${esc(curProfile().name)}'s data on this device</button></div>
     <div class="small muted" style="margin-top:8px">${Object.values(DB.entries).filter(e=>!e.del).length} expenses stored · Last SGD→INR rate: ${DB.meta.lastRate? '₹'+DB.meta.lastRate.toFixed(2):'not fetched yet'}</div></div>`;
   $('#tab-settings').innerHTML = h;
 
@@ -762,7 +797,7 @@ function renderSettings(){
   $('#sExport').onclick=exportSyncFile;
   $('#dCsv').onclick=()=>exportCSV(S.ym); $('#dCsvAll').onclick=()=>exportCSV(null);
   $('#dTheme').onclick=()=>{ const o=['auto','light','dark']; DB.settings.theme=o[(o.indexOf(DB.settings.theme||'auto')+1)%3]; DB.settings.upd=Date.now(); applyTheme(); persist(); renderSettings(); };
-  confirmBtn($('#dClear'),'Tap again to erase everything on this device',()=>{ DB=blankDB(); persist(); toast('All data on this device erased'); render(); });
+  confirmBtn($('#dClear'),'Tap again to erase '+curProfile().name+"'s data",()=>{ DB=blankDB(); persist(); toast(curProfile().name+"'s data on this device erased"); render(); });
   if($('#dSampleOff')) $('#dSampleOff').onclick=()=>{ removeSample(); toast('Sample data removed'); render(); };
   renderSyncStatus();
 }
@@ -856,9 +891,11 @@ const idb = (()=>{ let dbp=null; const open=()=>dbp||(dbp=new Promise((res,rej)=
   return { get:k=>tx('readonly',s=>s.get(k)).catch(()=>null), set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null), del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>null) };
 })();
 let SH = null, syncState='none', syncTimer=null, syncing=false;
-function exportObj(){ return {app:'daily-expense-tracker', version:1, exported:new Date().toISOString(), entries:DB.entries, months:DB.months, rates:DB.rates, settings:DB.settings}; }
+function exportObj(){ return {app:'daily-expense-tracker', version:1, profileName:curProfile().name, exported:new Date().toISOString(), entries:DB.entries, months:DB.months, rates:DB.rates, settings:DB.settings}; }
 function merge(r){
   if(!r || typeof r!=='object' || !r.entries) throw new Error('Not an expense sync file');
+  if(r.profileName && r.profileName.trim().toLowerCase()!==curProfile().name.trim().toLowerCase())
+    throw new Error(`this file belongs to "${r.profileName}". Switch to that profile first (or rename this profile to "${r.profileName}")`);
   let n=0;
   for(const [id,e] of Object.entries(r.entries)){ const l=DB.entries[id]; if(!l || (e.upd||0)>(l.upd||0)){ DB.entries[id]=e; n++; } }
   for(const [m,c] of Object.entries(r.months||{})){ const l=DB.months[m]; if(!l || (c.upd||0)>(l.upd||0)){ DB.months[m]=c; n++; } }
@@ -866,29 +903,40 @@ function merge(r){
   if(r.settings && (r.settings.upd||0)>(DB.settings.upd||0)){ DB.settings=r.settings; applyTheme(); }
   return n;
 }
+function slug(n){ return (n||'me').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'me'; }
+function syncFileName(){ return PROFILES.list.length>1 || curProfile().name!=='Me' ? `expenses-sync-${slug(curProfile().name)}.json` : 'expenses-sync.json'; }
 async function initSync(){
   if(!('showOpenFilePicker' in window)) { syncState='manual'; renderSyncDot(); return; }
-  SH = await idb.get('syncHandle');
+  SH = await idb.get(syncKeyFor(PROFILES.current));
   if(!SH){ syncState='none'; renderSyncDot(); return; }
   try{ const p = await SH.queryPermission({mode:'readwrite'}); if(p==='granted'){ syncState='ok'; await syncNow(false); } else syncState='need'; }catch(e){ syncState='need'; }
   renderSyncDot();
 }
 async function linkSync(create){
   try{
-    const opts={types:[{description:'Expense sync file',accept:{'application/json':['.json']}}]};
-    if(create) SH = await window.showSaveFilePicker({...opts, suggestedName:'expenses-sync.json'});
+    // mode:'readwrite' asks for edit access in the same step as picking the file
+    const opts={types:[{description:'Expense sync file',accept:{'application/json':['.json']}}], mode:'readwrite', id:'expense-sync'};
+    if(create) SH = await window.showSaveFilePicker({...opts, suggestedName:syncFileName()});
     else [SH] = await window.showOpenFilePicker(opts);
-    if(await SH.requestPermission({mode:'readwrite'})!=='granted'){ toast('Permission needed to sync'); return; }
-    await idb.set('syncHandle',SH); syncState='ok';
+    await idb.set(syncKeyFor(PROFILES.current),SH);           // remember the file even if access is still pending
+    let perm = 'prompt';
+    try{ perm = await SH.queryPermission({mode:'readwrite'}); }catch(e){}
+    if(perm!=='granted'){ try{ perm = await SH.requestPermission({mode:'readwrite'}); }catch(e){} }
+    if(perm!=='granted'){
+      syncState='need'; render();
+      toast('File linked. Tap "Allow access" so the app can save to it.');
+      return;
+    }
+    syncState='ok';
     await syncNow(true);
   }catch(e){ if(e.name!=='AbortError') toast('Sync error: '+e.message); }
 }
-async function unlinkSync(){ await idb.del('syncHandle'); SH=null; syncState='none'; DB.meta.lastSync=null; persist(); toast('Sync file unlinked'); render(); }
+async function unlinkSync(){ await idb.del(syncKeyFor(PROFILES.current)); SH=null; syncState='none'; DB.meta.lastSync=null; persist(); toast('Sync file unlinked'); render(); }
 async function syncNow(manual){
   if(!SH){ if(manual) toast('Link a sync file first'); return; }
   if(syncing) return; syncing=true;
   try{
-    if(syncState!=='ok'){ const p=await SH.requestPermission({mode:'readwrite'}); if(p!=='granted'){ syncState='need'; return; } syncState='ok'; }
+    if(syncState!=='ok'){ const p=await SH.requestPermission({mode:'readwrite'}); if(p!=='granted'){ syncState='need'; if(manual) toast('Edit access was not given. Click the icon at the left of the address bar → Site settings → File editing → Allow, then try again.'); return; } syncState='ok'; }
     const f = await SH.getFile(); const txt = (await f.text()).trim();
     let n=0; if(txt){ n = merge(JSON.parse(txt)); }
     const w = await SH.createWritable(); await w.write(JSON.stringify(exportObj())); await w.close();
@@ -908,7 +956,7 @@ function renderSyncStatus(){
   const el=$('#syncStatus'); if(!el) return;
   const last = DB.meta.lastSync? new Date(DB.meta.lastSync).toLocaleString('en-SG') : 'never';
   el.innerHTML = syncState==='ok'? `<span class="syncdot ok"></span>Linked to <b>${esc(SH?.name||DB.meta.syncName)}</b> · last synced ${last}`
-    : syncState==='need'? `<span class="syncdot need"></span>Sync file linked — tap <b>Sync now</b> to allow access again.`
+    : syncState==='need'? `<span class="syncdot need"></span>Linked to <b>${esc(SH?.name||DB.meta.syncName||'sync file')}</b>, but the app still needs permission to edit it.<div class="btns" style="margin-top:8px"><button class="btn primary" onclick="syncNow(true)">Allow access</button></div><div class="small muted" style="margin-top:6px">Chrome will ask "Let site edit files?" — choose <b>Edit files</b> (or <b>Allow on every visit</b>). No pop-up? See the permission icon at the right of the address bar.</div>`
     : syncState==='manual'? `<span class="syncdot"></span>Last merge/save: ${DB.meta.lastManual? new Date(DB.meta.lastManual).toLocaleString('en-SG'):'never'}`
     : `<span class="syncdot"></span>Not linked. On your Mac, use <b>Link sync file</b> and choose (or create) expenses-sync.json inside your Google Drive / OneDrive folder.`;
 }
@@ -920,19 +968,124 @@ $('#fileIn').onchange=async ev=>{
 };
 async function exportSyncFile(){
   const blob = new Blob([JSON.stringify(exportObj())],{type:'application/json'});
-  const file = new File([blob],'expenses-sync.json',{type:'application/json'});
+  const file = new File([blob],syncFileName(),{type:'application/json'});
   DB.meta.lastManual=Date.now(); persist();
   if(navigator.canShare && navigator.canShare({files:[file]}) && matchMedia('(pointer:coarse)').matches){
-    try{ await navigator.share({files:[file], title:'expenses-sync.json'}); return; }catch(e){ if(e.name==='AbortError') return; }
+    try{ await navigator.share({files:[file], title:syncFileName()}); return; }catch(e){ if(e.name==='AbortError') return; }
   }
-  download(blob,'expenses-sync.json');
+  download(blob,syncFileName());
 }
 function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
 function exportCSV(ym){
   const es = Object.values(DB.entries).filter(e=>!e.del && (!ym||e.date.startsWith(ym))).sort((a,b)=>a.date.localeCompare(b.date));
   const q=v=>{ v=String(v??''); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; };
   const rows=[['Date','Category','Food type','Amount SGD','Amount INR','SGD-INR rate','Note']].concat(es.map(e=>[e.date,CAT[e.cat]?.name||e.cat,e.sub?CAT.food.subs.find(s=>s.id===e.sub)?.name:'',(CAT[e.cat]?.income?-e.amt:e.amt).toFixed(2),e.inr||'',e.rate||'',e.note||'']));
-  download(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}), `expenses-${ym||'all'}.csv`);
+  download(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}), `expenses-${slug(curProfile().name)}-${ym||'all'}.csv`);
+}
+
+/* ============ Profiles ============ */
+const AV_COLORS = ['#2a78d6','#1baf7a','#eb6834','#4a3aa7','#e34948','#008300','#c98500','#d55181'];
+const avatar = (p,lg) => `<span class="av${lg?' lg':''}" style="background:${AV_COLORS[(p.color||0)%AV_COLORS.length]}">${esc((p.name||'?').trim().charAt(0).toUpperCase()||'?')}</span>`;
+async function hashPin(pin, salt){
+  const data = new TextEncoder().encode(salt+':'+pin);
+  try{ const d = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  catch(e){ let h=0; for(const c of data) h=(h*31+c)>>>0; return 'x'+h.toString(16); }
+}
+function renderProfileBtn(){ const p=curProfile(); $('#profBtn').innerHTML = `${avatar(p)}<span class="nm">${esc(p.name)}</span><span class="muted" style="font-size:11px">▾</span>`; }
+
+function profileSheet(){
+  const h = `<div class="row" style="justify-content:space-between"><h3>Profiles</h3><button class="btn sm" onclick="dismissSheet()">Close</button></div>
+    <div class="small muted" style="margin-bottom:8px">Each person gets their own expenses, salary, budgets and sync file on this device.</div>
+    <div>${PROFILES.list.map(p=>`<div class="prow" data-pid="${p.id}">${avatar(p,true)}<div class="grow"><b>${esc(p.name)}</b><span class="small muted">${p.id===PROFILES.current?'Using now':'Tap to switch'}${p.pin?' · 🔒 PIN':''}</span></div>
+      <button class="btn sm" data-pedit="${p.id}">Edit</button></div>`).join('')}</div>
+    <div class="btns" style="margin-top:12px"><button class="btn primary" id="pAdd">+ Add profile</button></div>`;
+  openSheet(h);
+  document.querySelectorAll('.prow').forEach(r=>r.onclick=ev=>{ if(ev.target.closest('[data-pedit]')) return; switchProfile(r.dataset.pid); });
+  document.querySelectorAll('[data-pedit]').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); editProfile(b.dataset.pedit); });
+  $('#pAdd').onclick=()=>editProfile(null);
+}
+function editProfile(id){
+  const p = id ? PROFILES.list.find(x=>x.id===id) : null;
+  const h = `<div class="row" style="justify-content:space-between"><h3>${p?'Edit profile':'New profile'}</h3><button class="btn sm" id="pBack">Back</button></div>
+    <label class="f" for="pName">Name</label><input class="in" id="pName" maxlength="24" value="${p?esc(p.name):''}" placeholder="e.g. Chandra">
+    <label class="f" for="pPin">${p&&p.pin?'New 4-digit PIN (leave empty to keep the current PIN)':'4-digit PIN (optional)'}</label>
+    <input class="in num" id="pPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="new-password">
+    <div class="small muted" style="margin-top:6px">A PIN stops others opening this profile in the app. It doesn't encrypt the data on the device.</div>
+    <div class="btns" style="margin-top:14px"><button class="btn primary" id="pSave">${p?'Save':'Create profile'}</button>
+      ${p&&p.pin?'<button class="btn" id="pNoPin">Remove PIN</button>':''}
+      ${p&&PROFILES.list.length>1?`<button class="btn danger" id="pDel">Delete profile</button>`:''}</div>`;
+  openSheet(h);
+  $('#pBack').onclick=profileSheet;
+  if(!p) setTimeout(()=>$('#pName').focus(),50);
+  $('#pSave').onclick=async()=>{
+    const name=$('#pName').value.trim(), pin=$('#pPin').value.trim();
+    if(!name){ toast('Enter a name'); $('#pName').focus(); return; }
+    if(PROFILES.list.some(x=>x.id!==id && x.name.toLowerCase()===name.toLowerCase())){ toast('Another profile already has that name'); return; }
+    if(pin && !/^\d{4}$/.test(pin)){ toast('The PIN must be 4 digits'); $('#pPin').focus(); return; }
+    let target = p;
+    if(!target){ target={id:'p'+uid(), name, color:PROFILES.list.length}; PROFILES.list.push(target); }
+    target.name=name;
+    if(pin){ target.salt=uid(); target.pin=await hashPin(pin,target.salt); }
+    saveProfiles(); renderProfileBtn();
+    if(!p){ toast(`Profile "${name}" created`); switchProfile(target.id, true); }
+    else { toast('Profile saved'); profileSheet(); if(S.tab==='settings') renderSettings(); }
+  };
+  if($('#pNoPin')) $('#pNoPin').onclick=()=>{ delete p.pin; delete p.salt; saveProfiles(); toast('PIN removed'); profileSheet(); };
+  if($('#pDel')) confirmBtn($('#pDel'),`Tap again to delete ${p.name} and all their data here`,async()=>{
+    try{ localStorage.removeItem(keyFor(p.id)); }catch(e){}
+    await idb.del(syncKeyFor(p.id));
+    PROFILES.list = PROFILES.list.filter(x=>x.id!==p.id);
+    const wasCurrent = PROFILES.current===p.id;
+    saveProfiles(); toast(`Deleted ${p.name}`);
+    if(wasCurrent) switchProfile(PROFILES.list[0].id, true); else profileSheet();
+  });
+}
+async function switchProfile(id, skipPin){
+  const p = PROFILES.list.find(x=>x.id===id); if(!p) return;
+  if(id===PROFILES.current && !skipPin){
+    if(document.body.classList.contains('locked') && p.pin){ if(await askPin(p)){ document.body.classList.remove('locked'); dismissSheet(); } return; }
+    dismissSheet(); return; }
+  if(p.pin && !skipPin){ const ok = await askPin(p); if(!ok) return; }
+  clearTimeout(syncTimer);
+  document.body.classList.remove('locked');
+  PROFILES.current = id; saveProfiles();
+  KEY = keyFor(id); DB = loadDB(); applyTheme();
+  SH = null; syncState='none';
+  Object.assign(S, {ym:curYM(), tab:'home', histCat:'all', selDay:null, lastCat:null});
+  dismissSheet(); renderProfileBtn(); render(); window.scrollTo(0,0);
+  toast(`Switched to ${p.name}`);
+  initSync();
+}
+/* Full-screen PIN pad. Resolves true when the right PIN is entered, false if cancelled. */
+function askPin(p, blocking){
+  return new Promise(resolve=>{
+    const el = document.createElement('div'); el.className='lock';
+    let val='';
+    const draw = (msg)=>{ el.innerHTML = `<div class="box">${avatar(p,true).replace('class="av lg"','class="av lg" style="margin:0 auto;width:56px;height:56px;font-size:24px;background:'+AV_COLORS[(p.color||0)%AV_COLORS.length]+'"')}
+      <h3 style="margin:12px 0 2px">${esc(p.name)}</h3><div class="small ${msg?'neg':'muted'}">${msg||'Enter PIN'}</div>
+      <div class="pindots">${[0,1,2,3].map(i=>`<i class="${i<val.length?'on':''}"></i>`).join('')}</div>
+      <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="x" style="font-size:14px">${blocking?(PROFILES.list.length>1?'Switch':''):'Cancel'}</button><button data-k="0">0</button><button data-k="b" aria-label="Delete">⌫</button></div></div>`;
+      el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>key(b.dataset.k)); };
+    const finish = ok => { document.removeEventListener('keydown', kd); el.remove(); resolve(ok); };
+    const key = async k => {
+      if(k==='x'){ if(!blocking) finish(false); else if(PROFILES.list.length>1){ finish(false); } return; }
+      if(k==='b'){ val=val.slice(0,-1); draw(); return; }
+      if(val.length>=4) return;
+      val+=k; draw();
+      if(val.length===4){ const h = await hashPin(val,p.salt); if(h===p.pin) finish(true); else { val=''; draw('Wrong PIN — try again'); } }
+    };
+    const kd = ev => { if(/^\d$/.test(ev.key)) key(ev.key); else if(ev.key==='Backspace') key('b'); else if(ev.key==='Escape' && !blocking) key('x'); };
+    document.addEventListener('keydown', kd);
+    draw(); document.body.appendChild(el);
+  });
+}
+/* On start: if the current profile has a PIN, lock until it's entered (or the person switches). */
+async function startupLock(){
+  const p = curProfile(); if(!p.pin) return true;
+  document.body.classList.add('locked');
+  const ok = await askPin(p, true);
+  if(ok){ document.body.classList.remove('locked'); return true; }
+  profileSheet(); return false;
 }
 
 /* ============ Two-tap confirm (no browser dialogs) ============ */
@@ -989,14 +1142,17 @@ function go(t){ S.tab=t; window.scrollTo(0,0); render(); }
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 $('#fab').onclick=()=>openEntry(null);
 $('#mLabel').onclick=()=>calSheet();
+$('#profBtn').onclick=profileSheet;
 $('#mPrev').onclick=()=>{ S.ym=addMonths(S.ym,-1); render(); };
 $('#mNext').onclick=()=>{ S.ym=addMonths(S.ym,1); render(); };
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(SH&&syncState==='ok') syncNow(false); render(); } });
 let _rs; window.addEventListener('resize',()=>{ clearTimeout(_rs); _rs=setTimeout(()=>{ if(S.tab==='analysis') renderAnalysis(); },200); });
-window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render(); } });
+window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render(); } else if(ev.key===PKEY){ PROFILES=loadProfiles(); renderProfileBtn(); } });
 applyTheme();
+renderProfileBtn();
 render();
 initSync();
+startupLock();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
