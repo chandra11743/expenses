@@ -790,7 +790,8 @@ function renderBudget(){
 function renderSettings(){
   let h='';
   const fsa = 'showOpenFilePicker' in window;
-  h += `<div class="card"><h2>Sync with Google Drive / OneDrive</h2>
+  h += `<div class="card"><h2>Cloud sync — phone ⇄ Mac</h2><div id="cloudBox"></div></div>`;
+  if(!cloudOn()) h += `<div class="card"><h2>File sync (older method)</h2>
     <div class="small" style="margin-bottom:10px">Your data lives on this device. To use it on your Mac and phone, keep one sync file (<b>${syncFileName()}</b>) in your Google Drive or OneDrive. Syncing merges both sides — nothing is overwritten or lost.</div>
     <div id="syncStatus" class="small" style="margin-bottom:10px"></div>
     ${fsa?`<div class="btns" style="margin-bottom:10px">
@@ -813,14 +814,13 @@ function renderSettings(){
     <div class="small muted" style="margin-top:8px">${Object.values(DB.entries).filter(e=>!e.del).length} expenses stored · Currency: ${curCode()} · home currency ${homeCode()}</div></div>`;
   $('#tab-settings').innerHTML = h;
 
-  if(fsa){ $('#sLink').onclick=()=>linkSync(false); $('#sCreate').onclick=()=>linkSync(true); $('#sNow').onclick=()=>syncNow(true); $('#sUnlink').onclick=unlinkSync; }
-  $('#sImport').onclick=()=>$('#fileIn').click();
-  $('#sExport').onclick=exportSyncFile;
+  if(fsa && $('#sLink')){ $('#sLink').onclick=()=>linkSync(false); $('#sCreate').onclick=()=>linkSync(true); $('#sNow').onclick=()=>syncNow(true); $('#sUnlink').onclick=unlinkSync; }
+  if($('#sImport')){ $('#sImport').onclick=()=>$('#fileIn').click(); $('#sExport').onclick=exportSyncFile; }
   $('#dCsv').onclick=()=>exportCSV(S.ym); $('#dCsvAll').onclick=()=>exportCSV(null);
   $('#dTheme').onclick=()=>{ const o=['auto','light','dark']; DB.settings.theme=o[(o.indexOf(DB.settings.theme||'auto')+1)%3]; DB.settings.upd=Date.now(); applyTheme(); persist(); renderSettings(); };
   confirmBtn($('#dClear'),'Tap again to erase '+curProfile().name+"'s data",()=>{ DB=blankDB(); persist(); toast(curProfile().name+"'s data on this device erased"); render(); });
   if($('#dSampleOff')) $('#dSampleOff').onclick=()=>{ removeSample(); toast('Sample data removed'); render(); };
-  renderSyncStatus();
+  renderSyncStatus(); renderCloudStatus();
 }
 function applyTheme(){ const t=DB.settings.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
 
@@ -934,6 +934,7 @@ function merge(r){
 function slug(n){ return (n||'me').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'me'; }
 function syncFileName(){ return PROFILES.list.length>1 || curProfile().name!=='Me' ? `expenses-sync-${slug(curProfile().name)}.json` : 'expenses-sync.json'; }
 async function initSync(){
+  if(cloudOn()) cloudSync(false);
   if(!('showOpenFilePicker' in window)) { syncState='manual'; renderSyncDot(); return; }
   SH = await idb.get(syncKeyFor(PROFILES.current));
   if(!SH){ syncState='none'; renderSyncDot(); return; }
@@ -976,9 +977,10 @@ async function syncNow(manual){
   }catch(e){ syncState = (e.name==='NotAllowedError'||e.name==='SecurityError')?'need':syncState; if(manual) toast('Sync failed: '+e.message); }
   finally{ syncing=false; renderSyncDot(); if(S.tab==='settings') renderSyncStatus(); }
 }
-function scheduleSync(){ if(SH && syncState==='ok'){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow(false),1500); } renderSyncDot(); }
+function scheduleSync(){ scheduleCloud(); if(SH && syncState==='ok'){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow(false),1500); } renderSyncDot(); }
 function renderSyncDot(){
   const d=$('#syncDot'); if(!d) return;
+  if(cloudOn()){ d.className='syncdot '+(cloudState==='err'?'need':cloudState==='ok'?'ok':''); $('#syncBtn').title = cloudState==='ok'? 'Cloud sync on · '+(DB.meta.lastCloud?new Date(DB.meta.lastCloud).toLocaleString():'') : 'Cloud sync'; return; }
   d.className='syncdot '+(syncState==='ok'?'ok':syncState==='need'?'need':'');
   $('#syncBtn').title = syncState==='ok'? 'Synced '+(DB.meta.lastSync?new Date(DB.meta.lastSync).toLocaleString():'') : syncState==='need'? 'Tap to reconnect sync file' : 'Set up sync';
 }
@@ -990,7 +992,54 @@ function renderSyncStatus(){
     : syncState==='manual'? `<span class="syncdot"></span>Last merge/save: ${DB.meta.lastManual? new Date(DB.meta.lastManual).toLocaleString('en-SG'):'never'}`
     : `<span class="syncdot"></span>Not linked. On your Mac, use <b>Link sync file</b> and choose (or create) ${syncFileName()} inside your Google Drive / OneDrive folder.`;
 }
-$('#syncBtn').onclick=()=>{ if(syncState==='ok'||syncState==='need') syncNow(true); else go('settings'); };
+/* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
+   No files and no permission prompts: the app posts its data to the script, the script merges it with the
+   copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
+const CKEY='dailyExpenseTracker.cloud';
+function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
+function cloudOn(){ const c=cloudCfg(); return !!(c&&c.u&&c.k); }
+let cloudState='off', cloudBusy=false, cloudTimer=null;
+function connCode(c){ return 'EXP1-'+btoa(JSON.stringify({u:c.u,k:c.k})); }
+function parseCode(t){ const m=String(t||'').replace(/\s+/g,'').match(/EXP1-([A-Za-z0-9+/=]+)/); if(!m) return null; try{ const o=JSON.parse(atob(m[1])); return o&&o.u&&o.k?o:null; }catch(e){ return null; } }
+async function cloudSync(manual){
+  if(!cloudOn()){ if(manual) toast('Connect cloud sync first'); return false; }
+  if(cloudBusy) return false; cloudBusy=true; const c=cloudCfg(), prof=curProfile();
+  try{
+    const r = await fetch(c.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:c.k, profile:prof.name, profileName:prof.name, currency:curCode(), data:exportObj()})});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||'sync failed');
+    const n = merge(j.data);
+    DB.meta.lastCloud=Date.now(); persist(); cloudState='ok';
+    if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
+    if(manual) toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced');
+    return true;
+  }catch(e){ cloudState='err'; renderSyncDot(); renderCloudStatus(); if(manual) toast('Cloud sync failed: '+e.message); return false; }
+  finally{ cloudBusy=false; }
+}
+function scheduleCloud(){ if(!cloudOn()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSync(false),2000); }
+setInterval(()=>{ if(cloudOn() && document.visibilityState==='visible') cloudSync(false); }, 60000);
+function renderCloudStatus(){
+  const box=$('#cloudBox'); if(!box) return;
+  if(cloudOn()){
+    const last = DB.meta.lastCloud? new Date(DB.meta.lastCloud).toLocaleString('en-SG') : 'not yet';
+    box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync (offline?). It will retry automatically.':'Connected'} · last synced ${last}</div>
+      <div class="btns"><button class="btn primary" id="cSync">Sync now</button><button class="btn" id="cCopy">Copy connection code</button><button class="btn danger" id="cOff">Disconnect</button></div>
+      <input class="in small hidden" id="cShow" readonly style="margin-top:8px">
+      <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, after each change and every minute. To add another device, copy the connection code and paste it into the app on that device.</div>`;
+    $('#cSync').onclick=()=>cloudSync(true);
+    $('#cCopy').onclick=async()=>{ const code=connCode(cloudCfg()); try{ await navigator.clipboard.writeText(code); toast('Connection code copied'); }catch(e){ const i=$('#cShow'); i.value=code; i.classList.remove('hidden'); i.select(); toast('Copy the code shown below'); } };
+    confirmBtn($('#cOff'),'Tap again to disconnect this device',()=>{ try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Cloud sync disconnected on this device'); render(); });
+  } else {
+    box.innerHTML = `<div class="small" style="margin-bottom:10px">Sync your phone and Mac automatically through your own Google Drive, with no files to pick and no permission pop-ups. Paste the connection code to turn it on.</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><input class="in" id="cCode" placeholder="EXP1-…" style="flex:1;min-width:200px" autocomplete="off"><button class="btn primary" id="cConnect">Connect</button></div>`;
+    $('#cConnect').onclick=async()=>{ const o=parseCode($('#cCode').value); if(!o){ toast('That code doesn’t look right — it starts with EXP1-'); return; }
+      try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){}
+      if(await cloudSync(false)){ toast('Connected — syncing automatically'); render(); }
+      else { try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Couldn’t connect with that code. Check it and your internet.'); renderCloudStatus(); } };
+  }
+}
+$('#syncBtn').onclick=()=>{ if(cloudOn()) cloudSync(true); else if(syncState==='ok'||syncState==='need') syncNow(true); else go('settings'); };
 $('#fileIn').onchange=async ev=>{
   const f=ev.target.files[0]; ev.target.value=''; if(!f) return;
   try{ const n=merge(JSON.parse(await f.text())); DB.meta.lastManual=Date.now(); save(); toast(`Merged · ${n} update${n===1?'':'s'}`); render(); }
@@ -1183,7 +1232,7 @@ $('#mLabel').onclick=()=>calSheet();
 $('#profBtn').onclick=profileSheet;
 $('#mPrev').onclick=()=>{ S.ym=addMonths(S.ym,-1); render(); };
 $('#mNext').onclick=()=>{ S.ym=addMonths(S.ym,1); render(); };
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(SH&&syncState==='ok') syncNow(false); render(); } });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(cloudOn()) cloudSync(false); if(SH&&syncState==='ok') syncNow(false); render(); } });
 let _rs; window.addEventListener('resize',()=>{ clearTimeout(_rs); _rs=setTimeout(()=>{ if(S.tab==='analysis') renderAnalysis(); },200); });
 window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render(); } else if(ev.key===PKEY){ PROFILES=loadProfiles(); renderProfileBtn(); } });
 applyTheme();
