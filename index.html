@@ -789,20 +789,10 @@ function renderBudget(){
 /* ============ SYNC & DATA ============ */
 function renderSettings(){
   let h='';
-  const fsa = 'showOpenFilePicker' in window;
   h += `<div class="card"><h2>Cloud sync — phone ⇄ Mac</h2><div id="cloudBox"></div></div>`;
-  if(!cloudOn()) h += `<div class="card"><h2>File sync (older method)</h2>
-    <div class="small" style="margin-bottom:10px">Your data lives on this device. To use it on your Mac and phone, keep one sync file (<b>${syncFileName()}</b>) in your Google Drive or OneDrive. Syncing merges both sides — nothing is overwritten or lost.</div>
-    <div id="syncStatus" class="small" style="margin-bottom:10px"></div>
-    ${fsa?`<div class="btns" style="margin-bottom:10px">
-      <button class="btn primary" id="sLink">Link sync file</button>
-      <button class="btn" id="sCreate">Create new sync file</button>
-      <button class="btn" id="sNow">Sync now</button>
-      <button class="btn" id="sUnlink">Unlink</button></div>
-      <div class="small muted" style="margin-bottom:10px">Auto-sync: once linked, the app merges on open and saves after every change.</div>`:''}
-    <div class="small" style="font-weight:600;margin-bottom:6px">${fsa?'Manual (for phones)':'Phone sync'}</div>
-    <div class="btns"><button class="btn ${fsa?'':'primary'}" id="sImport">Merge from Drive file…</button><button class="btn" id="sExport">Save sync file to Drive…</button></div>
-    ${fsa?'':'<div class="small muted" style="margin-top:8px">1) Tap <b>Merge from Drive file</b>, choose Drive → '+syncFileName()+'. 2) After adding expenses, tap <b>Save sync file to Drive</b> → Drive, and replace the old file.</div>'}
+  h += `<div class="card"><h2>Backup file (optional)</h2>
+    <div class="small" style="margin-bottom:10px">Cloud sync above keeps your devices in step automatically. You can also save a backup file, or merge one back in. This never asks for file permissions.</div>
+    <div class="btns"><button class="btn" id="sExport">Save backup file…</button><button class="btn" id="sImport">Merge from a file…</button></div>
   </div>`;
 
   h += `<div class="card"><h2>Data</h2><div class="btns">
@@ -814,7 +804,6 @@ function renderSettings(){
     <div class="small muted" style="margin-top:8px">${Object.values(DB.entries).filter(e=>!e.del).length} expenses stored · Currency: ${curCode()} · home currency ${homeCode()}</div></div>`;
   $('#tab-settings').innerHTML = h;
 
-  if(fsa && $('#sLink')){ $('#sLink').onclick=()=>linkSync(false); $('#sCreate').onclick=()=>linkSync(true); $('#sNow').onclick=()=>syncNow(true); $('#sUnlink').onclick=unlinkSync; }
   if($('#sImport')){ $('#sImport').onclick=()=>$('#fileIn').click(); $('#sExport').onclick=exportSyncFile; }
   $('#dCsv').onclick=()=>exportCSV(S.ym); $('#dCsvAll').onclick=()=>exportCSV(null);
   $('#dTheme').onclick=()=>{ const o=['auto','light','dark']; DB.settings.theme=o[(o.indexOf(DB.settings.theme||'auto')+1)%3]; DB.settings.upd=Date.now(); applyTheme(); persist(); renderSettings(); };
@@ -934,15 +923,15 @@ function merge(r){
 function slug(n){ return (n||'me').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'me'; }
 function syncFileName(){ return PROFILES.list.length>1 || curProfile().name!=='Me' ? `expenses-sync-${slug(curProfile().name)}.json` : 'expenses-sync.json'; }
 async function initSync(){
-  if(cloudOn()){ SH=null; syncState='none'; cloudSync(false); renderSyncDot(); return; } /* cloud sync replaces the old file link completely: no file access, no prompts */
-  if(!('showOpenFilePicker' in window)) { syncState='manual'; renderSyncDot(); return; }
-  SH = await idb.get(syncKeyFor(PROFILES.current));
-  if(!SH){ syncState='none'; renderSyncDot(); return; }
-  try{ const p = await SH.queryPermission({mode:'readwrite'}); if(p==='granted'){ syncState='ok'; await syncNow(false); } else syncState='need'; }catch(e){ syncState='need'; }
+  /* The old "linked file" method is retired: it made phones ask for file permission on every refresh.
+     Forget any remembered file so the browser never asks again. Cloud sync does the syncing. */
+  SH=null; syncState='none';
+  try{ await idb.del(syncKeyFor(PROFILES.current)); }catch(e){}
+  if(cloudOn()) cloudSync(false);
   renderSyncDot();
 }
 /* While the app is open and linked, pull in changes from other devices every minute. */
-setInterval(()=>{ if(!cloudOn() && SH && syncState==='ok' && document.visibilityState==='visible' && !syncing) syncNow(false); }, 60000);
+
 async function linkSync(create){
   try{
     // mode:'readwrite' asks for edit access in the same step as picking the file
@@ -977,7 +966,7 @@ async function syncNow(manual){
   }catch(e){ syncState = (e.name==='NotAllowedError'||e.name==='SecurityError')?'need':syncState; if(manual) toast('Sync failed: '+e.message); }
   finally{ syncing=false; renderSyncDot(); if(S.tab==='settings') renderSyncStatus(); }
 }
-function scheduleSync(){ scheduleCloud(); if(!cloudOn() && SH && syncState==='ok'){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow(false),1500); } renderSyncDot(); }
+function scheduleSync(){ scheduleCloud(); renderSyncDot(); }
 function renderSyncDot(){
   const d=$('#syncDot'); if(!d) return;
   if(cloudOn()){ d.className='syncdot '+(cloudState==='err'?'need':cloudState==='ok'?'ok':''); $('#syncBtn').title = cloudState==='ok'? 'Cloud sync on · '+(DB.meta.lastCloud?new Date(DB.meta.lastCloud).toLocaleString():'') : 'Cloud sync'; return; }
@@ -995,7 +984,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v10';
+const APP_VERSION='v11';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function cloudOn(){ const c=cloudCfg(); return !!(c&&c.u&&c.k); }
@@ -1043,7 +1032,7 @@ function renderCloudStatus(){
   }
   box.insertAdjacentHTML('beforeend','<div class="small muted" style="margin-top:10px">App version '+APP_VERSION+'</div>');
 }
-$('#syncBtn').onclick=()=>{ if(cloudOn()) cloudSync(true); else if(syncState==='ok'||syncState==='need') syncNow(true); else go('settings'); };
+$('#syncBtn').onclick=()=>{ if(cloudOn()) cloudSync(true); else go('settings'); };
 $('#fileIn').onchange=async ev=>{
   const f=ev.target.files[0]; ev.target.value=''; if(!f) return;
   try{ const n=merge(JSON.parse(await f.text())); DB.meta.lastManual=Date.now(); save(); toast(`Merged · ${n} update${n===1?'':'s'}`); render(); }
@@ -1236,7 +1225,7 @@ $('#mLabel').onclick=()=>calSheet();
 $('#profBtn').onclick=profileSheet;
 $('#mPrev').onclick=()=>{ S.ym=addMonths(S.ym,-1); render(); };
 $('#mNext').onclick=()=>{ S.ym=addMonths(S.ym,1); render(); };
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(cloudOn()) cloudSync(false); else if(SH&&syncState==='ok') syncNow(false); render(); } });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(cloudOn()) cloudSync(false); render(); } });
 let _rs; window.addEventListener('resize',()=>{ clearTimeout(_rs); _rs=setTimeout(()=>{ if(S.tab==='analysis') renderAnalysis(); },200); });
 window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render(); } else if(ev.key===PKEY){ PROFILES=loadProfiles(); renderProfileBtn(); } });
 applyTheme();
@@ -1244,7 +1233,11 @@ renderProfileBtn();
 render();
 initSync();
 startupLock();
-if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  const hadSW = !!navigator.serviceWorker.controller; let reloaded=false;
+  navigator.serviceWorker.register('sw.js').then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(hadSW && !reloaded){ reloaded=true; location.reload(); } });
+}
 </script>
 </body>
 </html>
