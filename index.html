@@ -928,6 +928,7 @@ async function initSync(){
   /* The old "linked file" method is retired: it made phones ask for file permission on every refresh.
      Forget any remembered file so the browser never asks again. Cloud sync does the syncing. */
   SH=null; syncState='none'; cloudRev=null; cloudDirty=true;
+  if(await restoreCloudCfg()) render();
   try{ await idb.del(syncKeyFor(PROFILES.current)); }catch(e){}
   if(cloudOn()) cloudSync(false);
   renderSyncDot();
@@ -986,11 +987,16 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v13';
+const APP_VERSION='v14';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
+function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
+function clearCloudCfg(){ try{ localStorage.removeItem(CKEY); }catch(e){} try{ idb.del('cloudCfg'); }catch(e){} }
+/* If the browser ever drops localStorage but keeps IndexedDB, bring the saved code back. */
+async function restoreCloudCfg(){ if(cloudCfg()) { try{ if(!(await idb.get('cloudCfg'))) idb.set('cloudCfg', cloudCfg()); }catch(e){} return false; }
+  try{ const o=await idb.get('cloudCfg'); if(o&&o.u&&o.k){ localStorage.setItem(CKEY, JSON.stringify(o)); return true; } }catch(e){} return false; }
 function cloudOn(){ const c=cloudCfg(); return !!(c&&c.u&&c.k); }
-let cloudState='off', cloudBusy=false, cloudTimer=null, cloudAgain=false, cloudDirty=true, cloudFull=0, cloudRev=null;
+let cloudErr='', cloudState='off', cloudBusy=false, cloudTimer=null, cloudAgain=false, cloudDirty=true, cloudFull=0, cloudRev=null;
 function connCode(c){ return 'EXP1-'+btoa(JSON.stringify({u:c.u,k:c.k})); }
 function parseCode(t){ const m=String(t||'').replace(/\s+/g,'').match(/EXP1-([A-Za-z0-9+/=]+)/); if(!m) return null; try{ const o=JSON.parse(atob(m[1])); return o&&o.u&&o.k?o:null; }catch(e){ return null; } }
 /* Sends this device's data only when something changed here (or once a minute as a safety net).
@@ -1019,7 +1025,7 @@ async function cloudSync(manual, poll){
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
     else if(n) toast(`Updated · ${n} change${n===1?'':'s'} from your other device`);
     return true;
-  }catch(e){ if(full) cloudDirty=true; cloudState='err'; renderSyncDot(); renderCloudStatus();
+  }catch(e){ cloudErr = e.name==='AbortError'?'no response':(e.message||String(e)); if(full) cloudDirty=true; cloudState='err'; renderSyncDot(); renderCloudStatus();
     if(manual){ syncLabel('Sync'); toast('Sync failed ('+(e.name==='AbortError'?'no response, check internet':e.message)+'). It will retry automatically.'); }
     return false; }
   finally{ clearTimeout(tmo); cloudBusy=false;
@@ -1034,20 +1040,21 @@ function renderCloudStatus(){
   const box=$('#cloudBox'); if(!box) return;
   if(cloudOn()){
     const last = DB.meta.lastCloud? new Date(DB.meta.lastCloud).toLocaleString('en-SG') : 'not yet';
-    box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync (offline?). It will retry automatically.':'Connected'} · last synced <span id="cLast">${last}</span></div>
+    box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync ('+esc(cloudErr||'offline?')+'). It keeps retrying — if you use Brave, turn Shields off for this site.':'Connected'} · last synced <span id="cLast">${last}</span></div>
       <div class="btns"><button class="btn primary" id="cSync">Sync now</button><button class="btn" id="cCopy">Copy connection code</button><button class="btn danger" id="cOff">Disconnect</button></div>
       <input class="in small hidden" id="cShow" readonly style="margin-top:8px">
       <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, right after each change, and checks for updates every 5 seconds while open. To add another device, copy the connection code and paste it into the app on that device.</div>`;
     $('#cSync').onclick=()=>cloudSync(true);
     $('#cCopy').onclick=async()=>{ const code=connCode(cloudCfg()); try{ await navigator.clipboard.writeText(code); toast('Connection code copied'); }catch(e){ const i=$('#cShow'); i.value=code; i.classList.remove('hidden'); i.select(); toast('Copy the code shown below'); } };
-    confirmBtn($('#cOff'),'Tap again to disconnect this device',()=>{ try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Cloud sync disconnected on this device'); render(); });
+    confirmBtn($('#cOff'),'Tap again to disconnect this device',()=>{ clearCloudCfg(); cloudState='off'; toast('Cloud sync disconnected on this device'); render(); });
   } else {
     box.innerHTML = `<div class="small" style="margin-bottom:10px">Sync your phone and Mac automatically through your own Google Drive, with no files to pick and no permission pop-ups. Paste the connection code to turn it on.</div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><input class="in" id="cCode" placeholder="EXP1-…" style="flex:1;min-width:200px" autocomplete="off"><button class="btn primary" id="cConnect">Connect</button></div>`;
     $('#cConnect').onclick=async()=>{ const o=parseCode($('#cCode').value); if(!o){ toast('That code doesn’t look right — it starts with EXP1-'); return; }
-      try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){}
+      saveCloudCfg(o); cloudRev=null; cloudDirty=true;
       if(await cloudSync(false)){ SH=null; syncState='none'; toast('Connected — syncing automatically'); render(); }
-      else { try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Couldn’t connect with that code. Check it and your internet.'); renderCloudStatus(); } };
+      else if(/wrong sync key/i.test(cloudErr)){ clearCloudCfg(); cloudState='off'; toast('That code has the wrong key. Copy it again from your phone (Sync & data → Copy connection code).'); renderCloudStatus(); }
+      else { toast('Code saved. Couldn’t reach cloud sync yet ('+cloudErr+'). It will keep retrying.'); render(); } };
   }
   box.insertAdjacentHTML('beforeend','<div class="small muted" style="margin-top:10px">App version '+APP_VERSION+'</div>');
 }
