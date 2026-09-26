@@ -36,7 +36,11 @@ Go to **Budget**. Enter your monthly salary and a budget for each category (you 
 
 Tap the name at the top-left (it starts as **Me**) to switch profile or add one. Each profile has its own expenses, salary, budgets, currency and sync file (`expenses-sync-<name>.json`). When adding or editing a profile, choose its **expense currency** (e.g. SGD, USD, INR) and **home currency** for Money sent home; that day's exchange rate between the two is filled in automatically. You can give a profile a 4-digit PIN so others can't open it in the app. The PIN doesn't encrypt the data on the device. Use the **same profile name** on the Mac and the phone so their sync files match.
 
-## 4. Sync between Mac and phone (Google Drive or OneDrive)
+## 4. Sync between Mac and phone
+
+**Recommended – Cloud sync (automatic, no pop-ups):** go to **Sync & data**, paste your **connection code** (starts with `EXP1-`), and tap **Connect**. Do this once on each device. From then on the app syncs through a private script in your own Google account whenever it opens, after every change and every minute. It keeps one file per profile in **My Drive → Expenses App** (`expenses-cloud-<profile>.json`). To add another device, tap **Copy connection code** on a connected device and paste it on the new one. Keep the code private: anyone with it can read and change the synced expenses.
+
+**Older method – File sync (Google Drive / OneDrive folder):**
 
 **On the Mac (automatic):**
 1. Install **Google Drive for desktop** or **OneDrive**, so your drive shows up as a folder in Finder.
@@ -61,4 +65,4 @@ Syncing always **merges**. Entries from both devices are combined. If the same e
 
 ## Updating the app later
 
-Replace `index.html` on GitHub, and increase the number in `expenses-v8` inside `sw.js` (e.g. to `expenses-v9`) so your phone picks up the new version. Your data isn't affected.
+Replace `index.html` on GitHub, and increase the number in `expenses-v9` inside `sw.js` (e.g. to `expenses-v10`) so your phone picks up the new version. Your data isn't affected.
