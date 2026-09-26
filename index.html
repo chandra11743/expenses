@@ -161,6 +161,8 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .toast.on{opacity:1}
 .syncdot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px}
 .syncdot.ok{background:var(--good)} .syncdot.need{background:var(--warn)}
+#syncBtn.busy .syncdot{background:var(--accent);animation:sdp .7s ease-in-out infinite alternate}
+@keyframes sdp{from{transform:scale(.6);opacity:.5}to{transform:scale(1.25);opacity:1}}
 .insight{padding:8px 0;border-top:1px solid var(--border);font-size:14px}
 .insight:first-of-type{border-top:0}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:10px;padding:3px;gap:2px}
@@ -202,7 +204,7 @@ svg.chart text{fill:var(--muted);font-size:11px}
     <button id="mLabel" class="mlabel num" aria-label="Show calendar for this month"></button>
     <button id="mNext" aria-label="Next month">›</button>
   </div>
-  <button class="headbtn" id="syncBtn" title="Sync"><span class="syncdot" id="syncDot"></span>Sync</button>
+  <button class="headbtn" id="syncBtn" title="Sync"><span class="syncdot" id="syncDot"></span><span id="syncLbl">Sync</span></button>
 </header>
 
 <main>
@@ -984,7 +986,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v12';
+const APP_VERSION='v13';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function cloudOn(){ const c=cloudCfg(); return !!(c&&c.u&&c.k); }
@@ -993,25 +995,36 @@ function connCode(c){ return 'EXP1-'+btoa(JSON.stringify({u:c.u,k:c.k})); }
 function parseCode(t){ const m=String(t||'').replace(/\s+/g,'').match(/EXP1-([A-Za-z0-9+/=]+)/); if(!m) return null; try{ const o=JSON.parse(atob(m[1])); return o&&o.u&&o.k?o:null; }catch(e){ return null; } }
 /* Sends this device's data only when something changed here (or once a minute as a safety net).
    Otherwise it just asks "anything new since version X?", which the script answers without reading Drive. */
+let cloudManualWait=false, lblTimer=null;
+function syncLabel(txt, busy){ const b=$('#syncBtn'), l=$('#syncLbl'); if(!b||!l) return; b.classList.toggle('busy',!!busy); l.textContent=txt; clearTimeout(lblTimer); if(!busy && txt!=='Sync') lblTimer=setTimeout(()=>{ l.textContent='Sync'; },2500); }
+function showLast(){ const el=$('#cLast'); if(el) el.textContent=DB.meta.lastCloud? new Date(DB.meta.lastCloud).toLocaleString('en-SG') : 'not yet'; }
 async function cloudSync(manual, poll){
   if(!cloudOn()){ if(manual) toast('Connect cloud sync first'); return false; }
-  if(cloudBusy){ if(!poll) cloudAgain=true; return false; } cloudBusy=true; cloudAgain=false; const c=cloudCfg(), prof=curProfile();
+  if(cloudBusy){ if(manual){ cloudManualWait=true; syncLabel('Syncing…',true); } else if(!poll) cloudAgain=true; return false; }
+  cloudBusy=true; cloudAgain=false; const c=cloudCfg(), prof=curProfile();
+  if(manual) syncLabel('Syncing…',true);
   const full = manual || cloudDirty || !cloudRev || Date.now()-cloudFull>60000;
   if(full) cloudDirty=false;
+  const ctl = ('AbortController' in window)? new AbortController() : null; const tmo = setTimeout(()=>{ try{ ctl&&ctl.abort(); }catch(e){} }, 25000);
   try{
-    const r = await fetch(c.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    const r = await fetch(c.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'}, signal: ctl?ctl.signal:undefined,
       body:JSON.stringify({key:c.k, profile:prof.name, profileName:prof.name, currency:curCode(), since: full?null:cloudRev, data: full?exportObj():null})});
     const j = await r.json();
     if(!j.ok) throw new Error(j.error||'sync failed');
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
-    if(j.same){ if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } if(manual) toast('Synced'); return true; }
+    if(j.same){ if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
     persist();
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
-    if(manual) toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced');
+    if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
+    else if(n) toast(`Updated · ${n} change${n===1?'':'s'} from your other device`);
     return true;
-  }catch(e){ if(full) cloudDirty=true; cloudState='err'; renderSyncDot(); renderCloudStatus(); if(manual) toast('Cloud sync failed: '+e.message); return false; }
-  finally{ cloudBusy=false; if(cloudAgain){ cloudAgain=false; setTimeout(()=>cloudSync(false),200); } }
+  }catch(e){ if(full) cloudDirty=true; cloudState='err'; renderSyncDot(); renderCloudStatus();
+    if(manual){ syncLabel('Sync'); toast('Sync failed ('+(e.name==='AbortError'?'no response, check internet':e.message)+'). It will retry automatically.'); }
+    return false; }
+  finally{ clearTimeout(tmo); cloudBusy=false;
+    if(cloudManualWait){ cloudManualWait=false; setTimeout(()=>cloudSync(true),50); }
+    else if(cloudAgain){ cloudAgain=false; setTimeout(()=>cloudSync(false),200); } }
 }
 function scheduleCloud(){ if(!cloudOn()) return; cloudDirty=true; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSync(false),300); }
 setInterval(()=>{ if(cloudOn() && document.visibilityState==='visible') cloudSync(false,true); }, 5000);
@@ -1021,7 +1034,7 @@ function renderCloudStatus(){
   const box=$('#cloudBox'); if(!box) return;
   if(cloudOn()){
     const last = DB.meta.lastCloud? new Date(DB.meta.lastCloud).toLocaleString('en-SG') : 'not yet';
-    box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync (offline?). It will retry automatically.':'Connected'} · last synced ${last}</div>
+    box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync (offline?). It will retry automatically.':'Connected'} · last synced <span id="cLast">${last}</span></div>
       <div class="btns"><button class="btn primary" id="cSync">Sync now</button><button class="btn" id="cCopy">Copy connection code</button><button class="btn danger" id="cOff">Disconnect</button></div>
       <input class="in small hidden" id="cShow" readonly style="margin-top:8px">
       <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, right after each change, and checks for updates every 5 seconds while open. To add another device, copy the connection code and paste it into the app on that device.</div>`;
