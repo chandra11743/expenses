@@ -934,7 +934,7 @@ function merge(r){
 function slug(n){ return (n||'me').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'me'; }
 function syncFileName(){ return PROFILES.list.length>1 || curProfile().name!=='Me' ? `expenses-sync-${slug(curProfile().name)}.json` : 'expenses-sync.json'; }
 async function initSync(){
-  if(cloudOn()) cloudSync(false);
+  if(cloudOn()){ SH=null; syncState='none'; cloudSync(false); renderSyncDot(); return; } /* cloud sync replaces the old file link completely: no file access, no prompts */
   if(!('showOpenFilePicker' in window)) { syncState='manual'; renderSyncDot(); return; }
   SH = await idb.get(syncKeyFor(PROFILES.current));
   if(!SH){ syncState='none'; renderSyncDot(); return; }
@@ -942,7 +942,7 @@ async function initSync(){
   renderSyncDot();
 }
 /* While the app is open and linked, pull in changes from other devices every minute. */
-setInterval(()=>{ if(SH && syncState==='ok' && document.visibilityState==='visible' && !syncing) syncNow(false); }, 60000);
+setInterval(()=>{ if(!cloudOn() && SH && syncState==='ok' && document.visibilityState==='visible' && !syncing) syncNow(false); }, 60000);
 async function linkSync(create){
   try{
     // mode:'readwrite' asks for edit access in the same step as picking the file
@@ -977,7 +977,7 @@ async function syncNow(manual){
   }catch(e){ syncState = (e.name==='NotAllowedError'||e.name==='SecurityError')?'need':syncState; if(manual) toast('Sync failed: '+e.message); }
   finally{ syncing=false; renderSyncDot(); if(S.tab==='settings') renderSyncStatus(); }
 }
-function scheduleSync(){ scheduleCloud(); if(SH && syncState==='ok'){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow(false),1500); } renderSyncDot(); }
+function scheduleSync(){ scheduleCloud(); if(!cloudOn() && SH && syncState==='ok'){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow(false),1500); } renderSyncDot(); }
 function renderSyncDot(){
   const d=$('#syncDot'); if(!d) return;
   if(cloudOn()){ d.className='syncdot '+(cloudState==='err'?'need':cloudState==='ok'?'ok':''); $('#syncBtn').title = cloudState==='ok'? 'Cloud sync on · '+(DB.meta.lastCloud?new Date(DB.meta.lastCloud).toLocaleString():'') : 'Cloud sync'; return; }
@@ -995,15 +995,16 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
+const APP_VERSION='v10';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function cloudOn(){ const c=cloudCfg(); return !!(c&&c.u&&c.k); }
-let cloudState='off', cloudBusy=false, cloudTimer=null;
+let cloudState='off', cloudBusy=false, cloudTimer=null, cloudAgain=false;
 function connCode(c){ return 'EXP1-'+btoa(JSON.stringify({u:c.u,k:c.k})); }
 function parseCode(t){ const m=String(t||'').replace(/\s+/g,'').match(/EXP1-([A-Za-z0-9+/=]+)/); if(!m) return null; try{ const o=JSON.parse(atob(m[1])); return o&&o.u&&o.k?o:null; }catch(e){ return null; } }
 async function cloudSync(manual){
   if(!cloudOn()){ if(manual) toast('Connect cloud sync first'); return false; }
-  if(cloudBusy) return false; cloudBusy=true; const c=cloudCfg(), prof=curProfile();
+  if(cloudBusy){ cloudAgain=true; return false; } cloudBusy=true; cloudAgain=false; const c=cloudCfg(), prof=curProfile();
   try{
     const r = await fetch(c.u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:c.k, profile:prof.name, profileName:prof.name, currency:curCode(), data:exportObj()})});
@@ -1015,10 +1016,12 @@ async function cloudSync(manual){
     if(manual) toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced');
     return true;
   }catch(e){ cloudState='err'; renderSyncDot(); renderCloudStatus(); if(manual) toast('Cloud sync failed: '+e.message); return false; }
-  finally{ cloudBusy=false; }
+  finally{ cloudBusy=false; if(cloudAgain){ cloudAgain=false; setTimeout(()=>cloudSync(false),300); } }
 }
-function scheduleCloud(){ if(!cloudOn()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSync(false),2000); }
-setInterval(()=>{ if(cloudOn() && document.visibilityState==='visible') cloudSync(false); }, 60000);
+function scheduleCloud(){ if(!cloudOn()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(()=>cloudSync(false),800); }
+setInterval(()=>{ if(cloudOn() && document.visibilityState==='visible') cloudSync(false); }, 20000);
+window.addEventListener('focus',()=>{ if(cloudOn()) cloudSync(false); });
+window.addEventListener('online',()=>{ if(cloudOn()) cloudSync(false); });
 function renderCloudStatus(){
   const box=$('#cloudBox'); if(!box) return;
   if(cloudOn()){
@@ -1026,7 +1029,7 @@ function renderCloudStatus(){
     box.innerHTML = `<div class="small" style="margin-bottom:10px"><span class="syncdot ${cloudState==='err'?'need':'ok'}"></span>${cloudState==='err'?'Couldn’t reach cloud sync (offline?). It will retry automatically.':'Connected'} · last synced ${last}</div>
       <div class="btns"><button class="btn primary" id="cSync">Sync now</button><button class="btn" id="cCopy">Copy connection code</button><button class="btn danger" id="cOff">Disconnect</button></div>
       <input class="in small hidden" id="cShow" readonly style="margin-top:8px">
-      <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, after each change and every minute. To add another device, copy the connection code and paste it into the app on that device.</div>`;
+      <div class="small muted" style="margin-top:8px">Syncs automatically when the app opens, a couple of seconds after each change, and every 20 seconds while open. To add another device, copy the connection code and paste it into the app on that device.</div>`;
     $('#cSync').onclick=()=>cloudSync(true);
     $('#cCopy').onclick=async()=>{ const code=connCode(cloudCfg()); try{ await navigator.clipboard.writeText(code); toast('Connection code copied'); }catch(e){ const i=$('#cShow'); i.value=code; i.classList.remove('hidden'); i.select(); toast('Copy the code shown below'); } };
     confirmBtn($('#cOff'),'Tap again to disconnect this device',()=>{ try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Cloud sync disconnected on this device'); render(); });
@@ -1035,9 +1038,10 @@ function renderCloudStatus(){
       <div class="row" style="gap:8px;flex-wrap:wrap"><input class="in" id="cCode" placeholder="EXP1-…" style="flex:1;min-width:200px" autocomplete="off"><button class="btn primary" id="cConnect">Connect</button></div>`;
     $('#cConnect').onclick=async()=>{ const o=parseCode($('#cCode').value); if(!o){ toast('That code doesn’t look right — it starts with EXP1-'); return; }
       try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){}
-      if(await cloudSync(false)){ toast('Connected — syncing automatically'); render(); }
+      if(await cloudSync(false)){ SH=null; syncState='none'; toast('Connected — syncing automatically'); render(); }
       else { try{ localStorage.removeItem(CKEY); }catch(e){} cloudState='off'; toast('Couldn’t connect with that code. Check it and your internet.'); renderCloudStatus(); } };
   }
+  box.insertAdjacentHTML('beforeend','<div class="small muted" style="margin-top:10px">App version '+APP_VERSION+'</div>');
 }
 $('#syncBtn').onclick=()=>{ if(cloudOn()) cloudSync(true); else if(syncState==='ok'||syncState==='need') syncNow(true); else go('settings'); };
 $('#fileIn').onchange=async ev=>{
@@ -1232,7 +1236,7 @@ $('#mLabel').onclick=()=>calSheet();
 $('#profBtn').onclick=profileSheet;
 $('#mPrev').onclick=()=>{ S.ym=addMonths(S.ym,-1); render(); };
 $('#mNext').onclick=()=>{ S.ym=addMonths(S.ym,1); render(); };
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(cloudOn()) cloudSync(false); if(SH&&syncState==='ok') syncNow(false); render(); } });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(cloudOn()) cloudSync(false); else if(SH&&syncState==='ok') syncNow(false); render(); } });
 let _rs; window.addEventListener('resize',()=>{ clearTimeout(_rs); _rs=setTimeout(()=>{ if(S.tab==='analysis') renderAnalysis(); },200); });
 window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render(); } else if(ev.key===PKEY){ PROFILES=loadProfiles(); renderProfileBtn(); } });
 applyTheme();
