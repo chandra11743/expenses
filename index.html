@@ -938,8 +938,21 @@ async function initSync(){
   SH = await idb.get(syncKeyFor(PROFILES.current));
   if(!SH){ syncState='none'; renderSyncDot(); return; }
   try{ const p = await SH.queryPermission({mode:'readwrite'}); if(p==='granted'){ syncState='ok'; await syncNow(false); } else syncState='need'; }catch(e){ syncState='need'; }
+  if(syncState==='need') armTapToSync();
   renderSyncDot();
 }
+/* After a browser restart Chrome may need one click before the app can open the sync file again.
+   Rather than making the person find the Sync button, the first tap anywhere in the app does it. */
+let tapArmed=false;
+function armTapToSync(){
+  if(tapArmed) return; tapArmed=true;
+  toast('Tap anywhere to sync with your Drive file');
+  const h = ()=>{ tapArmed=false; document.removeEventListener('pointerdown',h,true); document.removeEventListener('keydown',h,true);
+    if(SH && syncState==='need') syncNow(true); };
+  document.addEventListener('pointerdown',h,true); document.addEventListener('keydown',h,true);
+}
+/* While the app is open and linked, pull in changes from other devices every minute. */
+setInterval(()=>{ if(SH && syncState==='ok' && document.visibilityState==='visible' && !syncing) syncNow(false); }, 60000);
 async function linkSync(create){
   try{
     // mode:'readwrite' asks for edit access in the same step as picking the file
@@ -964,7 +977,7 @@ async function syncNow(manual){
   if(!SH){ if(manual) toast('Link a sync file first'); return; }
   if(syncing) return; syncing=true;
   try{
-    if(syncState!=='ok'){ const p=await SH.requestPermission({mode:'readwrite'}); if(p!=='granted'){ syncState='need'; if(manual) toast('Edit access was not given. Click the icon at the left of the address bar → Site settings → File editing → Allow, then try again.'); return; } syncState='ok'; }
+    if(syncState!=='ok'){ const p=await SH.requestPermission({mode:'readwrite'}); if(p!=='granted'){ syncState='need'; setTimeout(armTapToSync,3000); if(manual) toast('Edit access was not given. Click the icon at the left of the address bar → Site settings → File editing → Allow, then try again.'); return; } syncState='ok'; }
     const f = await SH.getFile(); const txt = (await f.text()).trim();
     let n=0; if(txt){ n = merge(JSON.parse(txt)); }
     const w = await SH.createWritable(); await w.write(JSON.stringify(exportObj())); await w.close();
