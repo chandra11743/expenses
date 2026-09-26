@@ -32,6 +32,10 @@ Use Chrome on the Mac. Safari doesn't support automatic file sync.
 
 Go to **Budget**. Enter your monthly salary and a budget for each category (you can also split Food into Daily food, Groceries and Online delivery), then tap **Save budget**. Next month reuses the same budget until you change it.
 
+## Profiles (several people on one device)
+
+Tap the name at the top-left (it starts as **Me**) to switch profile or add one. Each profile has its own expenses, salary, budgets and sync file (`expenses-sync-<name>.json`). You can give a profile a 4-digit PIN so others can't open it in the app. The PIN doesn't encrypt the data on the device. Use the **same profile name** on the Mac and the phone so their sync files match.
+
 ## 4. Sync between Mac and phone (Google Drive or OneDrive)
 
 **On the Mac (automatic):**
@@ -57,4 +61,4 @@ Syncing always **merges**. Entries from both devices are combined. If the same e
 
 ## Updating the app later
 
-Replace `index.html` on GitHub, and increase the number in `expenses-v2` inside `sw.js` (e.g. to `expenses-v3`) so your phone picks up the new version. Your data isn't affected.
+Replace `index.html` on GitHub, and increase the number in `expenses-v4` inside `sw.js` (e.g. to `expenses-v5`) so your phone picks up the new version. Your data isn't affected.
