@@ -41,7 +41,7 @@ Tap the name at the top-left (it starts as **Me**) to switch profile or add one.
 **On the Mac (automatic):**
 1. Install **Google Drive for desktop** or **OneDrive**, so your drive shows up as a folder in Finder.
 2. In the app, go to **Sync & data** and tap **Create new sync file**. Save `expenses-sync.json` inside your Google Drive / OneDrive folder.
-3. That's it. From now on the app merges from that file every time it opens and saves back to it after each change. The green dot next to **Sync** means it's linked. If the dot turns amber after a restart, tap **Sync** once to allow access again.
+3. That's it. From now on the app merges from that file every time it opens and saves back to it after each change. The green dot next to **Sync** means it's linked. If the dot turns amber after a browser restart, just tap anywhere in the app and it syncs. When Chrome asks, choose **Allow on every visit** so it syncs on every refresh with no tap. While the app is open it also checks the Drive file every minute.
 
 **On Android (one tap each way):**
 - **To get your Mac's entries:** tap **Merge from Drive file…**, then choose Drive and `expenses-sync.json`.
@@ -61,4 +61,4 @@ Syncing always **merges**. Entries from both devices are combined. If the same e
 
 ## Updating the app later
 
-Replace `index.html` on GitHub, and increase the number in `expenses-v6` inside `sw.js` (e.g. to `expenses-v7`) so your phone picks up the new version. Your data isn't affected.
+Replace `index.html` on GitHub, and increase the number in `expenses-v7` inside `sw.js` (e.g. to `expenses-v8`) so your phone picks up the new version. Your data isn't affected.
