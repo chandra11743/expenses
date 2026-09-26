@@ -51,9 +51,9 @@ Syncing always **merges**. Entries from both devices are combined. If the same e
 
 ## Features
 
-- **Categories:** Food (Breakfast, Lunch, Dinner, Coffee/Drinks), Travel, Temple, Entertainment, Medical, Laundry, Shopping, Monthly Rent, Money sent home, Medical refund.
+- **Categories:** Food (Breakfast, Lunch, Dinner, Coffee/Drinks), Travel, Temple, Entertainment, Medical, Laundry, Shopping, Monthly Rent, AC bill, Money sent home, Miscellaneous (with a reason), Refunds.
 - **Average daily spending:** shown for every category and every meal. The app also shows an overall average and a "daily living" average that leaves out rent and money sent home.
-- **Budgets:** each category shows its budget, what's left, and how much you can spend per day for the rest of the month. Medical budget is measured after refunds.
+- **Budgets:** each category shows its budget, what's left, and how much you can spend per day for the rest of the month. Refunds are taken off the category you choose (e.g. an insurance claim off Medical), so budgets are measured after refunds.
 - **Salary:** shows how much salary is left (your potential saving) and what % of your salary you've spent.
 - **Money sent home:** fetches that day's SGD→INR rate. Type either the SGD or the INR amount and the other is calculated. You can edit the rate to match your transfer.
 - **Monthly analysis:** insights, spending by category, a daily spending chart, budget vs actual, a month-end projection, and 6 months of spent vs saved with your savings rate.
@@ -61,4 +61,4 @@ Syncing always **merges**. Entries from both devices are combined. If the same e
 
 ## Updating the app later
 
-Replace `index.html` on GitHub, and increase the number in `expenses-v4` inside `sw.js` (e.g. to `expenses-v5`) so your phone picks up the new version. Your data isn't affected.
+Replace `index.html` on GitHub, and increase the number in `expenses-v5` inside `sw.js` (e.g. to `expenses-v6`) so your phone picks up the new version. Your data isn't affected.
