@@ -16,7 +16,7 @@
   --text:#0b0b0b; --text-2:#52514e; --muted:#8a8984;
   --accent:#2a78d6; --accent-ink:#ffffff;
   --series-1:#2a78d6; --series-3:#1baf7a;
-  --p1:#2a78d6; --p2:#eb6834; --p3:#4a3aa7; --p4:#e87ba4; --p5:#eda100;
+  --g1:#2a78d6; --g2:#eb6834; --g3:#4a3aa7; --g4:#eda100; --g5:#e87ba4; --g6:#008300; --g7:#e34948;
   --good:#008300; --warn:#b77a00; --bad:#d03b3b;
   --good-bg:#e3f3e3; --warn-bg:#fbf0d6; --bad-bg:#fbe3e3;
   --grid:#e6e4de;
@@ -29,7 +29,7 @@
     --text:#ffffff; --text-2:#c3c2b7; --muted:#8d8c84;
     --accent:#3987e5; --accent-ink:#ffffff;
     --series-1:#3987e5; --series-3:#199e70;
-    --p1:#3987e5; --p2:#d95926; --p3:#9085e9; --p4:#d55181; --p5:#c98500;
+    --g1:#3987e5; --g2:#d95926; --g3:#9085e9; --g4:#c98500; --g5:#d55181; --g6:#008300; --g7:#e66767;
     --good:#4fb84f; --warn:#e0a526; --bad:#ef6b6b;
     --good-bg:#1d3320; --warn-bg:#3a2f14; --bad-bg:#3d1f1f;
     --grid:#2c2c29;
@@ -42,7 +42,7 @@
   --text:#ffffff; --text-2:#c3c2b7; --muted:#8d8c84;
   --accent:#3987e5; --accent-ink:#ffffff;
   --series-1:#3987e5; --series-3:#199e70;
-  --p1:#3987e5; --p2:#d95926; --p3:#9085e9; --p4:#d55181; --p5:#c98500;
+  --g1:#3987e5; --g2:#d95926; --g3:#9085e9; --g4:#c98500; --g5:#d55181; --g6:#008300; --g7:#e66767;
   --good:#4fb84f; --warn:#e0a526; --bad:#ef6b6b;
   --good-bg:#1d3320; --warn-bg:#3a2f14; --bad-bg:#3d1f1f;
   --grid:#2c2c29;
@@ -603,6 +603,17 @@ function calSheet(){
 }
 
 /* ============ ANALYSIS ============ */
+/* ============ Analysis groups (7) — colours fixed per group, validated as a ring incl. Saved ============ */
+const GROUPS=[
+  {id:'food', name:'Food', icon:'🍽️', cats:['food'], c:'var(--g1)'},
+  {id:'rent', name:'Rent & Utilities', icon:'🏠', cats:['rent','ac','laundry'], c:'var(--g2)'},
+  {id:'home', name:'Home', icon:'💸', cats:['home'], c:'var(--g3)'},
+  {id:'life', name:'Lifestyle', icon:'🎡', cats:['travel','entertainment','temple'], c:'var(--g4)'},
+  {id:'shop', name:'Shopping', icon:'🛍️', cats:['shopping'], c:'var(--g5)'},
+  {id:'med',  name:'Medical', icon:'💊', cats:['medical'], c:'var(--g6)'},
+  {id:'misc', name:'Miscellaneous', icon:'🧾', cats:['misc'], c:'var(--g7)'}];
+function groupTotals(st){ const inG=new Set(GROUPS.flatMap(g=>g.cats)); return GROUPS.map(g=>{ let v=g.cats.reduce((a,k)=>a+(st.net[k]||0),0);
+  if(g.id==='misc') v+=EXP_CATS.filter(k=>!inG.has(k.id)).reduce((a,k)=>a+(st.net[k.id]||0),0); return {...g, v}; }); }
 /* ============ Month summary: donut of where the salary went + savings ============ */
 function firstYm(){ const ks=[...Object.values(DB.entries).filter(e=>!e.del).map(e=>e.date.slice(0,7)), ...Object.keys(DB.months).filter(k=>!DB.months[k].del)]; return ks.length? ks.sort()[0] : null; }
 function savedBefore(ym){ const f=firstYm(); let m=f, sum=0, n=0; if(!f) return {sum,n}; while(m<ym){ const x=stats(m); if(x.salary){ sum+=x.saved; n++; } m=addMonths(m,1); } return {sum,n}; }
@@ -623,11 +634,7 @@ function donutSvg(parts, center1, center2){
 }
 function monthSummaryCard(ym, heading){
   const st=stats(ym);
-  const rows=EXP_CATS.map(k=>({name:k.icon+' '+k.name, v:st.net[k.id]})).filter(x=>x.v>0.004).sort((a,b)=>b.v-a.v);
-  const top=rows.slice(0,4), rest=rows.slice(4).reduce((a,x)=>a+x.v,0);
-  const cols=['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
-  const parts=top.map((x,i)=>({...x,c:cols[i]}));
-  if(rest>0.004) parts.push({name:'Other ('+(rows.length-4)+' categories)', v:rest, c:'var(--p5)'});
+  const parts=groupTotals(st).filter(g=>g.v>0.004).map(g=>({name:g.icon+' '+g.name, v:g.v, c:g.c}));
   const hasSal=st.salary>0, saved=st.saved;
   if(hasSal && saved>0) parts.push({name:'💰 Saved', v:saved, c:'var(--series-3)'});
   const base=parts.reduce((a,p)=>a+p.v,0);
@@ -668,11 +675,11 @@ function renderAnalysis(){
   // insights
   h += `<div class="card"><h2>Insights</h2>${insights(st,prev).map(t=>`<div class="insight">${t}</div>`).join('') || '<div class="muted">Add some expenses to see insights.</div>'}</div>`;
 
-  // by category (horizontal bars, single hue)
-  const rows = EXP_CATS.map(k=>({k, v: st.net[k.id]})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+  // by group (horizontal bars, single hue)
+  const rows = groupTotals(st).filter(g=>g.v>0.004).sort((a,b)=>b.v-a.v);
   const max = Math.max(1,...rows.map(r=>r.v));
   h += `<div class="card"><h2>Spending by category</h2>`;
-  h += rows.length ? rows.map(r=>`<div class="hbar" data-tip="${esc(r.k.name)}: ${sgd(r.v)} (${Math.round(r.v/st.total*100)}% of spend)"><div>${r.k.icon} ${r.k.name}</div><div class="track"><i style="width:${r.v/max*100}%"></i></div><div class="num">${sgd0(r.v)}</div></div>`).join('') : '<div class="muted">No spending yet.</div>';
+  h += rows.length ? rows.map(r=>`<div class="hbar" data-tip="${esc(r.name)}: ${sgd(r.v)} (${st.total?Math.round(r.v/st.total*100):0}% of spend)"><div>${r.icon} ${r.name}</div><div class="track"><i style="width:${r.v/max*100}%"></i></div><div class="num">${sgd(r.v)}</div></div>`).join('') : '<div class="muted">No spending yet this month.</div>';
   h += `</div>`;
 
   // daily chart
@@ -894,15 +901,15 @@ document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') dismissSheet(); 
 function openEntry(id, presetDate){
   const src = id? DB.entries[id] : null;
   const defDate = presetDate || (S.ym===curYM()? todayStr() : (S.ym<curYM()? S.ym+'-'+pad(dim(S.ym)) : S.ym+'-01'));
-  E = src? {...src} : {id:null, date:defDate, cat:S.lastCat||'food', sub:guessMeal(), amt:'', inr:'', rate:'', note:''};
+  E = src? {...src} : {id:null, date:defDate, cat:null, sub:null, amt:'', inr:'', rate:'', note:''};
   if(S.calOpen) E.back='cal';
   drawSheet();
 }
 function guessMeal(){ const h=new Date().getHours(); if(h<11) return 'breakfast'; if(h<16) return 'lunch'; if(h<18) return 'coffee'; return 'dinner'; }
 function drawSheet(){
-  const k = CAT[E.cat];
+  const k = CAT[E.cat] || {};
   let h = `<div class="row" style="justify-content:space-between"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
-  <label class="f">Category</label><div class="chips">${CATS.map(c=>`<button class="chip ${c.id===E.cat?'on':''}" data-c="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>`;
+  <label class="f">Category</label><div class="chips">${CATS.map(c=>`<button class="chip ${c.id===E.cat?'on':''}" data-c="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>${E.cat?'':'<div class="small muted" style="margin-top:6px">Choose a category</div>'}`;
   if(k.income){ const rf = E.refFor||'medical';
     h += `<label class="f">Refund for</label><div class="chips">${EXP_CATS.map(c=>`<button class="chip ${c.id===rf?'on':''}" data-rf="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>`; }
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.icon} ${s.name}</button>`;
@@ -918,7 +925,7 @@ function drawSheet(){
   <div class="btns" style="margin-top:14px"><button class="btn primary" id="eSave">Save</button>${E.id?'':'<button class="btn" id="eSaveMore">Save &amp; add another</button>'}${E.id?'<button class="btn danger" id="eDel">Delete</button>':''}</div>`;
   openSheet(h);
   const amt=$('#eAmt');
-  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat==='food'&&!E.sub) E.sub=guessMeal(); drawSheet(); });
+  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; drawSheet(); });
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; drawSheet(); });
   document.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{ readSheet(); E.refFor=b.dataset.rf; drawSheet(); });
   if(E.cat==='home' && $('#eInr')){
@@ -951,11 +958,13 @@ function readSheet(){
 function commitEntry(more){
   readSheet();
   const amt = r2(parseFloat(E.amt));
+  if(!E.cat || !CAT[E.cat]){ toast('Choose a category'); return; }
+  if(E.cat==='food' && !E.sub){ toast('Choose breakfast, lunch, dinner, coffee, groceries or delivery'); return; }
   if(!(amt>0)){ toast('Enter an amount'); $('#eAmt').focus(); return; }
   if(CAT[E.cat].reason && !(E.note||'').trim()){ toast('Add a reason for this miscellaneous expense'); $('#eNote').focus(); return; }
   const now=Date.now();
   const rec = {id:E.id||uid(), date:E.date, cat:E.cat, amt, note:(E.note||'').trim(), upd:now, cr:E.cr||now};
-  if(E.cat==='food') rec.sub=E.sub||'lunch';
+  if(E.cat==='food') rec.sub=E.sub;
   if(E.cat==='refund') rec.refFor=E.refFor||'medical';
   rec.cur = curCode();
   if(E.cat==='home'){ if(curCode()===homeCode()){ rec.rate=1; rec.inr=amt; } else { rec.rate=+E.rate||null; rec.inr= +E.inr || (rec.rate? Math.round(amt*rec.rate):null); } rec.homeCur=homeCode(); }
@@ -1052,7 +1061,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v16';
+const APP_VERSION='v17';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
