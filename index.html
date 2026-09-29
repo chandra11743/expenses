@@ -16,6 +16,7 @@
   --text:#0b0b0b; --text-2:#52514e; --muted:#8a8984;
   --accent:#2a78d6; --accent-ink:#ffffff;
   --series-1:#2a78d6; --series-3:#1baf7a;
+  --p1:#2a78d6; --p2:#eb6834; --p3:#4a3aa7; --p4:#e87ba4; --p5:#eda100;
   --good:#008300; --warn:#b77a00; --bad:#d03b3b;
   --good-bg:#e3f3e3; --warn-bg:#fbf0d6; --bad-bg:#fbe3e3;
   --grid:#e6e4de;
@@ -28,6 +29,7 @@
     --text:#ffffff; --text-2:#c3c2b7; --muted:#8d8c84;
     --accent:#3987e5; --accent-ink:#ffffff;
     --series-1:#3987e5; --series-3:#199e70;
+    --p1:#3987e5; --p2:#d95926; --p3:#9085e9; --p4:#d55181; --p5:#c98500;
     --good:#4fb84f; --warn:#e0a526; --bad:#ef6b6b;
     --good-bg:#1d3320; --warn-bg:#3a2f14; --bad-bg:#3d1f1f;
     --grid:#2c2c29;
@@ -40,6 +42,7 @@
   --text:#ffffff; --text-2:#c3c2b7; --muted:#8d8c84;
   --accent:#3987e5; --accent-ink:#ffffff;
   --series-1:#3987e5; --series-3:#199e70;
+  --p1:#3987e5; --p2:#d95926; --p3:#9085e9; --p4:#d55181; --p5:#c98500;
   --good:#4fb84f; --warn:#e0a526; --bad:#ef6b6b;
   --good-bg:#1d3320; --warn-bg:#3a2f14; --bad-bg:#3d1f1f;
   --grid:#2c2c29;
@@ -155,6 +158,14 @@ table.t th{color:var(--text-2);font-weight:600;font-size:12px}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
 svg.chart{width:100%;height:auto;display:block;overflow:visible}
 svg.chart text{fill:var(--muted);font-size:11px}
+.msum{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.msum svg{width:170px;height:170px;flex:none;margin:0 auto}
+.msum svg .c1{fill:var(--text);font-size:16px;font-weight:700}
+.msum svg .c2{fill:var(--muted);font-size:11px}
+.plist{flex:1;min-width:200px;display:grid;gap:6px}
+.plist div{display:grid;grid-template-columns:12px 1fr auto auto;gap:8px;align-items:center;font-size:13px}
+.plist i{width:12px;height:12px;border-radius:3px;background:var(--c)}
+.plist .num{text-align:right}.plist .pc{color:var(--muted);min-width:34px;text-align:right}
 #tip{position:fixed;z-index:60;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:8px;opacity:0;transition:opacity .1s;max-width:220px}
 #tip.on{opacity:1}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom));background:var(--text);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:13px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
@@ -425,6 +436,7 @@ function renderHome(){
     h += `<div class="card"><b>Welcome!</b> Start by setting your monthly salary and category budgets.
       <div class="btns" style="margin-top:10px"><button class="btn primary" onclick="go('budget')">Set salary &amp; budgets</button><button class="btn" onclick="loadSample()">Try with sample data</button></div></div>`;
   }
+  h += monthEndCard();
   h += `<div class="card"><h2>${ymLabel(S.ym)}</h2><div class="kpis">
     <div class="kpi"><div class="l">Salary</div><div class="v num">${sgd0(st.salary)}</div><div class="s">${c.inherited?'from '+ymLabel(c.inherited,true):'this month'}</div></div>
     <div class="kpi"><div class="l">Spent</div><div class="v num">${sgd(st.total)}</div><div class="s">${st.salary?Math.round(st.total/st.salary*100)+'% of salary':'&nbsp;'}</div></div>
@@ -473,6 +485,7 @@ function renderHome(){
   const recent = st.es.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.cr||0)-(a.cr||0)).slice(0,6);
   h += `<div class="card"><h2>Recent</h2>${recent.length? `<div class="list" style="border:0">${recent.map(entRow).join('')}</div><div style="margin-top:8px"><button class="btn sm" onclick="go('history')">See all</button></div>` : '<div class="empty">No expenses yet this month. Tap + to add one.</div>'}</div>`;
   $('#tab-home').innerHTML = h;
+  bindTips($('#tab-home'));
 }
 function entRow(e){
   const k = CAT[e.cat]||{name:e.cat,icon:'•'};
@@ -590,6 +603,57 @@ function calSheet(){
 }
 
 /* ============ ANALYSIS ============ */
+/* ============ Month summary: donut of where the salary went + savings ============ */
+function firstYm(){ const ks=[...Object.values(DB.entries).filter(e=>!e.del).map(e=>e.date.slice(0,7)), ...Object.keys(DB.months).filter(k=>!DB.months[k].del)]; return ks.length? ks.sort()[0] : null; }
+function savedBefore(ym){ const f=firstYm(); let m=f, sum=0, n=0; if(!f) return {sum,n}; while(m<ym){ const x=stats(m); if(x.salary){ sum+=x.saved; n++; } m=addMonths(m,1); } return {sum,n}; }
+function donutSvg(parts, center1, center2){
+  const tot=parts.reduce((a,p)=>a+p.v,0); if(!tot) return '';
+  const R=80, r=52, C=85; let a0=-Math.PI/2, out='';
+  const pt=(a,rad)=>[C+rad*Math.cos(a), C+rad*Math.sin(a)];
+  for(const p of parts){
+    const frac=p.v/tot, a1=a0+frac*2*Math.PI, big=frac>0.5?1:0;
+    let d;
+    if(frac>=0.9999){ d=`M${C-R},${C} a${R},${R} 0 1,0 ${2*R},0 a${R},${R} 0 1,0 ${-2*R},0 M${C-r},${C} a${r},${r} 0 1,1 ${2*r},0 a${r},${r} 0 1,1 ${-2*r},0Z`; }
+    else { const [x0,y0]=pt(a0,R),[x1,y1]=pt(a1,R),[x2,y2]=pt(a1,r),[x3,y3]=pt(a0,r);
+      d=`M${x0},${y0} A${R},${R} 0 ${big},1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${big},0 ${x3},${y3}Z`; }
+    out+=`<path d="${d}" fill="${p.c}" fill-rule="evenodd" stroke="var(--surface)" stroke-width="2" data-tip="<b>${esc(p.name)}</b><br>${sgd(p.v)} · ${Math.round(frac*100)}%"/>`;
+    a0=a1;
+  }
+  return `<svg viewBox="0 0 170 170" role="img" aria-label="Where the money went">${out}<text class="c1" x="85" y="86" text-anchor="middle">${center1}</text><text class="c2" x="85" y="103" text-anchor="middle">${center2}</text></svg>`;
+}
+function monthSummaryCard(ym, heading){
+  const st=stats(ym);
+  const rows=EXP_CATS.map(k=>({name:k.icon+' '+k.name, v:st.net[k.id]})).filter(x=>x.v>0.004).sort((a,b)=>b.v-a.v);
+  const top=rows.slice(0,4), rest=rows.slice(4).reduce((a,x)=>a+x.v,0);
+  const cols=['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+  const parts=top.map((x,i)=>({...x,c:cols[i]}));
+  if(rest>0.004) parts.push({name:'Other ('+(rows.length-4)+' categories)', v:rest, c:'var(--p5)'});
+  const hasSal=st.salary>0, saved=st.saved;
+  if(hasSal && saved>0) parts.push({name:'💰 Saved', v:saved, c:'var(--series-3)'});
+  const base=parts.reduce((a,p)=>a+p.v,0);
+  const prev=savedBefore(ym);
+  let h=`<div class="card"><h2>${heading} · ${ymLabel(ym)}</h2>`;
+  if(!base){ h+=`<div class="muted">No expenses recorded for ${ymLabel(ym)} yet.</div></div>`; return h; }
+  h+=`<div class="msum">${donutSvg(parts, hasSal?sgd0(st.salary):sgd0(st.total), hasSal?'salary':'spent')}<div class="plist">`+
+     parts.map(p=>`<div data-tip="<b>${esc(p.name)}</b><br>${sgd(p.v)}"><i style="--c:${p.c}"></i><span>${esc(p.name)}</span><span class="num">${sgd(p.v)}</span><span class="pc">${Math.round(p.v/base*100)}%</span></div>`).join('')+
+     (hasSal && saved<0?`<div><i style="--c:var(--bad)"></i><span>Overspent</span><span class="num neg">${sgd(-saved)}</span><span class="pc"></span></div>`:'')+
+     `</div></div>`;
+  if(hasSal){
+    h+=`<div class="kpis" style="margin-top:12px">
+      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">${Math.round(saved/st.salary*100)}% of salary${ym===ymOf(todayStr())?' · so far':''}</div></div>
+      <div class="kpi"><div class="l">Saved in previous months</div><div class="v num ${prev.sum<0?'neg':''}">${sgd(prev.sum)}</div><div class="s">${prev.n?prev.n+' month'+(prev.n===1?'':'s'):'no earlier months'}</div></div>
+      <div class="kpi"><div class="l">Total saved so far</div><div class="v num ${prev.sum+saved<0?'neg':'pos'}">${sgd(prev.sum+saved)}</div><div class="s">up to ${ymLabel(ym,true)}</div></div>
+    </div>`;
+  } else h+=`<div class="small muted" style="margin-top:10px">Set your salary in the Budget tab to see savings.</div>`;
+  return h+`</div>`;
+}
+function monthEndCard(){
+  const t=todayStr(), tym=ymOf(t), d=+t.slice(8,10);
+  if(S.ym!==tym) return '';
+  if(d===dim(tym)) return monthSummaryCard(tym,'Month-end summary');
+  if(d===1) return monthSummaryCard(addMonths(tym,-1),'Last month’s summary');
+  return '';
+}
 function renderAnalysis(){
   const st = stats(S.ym);
   const prev = stats(addMonths(S.ym,-1));
@@ -600,6 +664,7 @@ function renderAnalysis(){
     <div class="kpi"><div class="l">Sent home</div><div class="v num">${inr(st.inrHome)}</div><div class="s">${sgd(st.by.home)}</div></div>
   </div></div>`;
 
+  h += monthSummaryCard(S.ym,'Where the money went');
   // insights
   h += `<div class="card"><h2>Insights</h2>${insights(st,prev).map(t=>`<div class="insight">${t}</div>`).join('') || '<div class="muted">Add some expenses to see insights.</div>'}</div>`;
 
@@ -987,7 +1052,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v15';
+const APP_VERSION='v16';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
