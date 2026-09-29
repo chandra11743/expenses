@@ -635,19 +635,24 @@ function donutSvg(parts, center1, center2){
 function monthSummaryCard(ym, heading){
   const st=stats(ym);
   const parts=groupTotals(st).filter(g=>g.v>0.004).map(g=>({name:g.icon+' '+g.name, v:g.v, c:g.c}));
+  const done = ym < ymOf(todayStr());            // savings are final only once the month is over
   const hasSal=st.salary>0, saved=st.saved;
-  if(hasSal && saved>0) parts.push({name:'💰 Saved', v:saved, c:'var(--series-3)'});
+  if(done && hasSal && saved>0) parts.push({name:'💰 Saved', v:saved, c:'var(--series-3)'});
   const base=parts.reduce((a,p)=>a+p.v,0);
   const prev=savedBefore(ym);
   let h=`<div class="card"><h2>${heading} · ${ymLabel(ym)}</h2>`;
   if(!base){ h+=`<div class="muted">No expenses recorded for ${ymLabel(ym)} yet.</div></div>`; return h; }
-  h+=`<div class="msum">${donutSvg(parts, hasSal?sgd0(st.salary):sgd0(st.total), hasSal?'salary':'spent')}<div class="plist">`+
+  h+=`<div class="msum">${donutSvg(parts, done&&hasSal?sgd0(st.salary):sgd0(st.total), done&&hasSal?'salary':(done?'spent':'spent so far'))}<div class="plist">`+
      parts.map(p=>`<div data-tip="<b>${esc(p.name)}</b><br>${sgd(p.v)}"><i style="--c:${p.c}"></i><span>${esc(p.name)}</span><span class="num">${sgd(p.v)}</span><span class="pc">${Math.round(p.v/base*100)}%</span></div>`).join('')+
-     (hasSal && saved<0?`<div><i style="--c:var(--bad)"></i><span>Overspent</span><span class="num neg">${sgd(-saved)}</span><span class="pc"></span></div>`:'')+
+     (done && hasSal && saved<0?`<div><i style="--c:var(--bad)"></i><span>Overspent</span><span class="num neg">${sgd(-saved)}</span><span class="pc"></span></div>`:'')+
      `</div></div>`;
-  if(hasSal){
+  if(hasSal && !done){
     h+=`<div class="kpis" style="margin-top:12px">
-      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">${Math.round(saved/st.salary*100)}% of salary${ym===ymOf(todayStr())?' · so far':''}</div></div>
+      <div class="kpi"><div class="l">Saved in previous months</div><div class="v num ${prev.sum<0?'neg':''}">${sgd(prev.sum)}</div><div class="s">${prev.n?prev.n+' month'+(prev.n===1?'':'s'):'no earlier months'}</div></div>
+    </div><div class="small muted" style="margin-top:8px">This month’s saving is added to the chart after ${ymLabel(ym)} ends.</div>`;
+  } else if(hasSal){
+    h+=`<div class="kpis" style="margin-top:12px">
+      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">${Math.round(saved/st.salary*100)}% of salary</div></div>
       <div class="kpi"><div class="l">Saved in previous months</div><div class="v num ${prev.sum<0?'neg':''}">${sgd(prev.sum)}</div><div class="s">${prev.n?prev.n+' month'+(prev.n===1?'':'s'):'no earlier months'}</div></div>
       <div class="kpi"><div class="l">Total saved so far</div><div class="v num ${prev.sum+saved<0?'neg':'pos'}">${sgd(prev.sum+saved)}</div><div class="s">up to ${ymLabel(ym,true)}</div></div>
     </div>`;
@@ -1061,7 +1066,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v17';
+const APP_VERSION='v18';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
