@@ -1114,7 +1114,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v21';
+const APP_VERSION='v22';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
@@ -1371,7 +1371,10 @@ function removeSample(){
 }
 
 /* ============ Wiring ============ */
-function go(t){ S.tab=t; window.scrollTo(0,0); render(); }
+const TABKEY='dailyExpenseTracker.tab';
+function go(t){ S.tab=t; try{ localStorage.setItem(TABKEY,t); }catch(e){} window.scrollTo(0,0); render(); }
+/* After a refresh, reopen the page you were on (Analysis, Calendar, …) instead of Home. */
+(function(){ try{ const t=localStorage.getItem(TABKEY); if(t && document.querySelector('nav.tabs button[data-tab="'+t+'"]')) S.tab=t; }catch(e){} })();
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 $('#fab').onclick=()=>openEntry(null);
 $('#mLabel').onclick=()=>calSheet();
