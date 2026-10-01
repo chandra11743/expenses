@@ -198,6 +198,12 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .brow .meta{font-size:12px;color:var(--text-2)}
 .brow .bin{text-align:right}
 .brow .bin[readonly]{background:var(--surface-2);color:var(--text-2)}
+.frow{display:grid;grid-template-columns:34px minmax(0,1fr) 116px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--border)}
+.frow .ic{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-size:18px}
+.frow .nm{font-weight:600}
+.frow label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);margin-top:4px;cursor:pointer}
+.frow input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.fhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .share{height:4px;border-radius:3px;background:var(--surface-2);margin-top:6px;overflow:hidden}
 .share i{display:block;height:100%;background:var(--series-1);border-radius:3px}
 .bparts{margin-left:20px;padding-left:12px;border-left:2px solid var(--border);margin-bottom:6px}
@@ -344,9 +350,15 @@ const r2 = n => Math.round(n*100)/100;
 function cfg(ym){
   if(DB.months[ym] && !DB.months[ym].del) return {...DB.months[ym], inherited:false};
   const prev = Object.keys(DB.months).filter(k=>k<ym && !DB.months[k].del).sort().pop();
-  if(prev) return {...DB.months[prev], inherited:prev};
+  if(prev) return {...DB.months[prev], fundsIn:[], inherited:prev};
   return {salary:0, budgets:{}, inherited:null};
 }
+
+/* ============ Emergency fund (cash / NETS / bank) — kept out of the budget unless ticked for a month ============ */
+const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'NETS',icon:'💳',amt:0},{id:'dbs',name:'DBS Bank',icon:'🏦',amt:0}];
+function funds(){ return (DB.settings.funds && DB.settings.funds.length)? DB.settings.funds : DEFAULT_FUNDS.map(f=>({...f})); }
+function fundsTotal(){ return funds().reduce((a,f)=>a+(+f.amt||0),0); }
+function fundsIncluded(ym){ const c=cfg(ym), ids=new Set(c.fundsIn||[]); return funds().filter(f=>ids.has(f.id)).reduce((a,f)=>a+(+f.amt||0),0); }
 
 /* ============ Calculations ============ */
 function monthEntries(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date.startsWith(ym)); }
@@ -380,7 +392,8 @@ function stats(ym){
   const dailyFood = DAILY_FOOD.reduce((a,k)=>a+sub[k],0);
   return {es, by, net, sub, dailyFood, refund, refundFor, gross, total, living, inrHome, daily, dailyLiving, cfg:c, salary:+c.salary||0,
           days, left:daysLeft(ym), dim:dim(ym), budgetTotal, budgetLeft,
-          saved:(+c.salary||0) - total,
+          extra:fundsIncluded(ym), income:(+c.salary||0)+fundsIncluded(ym),
+          saved:(+c.salary||0) + fundsIncluded(ym) - total,
           avg: days? total/days : 0, avgLiving: days? living/days : 0};
 }
 function status(spent,budget,cat){
@@ -440,7 +453,7 @@ function renderHome(){
   h += `<div class="card"><h2>${ymLabel(S.ym)}</h2><div class="kpis">
     <div class="kpi"><div class="l">Salary</div><div class="v num">${sgd0(st.salary)}</div><div class="s">${c.inherited?'from '+ymLabel(c.inherited,true):'this month'}</div></div>
     <div class="kpi"><div class="l">Spent</div><div class="v num">${sgd(st.total)}</div><div class="s">${st.salary?Math.round(st.total/st.salary*100)+'% of salary':'&nbsp;'}</div></div>
-    <div class="kpi"><div class="l">Left from salary</div><div class="v num ${st.saved<0?'neg':'pos'}">${sgd(st.saved)}</div><div class="s">potential saving</div></div>
+    <div class="kpi"><div class="l">Left from salary</div><div class="v num ${st.saved<0?'neg':'pos'}">${sgd(st.saved)}</div><div class="s">${st.extra?'incl. '+sgd0(st.extra)+' emergency fund':'potential saving'}</div></div>
     <div class="kpi"><div class="l">Budget left</div><div class="v num ${st.budgetLeft<0?'neg':''}">${sgd(st.budgetLeft)}</div><div class="s">${st.left && st.budgetLeft>0 ? sgd(st.budgetLeft/st.left)+'/day for '+st.left+' days':'of '+sgd0(st.budgetTotal)}</div></div>
   </div>
   <div class="kpis" style="margin-top:10px">
@@ -791,6 +804,36 @@ function trendChart(){
 }
 
 /* ============ BUDGET ============ */
+function fundCard(){
+  const fs=funds(), inc=new Set(cfg(S.ym).fundsIn||[]), tot=fundsTotal(), incAmt=fundsIncluded(S.ym);
+  let h=`<div class="card"><div class="fhead"><h2 style="margin:0">🔒 Emergency fund</h2><button class="btn sm" id="fToggle">${S.fundOpen?'Hide':'Show'}</button></div>`;
+  if(!S.fundOpen){
+    return h+`<div class="small muted" style="margin-top:6px">Cash, NETS and bank money kept aside. Hidden, and not part of the budget${incAmt?' — part of it is included in this month’s budget':''}.</div></div>`;
+  }
+  h+=`<div class="small muted" style="margin:6px 0 4px">Not counted in your budget or savings. Tick an account to add its money to ${ymLabel(S.ym)}'s budget.</div>`;
+  for(const f of fs){
+    h+=`<div class="frow"><div class="ic">${f.icon||'💰'}</div><div><div class="nm">${esc(f.name)}</div>
+      <label><input type="checkbox" data-finc="${f.id}" ${inc.has(f.id)?'checked':''}> Include in ${ymLabel(S.ym,true)} budget</label></div>
+      <input class="in num bin" type="number" inputmode="decimal" min="0" step="0.01" data-famt="${f.id}" value="${f.amt||''}" placeholder="0"></div>`;
+  }
+  h+=`<div class="frow"><div class="ic">➕</div><input class="in" id="fNewName" placeholder="Add account (e.g. POSB, Wise)"><button class="btn sm" id="fAdd">Add</button></div>`;
+  h+=`<div class="kpis" style="margin-top:10px"><div class="kpi"><div class="l">Total kept aside</div><div class="v num">${sgd(tot)}</div></div>
+      <div class="kpi"><div class="l">Included in ${ymLabel(S.ym,true)}</div><div class="v num">${sgd(incAmt)}</div><div class="s">${incAmt?'added to this month’s money':'none — not in budget'}</div></div></div></div>`;
+  return h;
+}
+function saveFunds(list){ DB.settings.funds=list; DB.settings.upd=Date.now(); save(); }
+function setFundIncluded(id,on){
+  const c=cfg(S.ym); const cur=new Set(c.fundsIn||[]); on?cur.add(id):cur.delete(id);
+  DB.months[S.ym]={salary:+c.salary||0, budgets:{...(c.budgets||{})}, fundsIn:[...cur], upd:Date.now()};
+  save();
+}
+function bindFundCard(){
+  $('#fToggle').onclick=()=>{ S.fundOpen=!S.fundOpen; renderBudget(); };
+  if(!S.fundOpen) return;
+  document.querySelectorAll('[data-famt]').forEach(i=>i.onchange=()=>{ const l=funds().map(f=>f.id===i.dataset.famt?{...f,amt:r2(+i.value||0)}:f); saveFunds(l); renderBudget(); });
+  document.querySelectorAll('[data-finc]').forEach(i=>i.onchange=()=>{ setFundIncluded(i.dataset.finc,i.checked); toast(i.checked?'Added to '+ymLabel(S.ym,true)+' budget':'Removed from '+ymLabel(S.ym,true)+' budget'); renderBudget(); });
+  $('#fAdd').onclick=()=>{ const n=($('#fNewName').value||'').trim(); if(!n){ toast('Type a name first'); return; } saveFunds([...funds(),{id:'f'+Date.now().toString(36),name:n,icon:'💰',amt:0}]); renderBudget(); };
+}
 function renderBudget(){
   const c = cfg(S.ym), st = stats(S.ym), B = c.budgets||{};
   const spentOf = id => st.net[id];
@@ -818,7 +861,9 @@ function renderBudget(){
   h += `<div class="card" id="bSummary"></div>
     <div class="btns" style="margin-bottom:14px"><button class="btn primary" id="bSaveBtn">Save budget for ${ymLabel(S.ym,true)}</button>
     ${prevCfg.salary||Object.keys(prevCfg.budgets||{}).length?`<button class="btn" id="bCopyPrev">Copy ${ymLabel(addMonths(S.ym,-1),true)} budget</button>`:''}</div>`;
+  h += fundCard();
   $('#tab-budget').innerHTML = h;
+  bindFundCard();
 
   const root = $('#tab-budget');
   const read = () => {
@@ -832,17 +877,18 @@ function renderBudget(){
   const refresh = () => {
     const {v, salary} = read();
     const total = EXP_CATS.reduce((a,k)=>a+(v[k.id]||0),0);
-    const saving = salary - total;
+    const extra = fundsIncluded(S.ym);
+    const saving = salary + extra - total;
     const base = Math.max(salary,total,1);
     root.querySelectorAll('[data-share]').forEach(el=>{ const x=v[el.dataset.share]||0; el.style.width=(x/base*100)+'%'; el.parentElement.title = salary? Math.round(x/salary*100)+'% of salary' : ''; });
     const rows = EXP_CATS.map(k=>({k,x:v[k.id]||0})).filter(r=>r.x>0).sort((a,b)=>b.x-a.x);
     let sh = `<h2>Summary</h2><div class="kpis">
-      <div class="kpi"><div class="l">Salary</div><div class="v num">${sgd0(salary)}</div></div>
+      <div class="kpi"><div class="l">Salary</div><div class="v num">${sgd0(salary)}</div><div class="s">${extra?'+ '+sgd0(extra)+' emergency fund included':'&nbsp;'}</div></div>
       <div class="kpi"><div class="l">Total budget</div><div class="v num">${sgd0(total)}</div><div class="s">${salary?Math.round(total/salary*100)+'% of salary':'&nbsp;'}</div></div>
       <div class="kpi"><div class="l">Planned saving</div><div class="v num ${saving<0?'neg':'pos'}">${sgd0(saving)}</div><div class="s">${salary?Math.round(saving/salary*100)+'% of salary':'&nbsp;'}</div></div>
       <div class="kpi"><div class="l">Per day (daily living)</div><div class="v num">${sgd(EXP_CATS.filter(k=>!FIXED.has(k.id)).reduce((a,k)=>a+(v[k.id]||0),0)/dim(S.ym))}</div><div class="s">excl. ${FIXED_TXT}</div></div>
     </div>`;
-    if(saving<0) sh += `<div class="insight" style="border:0"><span class="pill bad">Over salary</span> Your budget is ${sgd0(-saving)} more than your salary.</div>`;
+    if(saving<0) sh += `<div class="insight" style="border:0"><span class="pill bad">Over salary</span> Your budget is ${sgd0(-saving)} more than your salary${extra?' plus the included emergency fund':''}.</div>`;
     if(rows.length){
       const mx = Math.max(...rows.map(r=>r.x), Math.max(saving,0), 1);
       sh += `<div style="margin-top:12px">` + rows.map(r=>`<div class="hbar"><div>${r.k.icon} ${r.k.name}</div><div class="track"><i style="width:${r.x/mx*100}%"></i></div><div class="num">${sgd0(r.x)}${salary?` <span class="muted">${Math.round(r.x/salary*100)}%</span>`:''}</div></div>`).join('')
@@ -855,7 +901,7 @@ function renderBudget(){
   $('#bSaveBtn').onclick=()=>{
     const {v, salary} = read(); const budgets={};
     for(const [k,x] of Object.entries(v)) if(x>0) budgets[k]=r2(x);
-    DB.months[S.ym] = {salary:r2(salary), budgets, upd:Date.now()};
+    DB.months[S.ym] = {salary:r2(salary), budgets, fundsIn:(cfg(S.ym).fundsIn||[]), upd:Date.now()};
     save(); toast('Budget saved for '+ymLabel(S.ym)); renderBudget();
   };
   if($('#bCopyPrev')) $('#bCopyPrev').onclick=()=>{
@@ -1066,7 +1112,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v18';
+const APP_VERSION='v19';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
