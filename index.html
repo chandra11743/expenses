@@ -268,14 +268,15 @@ const CATS = [
   {id:'shopping', name:'Shopping', icon:'🛍️'},
   {id:'rent', name:'Monthly Rent', icon:'🏠'},
   {id:'ac', name:'AC bill', icon:'❄️'},
+  {id:'subs', name:'Subscriptions', icon:'📺'},
   {id:'home', name:'Money sent home', icon:'💸'},
   {id:'misc', name:'Miscellaneous', icon:'🧾', reason:true},
   {id:'refund', name:'Refunds', icon:'↩️', income:true},
 ];
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income);
-const FIXED = new Set(['rent','ac','home']);    // monthly bills: excluded from "daily living" average
-const FIXED_TXT = 'rent, AC &amp; home';
+const FIXED = new Set(['rent','ac','subs','home']);    // monthly bills: excluded from "daily living" average
+const FIXED_TXT = 'rent, bills &amp; home';
 const DAILY_FOOD = ['breakfast','lunch','dinner','coffee'];
 // Food budget can be split into three parts; stored as budgets['food:daily'] etc.
 const FOOD_PARTS = [
@@ -355,8 +356,9 @@ function cfg(ym){
 }
 
 /* ============ Emergency fund (cash / NETS / bank) — kept out of the budget unless ticked for a month ============ */
-const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'NETS',icon:'💳',amt:0},{id:'dbs',name:'DBS Bank',icon:'🏦',amt:0}];
-function funds(){ return (DB.settings.funds && DB.settings.funds.length)? DB.settings.funds : DEFAULT_FUNDS.map(f=>({...f})); }
+const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'NETS',icon:'💳',amt:0},{id:'dbs',name:'DBS Bank',icon:'🏦',amt:0},{id:'ezlink',name:'EZ-Link card',icon:'🚇',amt:0}];
+function funds(){ const own=(DB.settings.funds||[]); if(!own.length) return DEFAULT_FUNDS.map(f=>({...f}));
+  const have=new Set(own.map(f=>f.id)); return [...own, ...DEFAULT_FUNDS.filter(d=>!have.has(d.id)).map(f=>({...f}))]; }
 function fundsTotal(){ return funds().reduce((a,f)=>a+(+f.amt||0),0); }
 function fundsIncluded(ym){ const c=cfg(ym), ids=new Set(c.fundsIn||[]); return funds().filter(f=>ids.has(f.id)).reduce((a,f)=>a+(+f.amt||0),0); }
 
@@ -619,7 +621,7 @@ function calSheet(){
 /* ============ Analysis groups (7) — colours fixed per group, validated as a ring incl. Saved ============ */
 const GROUPS=[
   {id:'food', name:'Food', icon:'🍽️', cats:['food'], c:'var(--g1)'},
-  {id:'rent', name:'Rent & Utilities', icon:'🏠', cats:['rent','ac','laundry'], c:'var(--g2)'},
+  {id:'rent', name:'Rent & Utilities', icon:'🏠', cats:['rent','ac','subs','laundry'], c:'var(--g2)'},
   {id:'home', name:'Home', icon:'💸', cats:['home'], c:'var(--g3)'},
   {id:'life', name:'Lifestyle', icon:'🎡', cats:['travel','entertainment','temple'], c:'var(--g4)'},
   {id:'shop', name:'Shopping', icon:'🛍️', cats:['shopping'], c:'var(--g5)'},
@@ -808,7 +810,7 @@ function fundCard(){
   const fs=funds(), inc=new Set(cfg(S.ym).fundsIn||[]), tot=fundsTotal(), incAmt=fundsIncluded(S.ym);
   let h=`<div class="card"><div class="fhead"><h2 style="margin:0">🔒 Emergency fund</h2><button class="btn sm" id="fToggle">${S.fundOpen?'Hide':'Show'}</button></div>`;
   if(!S.fundOpen){
-    return h+`<div class="small muted" style="margin-top:6px">Cash, NETS and bank money kept aside. Hidden, and not part of the budget${incAmt?' — part of it is included in this month’s budget':''}.</div></div>`;
+    return h+`<div class="small muted" style="margin-top:6px">Cash, NETS, bank and EZ-Link money kept aside. Hidden, and not part of the budget${incAmt?' — part of it is included in this month’s budget':''}.</div></div>`;
   }
   h+=`<div class="small muted" style="margin:6px 0 4px">Not counted in your budget or savings. Tick an account to add its money to ${ymLabel(S.ym)}'s budget.</div>`;
   for(const f of fs){
@@ -971,7 +973,7 @@ function drawSheet(){
   if(E.cat==='home' && curCode()!==homeCode()) h += `<div class="grid2"><div><label class="f">Amount in ${homeCode()} (${curInfo(homeCode()).sym.trim()})</label><input class="in num" type="number" inputmode="decimal" id="eInr" value="${E.inr?Math.round(E.inr):''}" placeholder="0"></div>
     <div><label class="f">Rate: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
     <div class="small muted" id="rateNote" style="margin-top:6px">Enter either ${curCode()} or ${homeCode()} — the other is calculated.</div>`;
-  const ph = {travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
+  const ph = {subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
   h += `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label><input class="in" id="eNote" value="${esc(E.note)}" placeholder="${ph}" ${k.reason?'required':''}>
   <div class="btns" style="margin-top:14px"><button class="btn primary" id="eSave">Save</button>${E.id?'':'<button class="btn" id="eSaveMore">Save &amp; add another</button>'}${E.id?'<button class="btn danger" id="eDel">Delete</button>':''}</div>`;
   openSheet(h);
@@ -1112,7 +1114,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v19';
+const APP_VERSION='v20';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
