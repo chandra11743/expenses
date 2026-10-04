@@ -276,7 +276,8 @@ const CATS = [
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income);
 const FIXED = new Set(['rent','ac','subs','home']);    // monthly bills: excluded from "daily living" average
-const FIXED_TXT = 'rent, bills &amp; home';
+const LIVING_EXCL = new Set([...FIXED, 'misc']);   // also left out of "daily living": one-off miscellaneous spends
+const FIXED_TXT = 'rent, bills, home &amp; misc';
 const DAILY_FOOD = ['breakfast','lunch','dinner','coffee'];
 // Food budget can be split into three parts; stored as budgets['food:daily'] etc.
 const FOOD_PARTS = [
@@ -376,7 +377,7 @@ function stats(ym){
     if(e.cat==='home' && (e.homeCur||'INR')===homeCode()) inrHome += e.inr||0;
     const sign = CAT[e.cat]?.income ? -1 : 1;
     daily[e.date]=(daily[e.date]||0)+sign*e.amt;
-    if(!FIXED.has(e.cat)) dailyLiving[e.date]=(dailyLiving[e.date]||0)+sign*e.amt;
+    if(!LIVING_EXCL.has(e.cat)) dailyLiving[e.date]=(dailyLiving[e.date]||0)+sign*e.amt;
   }
   const refund = by.refund||0;
   const refundFor = {};
@@ -385,7 +386,7 @@ function stats(ym){
   for(const [f,x] of Object.entries(refundFor)) net[f] = (net[f]||0) - x;
   const gross = EXP_CATS.reduce((s,c)=>s+by[c.id],0);
   const total = gross - refund;
-  const living = total - [...FIXED].reduce((s,k)=>s+by[k],0);
+  const living = total - [...LIVING_EXCL].reduce((s,k)=>s+(by[k]||0),0);
   const c = cfg(ym);
   const days = daysElapsed(ym);
   const budgetTotal = EXP_CATS.reduce((s,k)=>s+(+c.budgets[k.id]||0),0);
@@ -550,7 +551,7 @@ function calendarView(es, days, signed, cat=S.histCat){
   const ym=S.ym, n=dim(ym), [y,m]=ym.split('-').map(Number);
   const excl = cat==='all' && S.calMode!=='all';        // leave out monthly bills so they don't swamp the shading
   const val = {};
-  for(const e of es){ if(excl && FIXED.has(e.cat)) continue; val[e.date]=(val[e.date]||0)+signed(e); }
+  for(const e of es){ if(excl && LIVING_EXCL.has(e.cat)) continue; val[e.date]=(val[e.date]||0)+signed(e); }
   const vals = Object.values(val); const mx = Math.max(1,...vals);
   const today = todayStr();
   const lead = (new Date(y,m-1,1).getDay()+6)%7;                // weeks start on Monday
@@ -889,7 +890,7 @@ function renderBudget(){
       <div class="kpi"><div class="l">Salary</div><div class="v num">${sgd0(salary)}</div><div class="s">${extra?'+ '+sgd0(extra)+' emergency fund included':'&nbsp;'}</div></div>
       <div class="kpi"><div class="l">Total budget</div><div class="v num">${sgd0(total)}</div><div class="s">${salary?Math.round(total/salary*100)+'% of salary':'&nbsp;'}</div></div>
       <div class="kpi"><div class="l">Planned saving</div><div class="v num ${saving<0?'neg':'pos'}">${sgd0(saving)}</div><div class="s">${salary?Math.round(saving/salary*100)+'% of salary':'&nbsp;'}</div></div>
-      <div class="kpi"><div class="l">Per day (daily living)</div><div class="v num">${sgd(EXP_CATS.filter(k=>!FIXED.has(k.id)).reduce((a,k)=>a+(v[k.id]||0),0)/dim(S.ym))}</div><div class="s">excl. ${FIXED_TXT}</div></div>
+      <div class="kpi"><div class="l">Per day (daily living)</div><div class="v num">${sgd(EXP_CATS.filter(k=>!LIVING_EXCL.has(k.id)).reduce((a,k)=>a+(v[k.id]||0),0)/dim(S.ym))}</div><div class="s">excl. ${FIXED_TXT}</div></div>
     </div>`;
     if(saving<0) sh += `<div class="insight" style="border:0"><span class="pill bad">Over salary</span> Your budget is ${sgd0(-saving)} more than your salary${extra?' plus the included emergency fund':''}.</div>`;
     if(rows.length){
@@ -1115,7 +1116,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v23';
+const APP_VERSION='v24';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
