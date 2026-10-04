@@ -557,7 +557,7 @@ function calendarView(es, days, signed, cat=S.histCat){
   const lead = (new Date(y,m-1,1).getDay()+6)%7;                // weeks start on Monday
   if(!S.selDay || !S.selDay.startsWith(ym)) S.selDay = ymOf(today)===ym ? today : null;
   let h = `<div class="card">`;
-  if(cat==='all') h += `<div class="chips" style="margin-bottom:10px"><button class="chip ${excl?'on':''}" data-cm="living">Daily living</button><button class="chip ${excl?'':'on'}" data-cm="all">Everything (incl. ${FIXED_TXT})</button></div>`;
+  if(cat==='all') h += `<div class="chips" style="margin-bottom:10px"><button class="chip ${excl?'on':''}" data-cm="living">Daily living</button><button class="chip ${excl?'':'on'}" data-cm="all">Everything</button></div>`;
   h += `<div class="cal">` + ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(w=>`<div class="wd">${w}</div>`).join('');
   for(let i=0;i<lead;i++) h += `<div></div>`;
   let weekTot=0; const weeks=[];
@@ -1116,7 +1116,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v24';
+const APP_VERSION='v25';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
