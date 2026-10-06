@@ -273,13 +273,15 @@ const CATS = [
   {id:'misc', name:'Miscellaneous', icon:'🧾', reason:true},
   {id:'lent', name:'Lent to friends', icon:'🤝', friend:true},
   {id:'repaid', name:'Paid back by friend', icon:'💵', income:true, friend:true},
+  {id:'borrowed', name:'Borrowed from friend', icon:'🙏', friend:true, owe:true, track:true},   // just a reminder: not spending
+  {id:'payback', name:'Paid back to friend', icon:'📤', friend:true, owe:true},                 // counts as spending
   {id:'refund', name:'Refunds', icon:'↩️', income:true},
 ];
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
-const EXP_CATS = CATS.filter(c=>!c.income);
+const EXP_CATS = CATS.filter(c=>!c.income && !c.track);
 const BUDGET_CATS = EXP_CATS.filter(c=>!c.friend);   // money lent to friends has no budget row
 const FIXED = new Set(['rent','ac','subs','home']);    // monthly bills: excluded from "daily living" average
-const LIVING_EXCL = new Set([...FIXED, 'misc', 'lent', 'repaid']);   // also left out of "daily living": one-off miscellaneous spends
+const LIVING_EXCL = new Set([...FIXED, 'misc', 'lent', 'repaid', 'payback', 'borrowed']);   // also left out of "daily living": one-off miscellaneous spends
 const FIXED_TXT = 'rent, bills, home &amp; misc';
 const DAILY_FOOD = ['breakfast','lunch','dinner','coffee'];
 // Food budget can be split into three parts; stored as budgets['food:daily'] etc.
@@ -367,7 +369,7 @@ function fundsTotal(){ return funds().reduce((a,f)=>a+(+f.amt||0),0); }
 function fundsIncluded(ym){ const c=cfg(ym), ids=new Set(c.fundsIn||[]); return funds().filter(f=>ids.has(f.id)).reduce((a,f)=>a+(+f.amt||0),0); }
 
 /* ============ Calculations ============ */
-function monthEntries(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date.startsWith(ym)); }
+function monthEntries(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date.startsWith(ym) && !CAT[e.cat]?.track); }   // borrowed money is only a reminder, never spending
 function stats(ym){
   const es = monthEntries(ym);
   const by = {}; CATS.forEach(c=>by[c.id]=0);
@@ -470,7 +472,7 @@ function renderHome(){
     <div class="kpi"><div class="l">Sent home</div><div class="v num">${inr(st.inrHome)}</div><div class="s">${sgd(st.by.home)}</div></div>
   </div></div>`;
 
-  h += friendsCard();
+  h += friendsCard('lend') + friendsCard('owe');
   h += `<div class="card"><h2>Categories</h2>`;
   for(const k of CATS){
     if(k.friend) continue;
@@ -512,7 +514,7 @@ function renderHome(){
 function entRow(e){
   const k = CAT[e.cat]||{name:e.cat,icon:'•'};
   const s = e.sub && k.subs ? k.subs.find(x=>x.id===e.sub) : null;
-  const title = s ? s.name : e.cat==='refund' ? 'Refund · '+(CAT[e.refFor]||CAT.medical).name : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : k.name;
+  const title = s ? s.name : e.cat==='refund' ? 'Refund · '+(CAT[e.refFor]||CAT.medical).name : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : e.cat==='payback' ? 'Paid back to '+esc(e.friend||'friend') : e.cat==='borrowed' ? 'Borrowed from '+esc(e.friend||'friend') : k.name;
   const extra = [];
   if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
@@ -527,7 +529,7 @@ function renderHistory(){
   const signed = e => CAT[e.cat]?.income ? -e.amt : e.amt;
   const days = {};
   es.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
-  let opts = `<option value="all">All categories</option>` + CATS.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
+  let opts = `<option value="all">All categories</option>` + CATS.filter(c=>!c.track).map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
   const total = es.reduce((s,e)=>s+signed(e),0);
   const cal = S.histView!=='list';
   let h = `<div class="card"><div class="row" style="gap:8px;flex-wrap:wrap">
@@ -628,7 +630,7 @@ function calSheet(){
 /* ============ Analysis groups (8) — colours fixed per group, validated as a ring incl. Saved ============ */
 const GROUPS=[
   {id:'food', name:'Food', icon:'🍽️', cats:['food'], c:'var(--g1)'},
-  {id:'lent', name:'Lent to friends', icon:'🤝', cats:['lent'], c:'var(--g9)'},
+  {id:'lent', name:'Friends', icon:'🤝', cats:['lent','payback'], c:'var(--g9)'},
   {id:'subs', name:'Subscriptions', icon:'📺', cats:['subs'], c:'var(--g8)'},
   {id:'rent', name:'Rent & Utilities', icon:'🏠', cats:['rent','ac','laundry'], c:'var(--g2)'},
   {id:'home', name:'Home', icon:'💸', cats:['home'], c:'var(--g3)'},
@@ -949,67 +951,79 @@ function renderSettings(){
 }
 function applyTheme(){ const t=DB.settings.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
 
-/* ============ Friends: money lent and paid back (stored as entries so it syncs) ============ */
-function friendLedger(){
-  const map={};
-  for(const e of Object.values(DB.entries)){ if(e.del || !CAT[e.cat]?.friend) continue;
+/* ============ Friends: money lent / borrowed and paid back (stored as entries so it syncs) ============ */
+const FTX = {
+  lend:{A:'lent', B:'repaid', icon:'🤝', title:'Friends owe you', owes:'owes you', times:'lent', empty:'Lent money to a friend? Tap to keep track',
+    none:'Nobody owes you anything right now.', add:'+ Lent money', addB:'+ Got money back', more:'+ Lend more', backBtn:'Got money back',
+    kA:'Owes you', kT:'Total lent', note:'Lending counts as spending until it’s paid back.',
+    fA:'🤝 Money lent', fB:'💵 Money paid back', amtA:'Amount given', amtB:'Amount received', iA:'Lent', iB:'Paid back',
+    tA:(n,a)=>`Lent ${a} to ${n}`, tB:(n,a)=>`${n} paid back ${a}`},
+  owe:{A:'borrowed', B:'payback', icon:'🙏', title:'You owe friends', owes:'you owe', times:'borrowed', empty:'Borrowed from a friend? Tap to keep track',
+    none:'You don’t owe anyone right now.', add:'+ Borrowed money', addB:'+ Paid back', more:'+ Borrow more', backBtn:'Pay back',
+    kA:'You owe', kT:'Total borrowed', note:'Borrowing isn’t counted as spending. Paying it back is.',
+    fA:'🙏 Money borrowed', fB:'📤 Paid back to friend', amtA:'Amount borrowed', amtB:'Amount paid', iA:'Borrowed', iB:'Paid back',
+    tA:(n,a)=>`Borrowed ${a} from ${n}`, tB:(n,a)=>`Paid ${a} back to ${n}`}};
+const fdir = cat => CAT[cat]?.owe ? 'owe' : 'lend';
+function friendLedger(dir='lend'){
+  const T=FTX[dir], map={};
+  for(const e of Object.values(DB.entries)){ if(e.del || (e.cat!==T.A && e.cat!==T.B)) continue;
     const n=(e.friend||'Friend').trim(), k=n.toLowerCase(); const f=map[k]||(map[k]={name:n, lent:0, back:0, items:[]});
-    if(e.cat==='lent') f.lent+=e.amt; else f.back+=e.amt; f.items.push(e); }
+    if(e.cat===T.A) f.lent+=e.amt; else f.back+=e.amt; f.items.push(e); }
   return Object.values(map).map(f=>({...f, owed:r2(f.lent-f.back), items:f.items.sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0))}))
     .sort((a,b)=>b.owed-a.owed || a.name.localeCompare(b.name));
 }
-function friendsCard(){
-  const L=friendLedger(), open=L.filter(f=>f.owed>0.004), tot=open.reduce((a,f)=>a+f.owed,0);
-  return `<div class="card fcard" onclick="friendsSheet()" style="cursor:pointer"><div class="row" style="justify-content:space-between;gap:10px">
-    <div class="row" style="gap:10px"><div class="ic" style="font-size:22px">🤝</div><div><div style="font-weight:650">Friends owe you</div>
-    <div class="small muted">${open.length? open.slice(0,3).map(f=>esc(f.name)+' '+sgd0(f.owed)).join(' · ')+(open.length>3?' · +'+(open.length-3)+' more':'') : 'Lent money to a friend? Tap to keep track'}</div></div></div>
+function friendsCard(dir='lend'){
+  const T=FTX[dir], L=friendLedger(dir), open=L.filter(f=>f.owed>0.004), tot=open.reduce((a,f)=>a+f.owed,0);
+  return `<div class="card fcard" data-fdir="${dir}" onclick="friendsSheet('${dir}')" style="cursor:pointer"><div class="row" style="justify-content:space-between;gap:10px">
+    <div class="row" style="gap:10px"><div class="ic" style="font-size:22px">${T.icon}</div><div><div style="font-weight:650">${T.title}</div>
+    <div class="small muted">${open.length? open.slice(0,3).map(f=>esc(f.name)+' '+sgd0(f.owed)).join(' · ')+(open.length>3?' · +'+(open.length-3)+' more':'') : T.empty}</div></div></div>
     <div class="num" style="font-weight:700;font-size:18px">${sgd(tot)}</div></div></div>`;
 }
-function friendsSheet(){
-  const L=friendLedger(), open=L.filter(f=>f.owed>0.004), done=L.filter(f=>f.owed<=0.004), tot=open.reduce((a,f)=>a+f.owed,0);
-  const row=f=>`<div class="ent frow2" data-fr="${esc(f.name)}" style="cursor:pointer"><div class="ic">${esc(f.name.slice(0,1).toUpperCase())}</div>
-    <div class="t"><div>${esc(f.name)}</div><div>${f.items.filter(e=>e.cat==='lent').length} time${f.items.filter(e=>e.cat==='lent').length===1?'':'s'} lent · last ${dayLabel(f.items[0].date)}</div></div>
-    <div class="num" style="font-weight:700;text-align:right">${f.owed>0.004?sgd(f.owed):'<span class="pos">Settled ✓</span>'}<div class="small muted" style="font-weight:400">${f.owed>0.004?'owes you':''}</div></div></div>`;
-  let h=`<div class="row" style="justify-content:space-between"><h3>🤝 Friends owe you ${sgd(tot)}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
-    <div class="small muted">Tap a name to see every amount with its reason and date. Lending counts as spending until it’s paid back.</div>
-    <div class="btns" style="margin-top:10px"><button class="btn primary" id="fLend">+ Lent money</button>${open.length?'<button class="btn" id="fBack">+ Got money back</button>':''}</div>`;
-  h += open.length? `<div class="list" style="margin-top:10px">${open.map(row).join('')}</div>` : '<div class="empty" style="margin-top:12px">Nobody owes you anything right now.</div>';
+function friendsSheet(dir='lend'){
+  const T=FTX[dir], L=friendLedger(dir), open=L.filter(f=>f.owed>0.004), done=L.filter(f=>f.owed<=0.004), tot=open.reduce((a,f)=>a+f.owed,0);
+  const row=f=>{ const n=f.items.filter(e=>e.cat===T.A).length; return `<div class="ent frow2" data-fr="${esc(f.name)}" style="cursor:pointer"><div class="ic">${esc(f.name.slice(0,1).toUpperCase())}</div>
+    <div class="t"><div>${esc(f.name)}</div><div>${n} time${n===1?'':'s'} ${T.times} · last ${dayLabel(f.items[0].date)}</div></div>
+    <div class="num" style="font-weight:700;text-align:right">${f.owed>0.004?sgd(f.owed):'<span class="pos">Settled ✓</span>'}<div class="small muted" style="font-weight:400">${f.owed>0.004?T.owes:''}</div></div></div>`; };
+  let h=`<div class="row" style="justify-content:space-between"><h3>${T.icon} ${T.title} ${sgd(tot)}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="small muted">Tap a name to see every amount with its reason and date. ${T.note}</div>
+    <div class="btns" style="margin-top:10px"><button class="btn primary" id="fLend">${T.add}</button>${open.length?`<button class="btn" id="fBack">${T.addB}</button>`:''}</div>`;
+  h += open.length? `<div class="list" style="margin-top:10px">${open.map(row).join('')}</div>` : `<div class="empty" style="margin-top:12px">${T.none}</div>`;
   if(done.length) h += `<details style="margin-top:10px"><summary class="small muted">Settled (${done.length})</summary><div class="list">${done.map(row).join('')}</div></details>`;
   openSheet(h);
-  $('#fLend').onclick=()=>friendForm('lent');
-  if($('#fBack')) $('#fBack').onclick=()=>friendForm('repaid');
-  document.querySelectorAll('[data-fr]').forEach(r=>r.onclick=()=>friendDetail(r.dataset.fr));
+  $('#fLend').onclick=()=>friendForm(T.A);
+  if($('#fBack')) $('#fBack').onclick=()=>friendForm(T.B);
+  document.querySelectorAll('[data-fr]').forEach(r=>r.onclick=()=>friendDetail(r.dataset.fr, dir));
 }
-function friendDetail(name){
-  const f=friendLedger().find(x=>x.name.toLowerCase()===String(name).toLowerCase());
-  if(!f){ friendsSheet(); return; }
-  const item=e=>`<div class="ent" data-fe="${e.id}" style="cursor:pointer"><div class="ic">${CAT[e.cat].icon}</div><div class="t"><div>${e.cat==='lent'?(e.note?esc(e.note):'Lent'):'Paid back'+(e.note?' · '+esc(e.note):'')}</div><div>${dayLabel(e.date)}</div></div><div class="num ${e.cat==='repaid'?'pos':''}" style="font-weight:600">${e.cat==='repaid'?'−':'+'}${sgd(e.amt)}</div></div>`;
+function friendDetail(name, dir='lend'){
+  const T=FTX[dir], f=friendLedger(dir).find(x=>x.name.toLowerCase()===String(name).toLowerCase());
+  if(!f){ friendsSheet(dir); return; }
+  const item=e=>`<div class="ent" data-fe="${e.id}" style="cursor:pointer"><div class="ic">${CAT[e.cat].icon}</div><div class="t"><div>${e.cat===T.A?(e.note?esc(e.note):T.iA):T.iB+(e.note?' · '+esc(e.note):'')}</div><div>${dayLabel(e.date)}</div></div><div class="num ${e.cat===T.B?'pos':''}" style="font-weight:600">${e.cat===T.B?'−':'+'}${sgd(e.amt)}</div></div>`;
   let h=`<div class="row" style="justify-content:space-between"><h3>${esc(f.name)}</h3><button class="btn sm" id="fdBack">All friends</button></div>
     <div class="kpis" style="margin-top:8px">
-      <div class="kpi"><div class="l">Owes you</div><div class="v num ${f.owed>0.004?'':'pos'}">${f.owed>0.004?sgd(f.owed):'Settled ✓'}</div></div>
-      <div class="kpi"><div class="l">Total lent</div><div class="v num">${sgd(f.lent)}</div><div class="s">paid back ${sgd(f.back)}</div></div></div>
-    <div class="btns" style="margin-top:10px"><button class="btn primary" id="fdLend">+ Lend more</button>${f.owed>0.004?`<button class="btn" id="fdBackAmt">Got money back</button>`:''}</div>
+      <div class="kpi"><div class="l">${T.kA}</div><div class="v num ${f.owed>0.004?'':'pos'}">${f.owed>0.004?sgd(f.owed):'Settled ✓'}</div></div>
+      <div class="kpi"><div class="l">${T.kT}</div><div class="v num">${sgd(f.lent)}</div><div class="s">paid back ${sgd(f.back)}</div></div></div>
+    <div class="btns" style="margin-top:10px"><button class="btn primary" id="fdLend">${T.more}</button>${f.owed>0.004?`<button class="btn" id="fdBackAmt">${T.backBtn}</button>`:''}</div>
     <div class="list" style="margin-top:10px">${f.items.map(item).join('')}</div>
     <div class="small muted" style="margin-top:6px">Tap an item to edit or delete it.</div>`;
   openSheet(h);
-  $('#fdBack').onclick=friendsSheet;
-  $('#fdLend').onclick=()=>friendForm('lent',f.name);
-  if($('#fdBackAmt')) $('#fdBackAmt').onclick=()=>friendForm('repaid',f.name,null,f.owed);
+  $('#fdBack').onclick=()=>friendsSheet(dir);
+  $('#fdLend').onclick=()=>friendForm(T.A,f.name);
+  if($('#fdBackAmt')) $('#fdBackAmt').onclick=()=>friendForm(T.B,f.name,null,f.owed);
   document.querySelectorAll('[data-fe]').forEach(r=>r.onclick=()=>friendForm(null,null,DB.entries[r.dataset.fe]));
 }
 function friendForm(kind, name, src, amt){
-  const names=[...new Set(friendLedger().map(f=>f.name))];
   const e = src || {id:null, cat:kind, friend:name||'', amt: amt? r2(amt):'', date: todayStr(), note:''};
-  const lend = e.cat==='lent';
-  let h=`<div class="row" style="justify-content:space-between"><h3>${e.id?'Edit':''} ${lend?'🤝 Money lent':'💵 Money paid back'}</h3><button class="btn sm" id="ffBack">Back</button></div>
+  const dir=fdir(e.cat), T=FTX[dir], first = e.cat===T.A;
+  const names=[...new Set([...friendLedger('lend'), ...friendLedger('owe')].map(f=>f.name))];
+  let h=`<div class="row" style="justify-content:space-between"><h3>${e.id?'Edit':''} ${first?T.fA:T.fB}</h3><button class="btn sm" id="ffBack">Back</button></div>
     <label class="f" for="ffName">Friend’s name</label><input class="in" id="ffName" list="ffNames" value="${esc(e.friend)}" placeholder="e.g. Ravi" autocomplete="off">
     <datalist id="ffNames">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     <div class="grid2"><div><label class="f">Date</label><input class="in" type="date" id="ffDate" value="${e.date}"></div>
-    <div><label class="f">${lend?'Amount given':'Amount received'} (${curCode()})</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="ffAmt" value="${e.amt}" placeholder="0.00"></div></div>
-    <label class="f" for="ffNote">${lend?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${lend?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
+    <div><label class="f">${first?T.amtA:T.amtB} (${curCode()})</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="ffAmt" value="${e.amt}" placeholder="0.00"></div></div>
+    <label class="f" for="ffNote">${first?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${first?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
     <div class="btns" style="margin-top:14px"><button class="btn primary" id="ffSave">Save</button>${e.id?'<button class="btn danger" id="ffDel">Delete</button>':''}</div>`;
   openSheet(h);
-  $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend) : friendsSheet();
+  $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend, dir) : friendsSheet(dir);
   $('#ffSave').onclick=()=>{
     const n=($('#ffName').value||'').trim(), a=r2(parseFloat($('#ffAmt').value));
     if(!n){ toast('Enter your friend’s name'); $('#ffName').focus(); return; }
@@ -1017,10 +1031,10 @@ function friendForm(kind, name, src, amt){
     const now=Date.now();
     const rec={id:e.id||uid(), date:$('#ffDate').value||todayStr(), cat:e.cat, friend:n, amt:a, note:($('#ffNote').value||'').trim(), upd:now, cr:e.cr||now, cur:curCode()};
     DB.entries[rec.id]=rec; save(); render();
-    toast(lend? `Lent ${sgd(a)} to ${n}` : `${n} paid back ${sgd(a)}`);
-    friendDetail(n);
+    toast(first? T.tA(n,sgd(a)) : T.tB(n,sgd(a)));
+    friendDetail(n, dir);
   };
-  if($('#ffDel')) confirmBtn($('#ffDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id], del:true, upd:Date.now()}; save(); render(); toast('Deleted'); friendDetail(e.friend); });
+  if($('#ffDel')) confirmBtn($('#ffDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id], del:true, upd:Date.now()}; save(); render(); toast('Deleted'); friendDetail(e.friend, dir); });
 }
 
 /* ============ Add / edit entry sheet ============ */
@@ -1198,7 +1212,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v27';
+const APP_VERSION='v28';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
