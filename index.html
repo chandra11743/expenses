@@ -967,21 +967,35 @@ function friendsCard(){
 }
 function friendsSheet(){
   const L=friendLedger(), open=L.filter(f=>f.owed>0.004), done=L.filter(f=>f.owed<=0.004), tot=open.reduce((a,f)=>a+f.owed,0);
-  const item=e=>`<div class="ent" onclick="friendForm('${e.cat}',null,DB.entries['${e.id}'])"><div class="ic">${CAT[e.cat].icon}</div><div class="t"><div>${e.cat==='lent'?'Lent':'Paid back'}${e.note?' · '+esc(e.note):''}</div><div>${dayLabel(e.date)}</div></div><div class="num ${e.cat==='repaid'?'pos':''}" style="font-weight:600">${e.cat==='repaid'?'−':''}${sgd(e.amt)}</div></div>`;
-  const card=f=>`<div class="card" style="margin:10px 0;padding:12px"><div class="row" style="justify-content:space-between"><b>${esc(f.name)}</b><span class="num" style="font-weight:700">${f.owed>0.004?sgd(f.owed)+' owed':'<span class="pos">Settled ✓</span>'}</span></div>
-    <div class="small muted">Lent ${sgd(f.lent)} · paid back ${sgd(f.back)}</div>
-    <div class="list" style="border:0;margin-top:6px">${f.items.map(item).join('')}</div>
-    <div class="btns" style="margin-top:8px">${f.owed>0.004?`<button class="btn sm primary" data-back="${esc(f.name)}" data-amt="${f.owed}">Got money back</button>`:''}<button class="btn sm" data-lend="${esc(f.name)}">Lend more</button></div></div>`;
+  const row=f=>`<div class="ent frow2" data-fr="${esc(f.name)}" style="cursor:pointer"><div class="ic">${esc(f.name.slice(0,1).toUpperCase())}</div>
+    <div class="t"><div>${esc(f.name)}</div><div>${f.items.filter(e=>e.cat==='lent').length} time${f.items.filter(e=>e.cat==='lent').length===1?'':'s'} lent · last ${dayLabel(f.items[0].date)}</div></div>
+    <div class="num" style="font-weight:700;text-align:right">${f.owed>0.004?sgd(f.owed):'<span class="pos">Settled ✓</span>'}<div class="small muted" style="font-weight:400">${f.owed>0.004?'owes you':''}</div></div></div>`;
   let h=`<div class="row" style="justify-content:space-between"><h3>🤝 Friends owe you ${sgd(tot)}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
-    <div class="small muted">Money you lend counts as spending until it’s paid back; repayments are added back like a refund.</div>
+    <div class="small muted">Tap a name to see every amount with its reason and date. Lending counts as spending until it’s paid back.</div>
     <div class="btns" style="margin-top:10px"><button class="btn primary" id="fLend">+ Lent money</button>${open.length?'<button class="btn" id="fBack">+ Got money back</button>':''}</div>`;
-  h += open.length? open.map(card).join('') : '<div class="empty" style="margin-top:12px">Nobody owes you anything right now.</div>';
-  if(done.length) h += `<details style="margin-top:8px"><summary class="small muted">Settled (${done.length})</summary>${done.map(card).join('')}</details>`;
+  h += open.length? `<div class="list" style="margin-top:10px">${open.map(row).join('')}</div>` : '<div class="empty" style="margin-top:12px">Nobody owes you anything right now.</div>';
+  if(done.length) h += `<details style="margin-top:10px"><summary class="small muted">Settled (${done.length})</summary><div class="list">${done.map(row).join('')}</div></details>`;
   openSheet(h);
   $('#fLend').onclick=()=>friendForm('lent');
   if($('#fBack')) $('#fBack').onclick=()=>friendForm('repaid');
-  document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>friendForm('repaid',b.dataset.back,null,+b.dataset.amt));
-  document.querySelectorAll('[data-lend]').forEach(b=>b.onclick=()=>friendForm('lent',b.dataset.lend));
+  document.querySelectorAll('[data-fr]').forEach(r=>r.onclick=()=>friendDetail(r.dataset.fr));
+}
+function friendDetail(name){
+  const f=friendLedger().find(x=>x.name.toLowerCase()===String(name).toLowerCase());
+  if(!f){ friendsSheet(); return; }
+  const item=e=>`<div class="ent" data-fe="${e.id}" style="cursor:pointer"><div class="ic">${CAT[e.cat].icon}</div><div class="t"><div>${e.cat==='lent'?(e.note?esc(e.note):'Lent'):'Paid back'+(e.note?' · '+esc(e.note):'')}</div><div>${dayLabel(e.date)}</div></div><div class="num ${e.cat==='repaid'?'pos':''}" style="font-weight:600">${e.cat==='repaid'?'−':'+'}${sgd(e.amt)}</div></div>`;
+  let h=`<div class="row" style="justify-content:space-between"><h3>${esc(f.name)}</h3><button class="btn sm" id="fdBack">All friends</button></div>
+    <div class="kpis" style="margin-top:8px">
+      <div class="kpi"><div class="l">Owes you</div><div class="v num ${f.owed>0.004?'':'pos'}">${f.owed>0.004?sgd(f.owed):'Settled ✓'}</div></div>
+      <div class="kpi"><div class="l">Total lent</div><div class="v num">${sgd(f.lent)}</div><div class="s">paid back ${sgd(f.back)}</div></div></div>
+    <div class="btns" style="margin-top:10px"><button class="btn primary" id="fdLend">+ Lend more</button>${f.owed>0.004?`<button class="btn" id="fdBackAmt">Got money back</button>`:''}</div>
+    <div class="list" style="margin-top:10px">${f.items.map(item).join('')}</div>
+    <div class="small muted" style="margin-top:6px">Tap an item to edit or delete it.</div>`;
+  openSheet(h);
+  $('#fdBack').onclick=friendsSheet;
+  $('#fdLend').onclick=()=>friendForm('lent',f.name);
+  if($('#fdBackAmt')) $('#fdBackAmt').onclick=()=>friendForm('repaid',f.name,null,f.owed);
+  document.querySelectorAll('[data-fe]').forEach(r=>r.onclick=()=>friendForm(null,null,DB.entries[r.dataset.fe]));
 }
 function friendForm(kind, name, src, amt){
   const names=[...new Set(friendLedger().map(f=>f.name))];
@@ -995,7 +1009,7 @@ function friendForm(kind, name, src, amt){
     <label class="f" for="ffNote">${lend?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${lend?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
     <div class="btns" style="margin-top:14px"><button class="btn primary" id="ffSave">Save</button>${e.id?'<button class="btn danger" id="ffDel">Delete</button>':''}</div>`;
   openSheet(h);
-  $('#ffBack').onclick=friendsSheet;
+  $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend) : friendsSheet();
   $('#ffSave').onclick=()=>{
     const n=($('#ffName').value||'').trim(), a=r2(parseFloat($('#ffAmt').value));
     if(!n){ toast('Enter your friend’s name'); $('#ffName').focus(); return; }
@@ -1004,9 +1018,9 @@ function friendForm(kind, name, src, amt){
     const rec={id:e.id||uid(), date:$('#ffDate').value||todayStr(), cat:e.cat, friend:n, amt:a, note:($('#ffNote').value||'').trim(), upd:now, cr:e.cr||now, cur:curCode()};
     DB.entries[rec.id]=rec; save(); render();
     toast(lend? `Lent ${sgd(a)} to ${n}` : `${n} paid back ${sgd(a)}`);
-    friendsSheet();
+    friendDetail(n);
   };
-  if($('#ffDel')) confirmBtn($('#ffDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id], del:true, upd:Date.now()}; save(); render(); toast('Deleted'); friendsSheet(); });
+  if($('#ffDel')) confirmBtn($('#ffDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id], del:true, upd:Date.now()}; save(); render(); toast('Deleted'); friendDetail(e.friend); });
 }
 
 /* ============ Add / edit entry sheet ============ */
@@ -1184,7 +1198,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v26';
+const APP_VERSION='v27';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
