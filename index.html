@@ -16,7 +16,7 @@
   --text:#0b0b0b; --text-2:#52514e; --muted:#8a8984;
   --accent:#2a78d6; --accent-ink:#ffffff;
   --series-1:#2a78d6; --series-3:#1baf7a;
-  --g1:#2a78d6; --g2:#eb6834; --g3:#4a3aa7; --g4:#eda100; --g5:#e87ba4; --g6:#008300; --g7:#e34948; --g8:#8e3b8e;
+  --g1:#2a78d6; --g2:#eb6834; --g3:#4a3aa7; --g4:#eda100; --g5:#e87ba4; --g6:#008300; --g7:#e34948; --g8:#8e3b8e; --g9:#7a8a00;
   --good:#008300; --warn:#b77a00; --bad:#d03b3b;
   --good-bg:#e3f3e3; --warn-bg:#fbf0d6; --bad-bg:#fbe3e3;
   --grid:#e6e4de;
@@ -29,7 +29,7 @@
     --text:#ffffff; --text-2:#c3c2b7; --muted:#8d8c84;
     --accent:#3987e5; --accent-ink:#ffffff;
     --series-1:#3987e5; --series-3:#199e70;
-    --g1:#3987e5; --g2:#d95926; --g3:#9085e9; --g4:#c98500; --g5:#d55181; --g6:#008300; --g7:#e66767; --g8:#b565b5;
+    --g1:#3987e5; --g2:#d95926; --g3:#9085e9; --g4:#c98500; --g5:#d55181; --g6:#008300; --g7:#e66767; --g8:#b565b5; --g9:#8f9f1a;
     --good:#4fb84f; --warn:#e0a526; --bad:#ef6b6b;
     --good-bg:#1d3320; --warn-bg:#3a2f14; --bad-bg:#3d1f1f;
     --grid:#2c2c29;
@@ -42,7 +42,7 @@
   --text:#ffffff; --text-2:#c3c2b7; --muted:#8d8c84;
   --accent:#3987e5; --accent-ink:#ffffff;
   --series-1:#3987e5; --series-3:#199e70;
-  --g1:#3987e5; --g2:#d95926; --g3:#9085e9; --g4:#c98500; --g5:#d55181; --g6:#008300; --g7:#e66767; --g8:#b565b5;
+  --g1:#3987e5; --g2:#d95926; --g3:#9085e9; --g4:#c98500; --g5:#d55181; --g6:#008300; --g7:#e66767; --g8:#b565b5; --g9:#8f9f1a;
   --good:#4fb84f; --warn:#e0a526; --bad:#ef6b6b;
   --good-bg:#1d3320; --warn-bg:#3a2f14; --bad-bg:#3d1f1f;
   --grid:#2c2c29;
@@ -271,12 +271,15 @@ const CATS = [
   {id:'subs', name:'Subscriptions', icon:'📺'},
   {id:'home', name:'Money sent home', icon:'💸'},
   {id:'misc', name:'Miscellaneous', icon:'🧾', reason:true},
+  {id:'lent', name:'Lent to friends', icon:'🤝', friend:true},
+  {id:'repaid', name:'Paid back by friend', icon:'💵', income:true, friend:true},
   {id:'refund', name:'Refunds', icon:'↩️', income:true},
 ];
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income);
+const BUDGET_CATS = EXP_CATS.filter(c=>!c.friend);   // money lent to friends has no budget row
 const FIXED = new Set(['rent','ac','subs','home']);    // monthly bills: excluded from "daily living" average
-const LIVING_EXCL = new Set([...FIXED, 'misc']);   // also left out of "daily living": one-off miscellaneous spends
+const LIVING_EXCL = new Set([...FIXED, 'misc', 'lent', 'repaid']);   // also left out of "daily living": one-off miscellaneous spends
 const FIXED_TXT = 'rent, bills, home &amp; misc';
 const DAILY_FOOD = ['breakfast','lunch','dinner','coffee'];
 // Food budget can be split into three parts; stored as budgets['food:daily'] etc.
@@ -382,11 +385,12 @@ function stats(ym){
   const refund = by.refund||0;
   const refundFor = {};
   for(const e of es) if(e.cat==='refund'){ const f = CAT[e.refFor]&&!CAT[e.refFor].income ? e.refFor : 'medical'; refundFor[f]=(refundFor[f]||0)+e.amt; }
-  const net = {...by}; delete net.refund;
+  const net = {...by}; delete net.refund; delete net.repaid;
+  net.lent = (by.lent||0) - (by.repaid||0);
   for(const [f,x] of Object.entries(refundFor)) net[f] = (net[f]||0) - x;
   const gross = EXP_CATS.reduce((s,c)=>s+by[c.id],0);
-  const total = gross - refund;
-  const living = total - [...LIVING_EXCL].reduce((s,k)=>s+(by[k]||0),0);
+  const total = gross - refund - (by.repaid||0);
+  const living = total - [...LIVING_EXCL].reduce((s,k)=>s+(CAT[k]?.income ? -(by[k]||0) : (by[k]||0)),0);
   const c = cfg(ym);
   const days = daysElapsed(ym);
   const budgetTotal = EXP_CATS.reduce((s,k)=>s+(+c.budgets[k.id]||0),0);
@@ -466,8 +470,10 @@ function renderHome(){
     <div class="kpi"><div class="l">Sent home</div><div class="v num">${inr(st.inrHome)}</div><div class="s">${sgd(st.by.home)}</div></div>
   </div></div>`;
 
+  h += friendsCard();
   h += `<div class="card"><h2>Categories</h2>`;
   for(const k of CATS){
+    if(k.friend) continue;
     const spent = k.income ? st.by[k.id] : st.net[k.id];
     const b = +c.budgets[k.id]||0;
     const avg = st.days? spent/st.days : 0;
@@ -506,7 +512,7 @@ function renderHome(){
 function entRow(e){
   const k = CAT[e.cat]||{name:e.cat,icon:'•'};
   const s = e.sub && k.subs ? k.subs.find(x=>x.id===e.sub) : null;
-  const title = s ? s.name : (e.cat==='refund' ? 'Refund · '+(CAT[e.refFor]||CAT.medical).name : k.name);
+  const title = s ? s.name : e.cat==='refund' ? 'Refund · '+(CAT[e.refFor]||CAT.medical).name : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : k.name;
   const extra = [];
   if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
@@ -622,6 +628,7 @@ function calSheet(){
 /* ============ Analysis groups (8) — colours fixed per group, validated as a ring incl. Saved ============ */
 const GROUPS=[
   {id:'food', name:'Food', icon:'🍽️', cats:['food'], c:'var(--g1)'},
+  {id:'lent', name:'Lent to friends', icon:'🤝', cats:['lent'], c:'var(--g9)'},
   {id:'subs', name:'Subscriptions', icon:'📺', cats:['subs'], c:'var(--g8)'},
   {id:'rent', name:'Rent & Utilities', icon:'🏠', cats:['rent','ac','laundry'], c:'var(--g2)'},
   {id:'home', name:'Home', icon:'💸', cats:['home'], c:'var(--g3)'},
@@ -711,7 +718,7 @@ function renderAnalysis(){
 
   // budget vs actual table
   h += `<div class="card"><h2>Budget vs actual</h2><div class="tablewrap"><table class="t"><thead><tr><th>Category</th><th>Budget</th><th>Spent</th><th>Left</th><th>Avg/day</th><th>Status</th></tr></thead><tbody>`;
-  for(const k of EXP_CATS){
+  for(const k of BUDGET_CATS){
     const b=+st.cfg.budgets[k.id]||0, s=st.net[k.id], stt=status(s,b,k.id);
     h += `<tr><td>${k.icon} ${k.name}</td><td class="num">${b?sgd0(b):'–'}</td><td class="num">${sgd(s)}</td><td class="num ${b&&b-s<0?'neg':''}">${b?sgd(b-s):'–'}</td><td class="num">${sgd(st.days?s/st.days:0)}</td><td>${stt?`<span class="pill ${stt}">${stt==='bad'?'Over':stt==='warn'?'Near limit':'On track'}</span>`:''}</td></tr>`;
     if(k.subs) for(const p of FOOD_PARTS){
@@ -733,7 +740,7 @@ function deltaTxt(a,b){ if(!b) return '&nbsp;'; const d=(a-b)/b*100; return (d>=
 function insights(st,prev){
   const out=[];
   if(!st.es.length) return out;
-  const top = EXP_CATS.map(k=>({k,v:st.net[k.id]})).filter(x=>!FIXED.has(x.k.id)).sort((a,b)=>b.v-a.v)[0];
+  const top = BUDGET_CATS.map(k=>({k,v:st.net[k.id]})).filter(x=>!FIXED.has(x.k.id)).sort((a,b)=>b.v-a.v)[0];
   if(top && top.v>0) out.push(`Biggest day-to-day category: <b>${top.k.icon} ${top.k.name}</b> at ${sgd(top.v)} (${sgd(st.days?top.v/st.days:0)}/day).`);
   const foodTop = CAT.food.subs.map(s=>({s,v:st.sub[s.id]})).sort((a,b)=>b.v-a.v)[0];
   if(foodTop.v>0) out.push(`Within food, <b>${foodTop.s.name}</b> costs the most: ${sgd(foodTop.v)} this month.`);
@@ -852,7 +859,7 @@ function renderBudget(){
   </div>`;
 
   h += `<div class="card"><h2>Budget breakdown</h2><div class="small muted" style="margin-bottom:4px">Amount per category for the month. The bar shows its share of your salary.</div>`;
-  for(const k of EXP_CATS){
+  for(const k of BUDGET_CATS){
     h += `<div class="brow"><div class="ic">${k.icon}</div><div class="bmid"><div class="nm">${k.name}</div><div class="meta">Spent so far ${sgd(spentOf(k.id))}</div><div class="share"><i data-share="${k.id}"></i></div></div>${inp(k.id)}</div>`;
     if(k.id==='food'){
       h += `<div class="bparts"><div class="small muted" style="padding:2px 0 4px">Split the food budget (optional) — the Food total becomes the sum of these three.</div>`;
@@ -880,12 +887,12 @@ function renderBudget(){
   };
   const refresh = () => {
     const {v, salary} = read();
-    const total = EXP_CATS.reduce((a,k)=>a+(v[k.id]||0),0);
+    const total = BUDGET_CATS.reduce((a,k)=>a+(v[k.id]||0),0);
     const extra = fundsIncluded(S.ym);
     const saving = salary + extra - total;
     const base = Math.max(salary,total,1);
     root.querySelectorAll('[data-share]').forEach(el=>{ const x=v[el.dataset.share]||0; el.style.width=(x/base*100)+'%'; el.parentElement.title = salary? Math.round(x/salary*100)+'% of salary' : ''; });
-    const rows = EXP_CATS.map(k=>({k,x:v[k.id]||0})).filter(r=>r.x>0).sort((a,b)=>b.x-a.x);
+    const rows = BUDGET_CATS.map(k=>({k,x:v[k.id]||0})).filter(r=>r.x>0).sort((a,b)=>b.x-a.x);
     let sh = `<h2>Summary</h2><div class="kpis">
       <div class="kpi"><div class="l">Salary</div><div class="v num">${sgd0(salary)}</div><div class="s">${extra?'+ '+sgd0(extra)+' emergency fund included':'&nbsp;'}</div></div>
       <div class="kpi"><div class="l">Total budget</div><div class="v num">${sgd0(total)}</div><div class="s">${salary?Math.round(total/salary*100)+'% of salary':'&nbsp;'}</div></div>
@@ -942,6 +949,66 @@ function renderSettings(){
 }
 function applyTheme(){ const t=DB.settings.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
 
+/* ============ Friends: money lent and paid back (stored as entries so it syncs) ============ */
+function friendLedger(){
+  const map={};
+  for(const e of Object.values(DB.entries)){ if(e.del || !CAT[e.cat]?.friend) continue;
+    const n=(e.friend||'Friend').trim(), k=n.toLowerCase(); const f=map[k]||(map[k]={name:n, lent:0, back:0, items:[]});
+    if(e.cat==='lent') f.lent+=e.amt; else f.back+=e.amt; f.items.push(e); }
+  return Object.values(map).map(f=>({...f, owed:r2(f.lent-f.back), items:f.items.sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0))}))
+    .sort((a,b)=>b.owed-a.owed || a.name.localeCompare(b.name));
+}
+function friendsCard(){
+  const L=friendLedger(), open=L.filter(f=>f.owed>0.004), tot=open.reduce((a,f)=>a+f.owed,0);
+  return `<div class="card fcard" onclick="friendsSheet()" style="cursor:pointer"><div class="row" style="justify-content:space-between;gap:10px">
+    <div class="row" style="gap:10px"><div class="ic" style="font-size:22px">🤝</div><div><div style="font-weight:650">Friends owe you</div>
+    <div class="small muted">${open.length? open.slice(0,3).map(f=>esc(f.name)+' '+sgd0(f.owed)).join(' · ')+(open.length>3?' · +'+(open.length-3)+' more':'') : 'Lent money to a friend? Tap to keep track'}</div></div></div>
+    <div class="num" style="font-weight:700;font-size:18px">${sgd(tot)}</div></div></div>`;
+}
+function friendsSheet(){
+  const L=friendLedger(), open=L.filter(f=>f.owed>0.004), done=L.filter(f=>f.owed<=0.004), tot=open.reduce((a,f)=>a+f.owed,0);
+  const item=e=>`<div class="ent" onclick="friendForm('${e.cat}',null,DB.entries['${e.id}'])"><div class="ic">${CAT[e.cat].icon}</div><div class="t"><div>${e.cat==='lent'?'Lent':'Paid back'}${e.note?' · '+esc(e.note):''}</div><div>${dayLabel(e.date)}</div></div><div class="num ${e.cat==='repaid'?'pos':''}" style="font-weight:600">${e.cat==='repaid'?'−':''}${sgd(e.amt)}</div></div>`;
+  const card=f=>`<div class="card" style="margin:10px 0;padding:12px"><div class="row" style="justify-content:space-between"><b>${esc(f.name)}</b><span class="num" style="font-weight:700">${f.owed>0.004?sgd(f.owed)+' owed':'<span class="pos">Settled ✓</span>'}</span></div>
+    <div class="small muted">Lent ${sgd(f.lent)} · paid back ${sgd(f.back)}</div>
+    <div class="list" style="border:0;margin-top:6px">${f.items.map(item).join('')}</div>
+    <div class="btns" style="margin-top:8px">${f.owed>0.004?`<button class="btn sm primary" data-back="${esc(f.name)}" data-amt="${f.owed}">Got money back</button>`:''}<button class="btn sm" data-lend="${esc(f.name)}">Lend more</button></div></div>`;
+  let h=`<div class="row" style="justify-content:space-between"><h3>🤝 Friends owe you ${sgd(tot)}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="small muted">Money you lend counts as spending until it’s paid back; repayments are added back like a refund.</div>
+    <div class="btns" style="margin-top:10px"><button class="btn primary" id="fLend">+ Lent money</button>${open.length?'<button class="btn" id="fBack">+ Got money back</button>':''}</div>`;
+  h += open.length? open.map(card).join('') : '<div class="empty" style="margin-top:12px">Nobody owes you anything right now.</div>';
+  if(done.length) h += `<details style="margin-top:8px"><summary class="small muted">Settled (${done.length})</summary>${done.map(card).join('')}</details>`;
+  openSheet(h);
+  $('#fLend').onclick=()=>friendForm('lent');
+  if($('#fBack')) $('#fBack').onclick=()=>friendForm('repaid');
+  document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>friendForm('repaid',b.dataset.back,null,+b.dataset.amt));
+  document.querySelectorAll('[data-lend]').forEach(b=>b.onclick=()=>friendForm('lent',b.dataset.lend));
+}
+function friendForm(kind, name, src, amt){
+  const names=[...new Set(friendLedger().map(f=>f.name))];
+  const e = src || {id:null, cat:kind, friend:name||'', amt: amt? r2(amt):'', date: todayStr(), note:''};
+  const lend = e.cat==='lent';
+  let h=`<div class="row" style="justify-content:space-between"><h3>${e.id?'Edit':''} ${lend?'🤝 Money lent':'💵 Money paid back'}</h3><button class="btn sm" id="ffBack">Back</button></div>
+    <label class="f" for="ffName">Friend’s name</label><input class="in" id="ffName" list="ffNames" value="${esc(e.friend)}" placeholder="e.g. Ravi" autocomplete="off">
+    <datalist id="ffNames">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+    <div class="grid2"><div><label class="f">Date</label><input class="in" type="date" id="ffDate" value="${e.date}"></div>
+    <div><label class="f">${lend?'Amount given':'Amount received'} (${curCode()})</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="ffAmt" value="${e.amt}" placeholder="0.00"></div></div>
+    <label class="f" for="ffNote">${lend?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${lend?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
+    <div class="btns" style="margin-top:14px"><button class="btn primary" id="ffSave">Save</button>${e.id?'<button class="btn danger" id="ffDel">Delete</button>':''}</div>`;
+  openSheet(h);
+  $('#ffBack').onclick=friendsSheet;
+  $('#ffSave').onclick=()=>{
+    const n=($('#ffName').value||'').trim(), a=r2(parseFloat($('#ffAmt').value));
+    if(!n){ toast('Enter your friend’s name'); $('#ffName').focus(); return; }
+    if(!(a>0)){ toast('Enter an amount'); $('#ffAmt').focus(); return; }
+    const now=Date.now();
+    const rec={id:e.id||uid(), date:$('#ffDate').value||todayStr(), cat:e.cat, friend:n, amt:a, note:($('#ffNote').value||'').trim(), upd:now, cr:e.cr||now, cur:curCode()};
+    DB.entries[rec.id]=rec; save(); render();
+    toast(lend? `Lent ${sgd(a)} to ${n}` : `${n} paid back ${sgd(a)}`);
+    friendsSheet();
+  };
+  if($('#ffDel')) confirmBtn($('#ffDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id], del:true, upd:Date.now()}; save(); render(); toast('Deleted'); friendsSheet(); });
+}
+
 /* ============ Add / edit entry sheet ============ */
 let E = null; // entry being edited
 function openSheet(html){ $('#sheet').innerHTML=html; $('#sheetBg').classList.add('open'); }
@@ -955,6 +1022,7 @@ document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') dismissSheet(); 
 
 function openEntry(id, presetDate){
   const src = id? DB.entries[id] : null;
+  if(src && CAT[src.cat]?.friend){ friendForm(src.cat, src.friend, src); return; }
   const defDate = presetDate || (S.ym===curYM()? todayStr() : (S.ym<curYM()? S.ym+'-'+pad(dim(S.ym)) : S.ym+'-01'));
   E = src? {...src} : {id:null, date:defDate, cat:null, sub:null, amt:'', inr:'', rate:'', note:''};
   if(S.calOpen) E.back='cal';
@@ -964,9 +1032,9 @@ function guessMeal(){ const h=new Date().getHours(); if(h<11) return 'breakfast'
 function drawSheet(){
   const k = CAT[E.cat] || {};
   let h = `<div class="row" style="justify-content:space-between"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
-  <label class="f">Category</label><div class="chips">${CATS.map(c=>`<button class="chip ${c.id===E.cat?'on':''}" data-c="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>${E.cat?'':'<div class="small muted" style="margin-top:6px">Choose a category</div>'}`;
+  <label class="f">Category</label><div class="chips">${CATS.filter(c=>!c.friend).map(c=>`<button class="chip ${c.id===E.cat?'on':''}" data-c="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>${E.cat?'':'<div class="small muted" style="margin-top:6px">Choose a category</div>'}`;
   if(k.income){ const rf = E.refFor||'medical';
-    h += `<label class="f">Refund for</label><div class="chips">${EXP_CATS.map(c=>`<button class="chip ${c.id===rf?'on':''}" data-rf="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>`; }
+    h += `<label class="f">Refund for</label><div class="chips">${BUDGET_CATS.map(c=>`<button class="chip ${c.id===rf?'on':''}" data-rf="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>`; }
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.icon} ${s.name}</button>`;
     h += `<label class="f">Daily food</label><div class="chips">${k.subs.filter(s=>!s.group).map(chip).join('')}</div>
           <label class="f">Other food</label><div class="chips">${k.subs.filter(s=>s.group).map(chip).join('')}</div>`; }
@@ -1116,7 +1184,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v25';
+const APP_VERSION='v26';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
