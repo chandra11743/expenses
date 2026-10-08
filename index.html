@@ -281,7 +281,7 @@ const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income && !c.track);
 const BUDGET_CATS = EXP_CATS.filter(c=>!c.friend);   // money lent to friends has no budget row
 const FIXED = new Set(['rent','ac','subs','home']);    // monthly bills: excluded from "daily living" average
-const LIVING_EXCL = new Set([...FIXED, 'misc', 'lent', 'repaid', 'payback', 'borrowed']);   // also left out of "daily living": one-off miscellaneous spends
+const LIVING_EXCL = new Set([...FIXED, 'misc', 'lent', 'repaid', 'payback', 'borrowed', 'refund']);   // also left out of "daily living": one-off miscellaneous spends
 const FIXED_TXT = 'rent, bills, home &amp; misc';
 const DAILY_FOOD = ['breakfast','lunch','dinner','coffee'];
 // Food budget can be split into three parts; stored as budgets['food:daily'] etc.
@@ -381,6 +381,7 @@ function stats(ym){
     if(e.cat==='food' && e.sub) sub[e.sub]=(sub[e.sub]||0)+e.amt;
     if(e.cat==='home' && (e.homeCur||'INR')===homeCode()) inrHome += e.inr||0;
     const sign = CAT[e.cat]?.income ? -1 : 1;
+    if(e.cat==='refund') continue;   // refunds don't reduce any day's spending (still taken off the month total)
     daily[e.date]=(daily[e.date]||0)+sign*e.amt;
     if(!LIVING_EXCL.has(e.cat)) dailyLiving[e.date]=(dailyLiving[e.date]||0)+sign*e.amt;
   }
@@ -403,7 +404,7 @@ function stats(ym){
           days, left:daysLeft(ym), dim:dim(ym), budgetTotal, budgetLeft,
           extra:fundsIncluded(ym), income:(+c.salary||0)+fundsIncluded(ym),
           saved:(+c.salary||0) + fundsIncluded(ym) - total,
-          avg: days? total/days : 0, avgLiving: days? living/days : 0};
+          avg: days? (total+refund)/days : 0, avgLiving: days? living/days : 0};
 }
 function status(spent,budget,cat){
   if(!budget) return null;
@@ -552,14 +553,14 @@ function renderHistory(){
 }
 function dayBlock(d, list, signed){
   list = list.slice().sort((a,b)=>(b.cr||0)-(a.cr||0));
-  const dt = list.reduce((s,e)=>s+signed(e),0);
+  const dt = list.reduce((s,e)=>s+(e.cat==='refund'&&S.histCat!=='refund'?0:signed(e)),0);   // refunds aren't counted in day totals
   return `<div class="day"><div class="dh"><span>${dayLabel(d)}</span><span class="num">${sgd(dt)}</span></div><div class="list">${list.map(entRow).join('')}</div></div>`;
 }
 function calendarView(es, days, signed, cat=S.histCat){
   const ym=S.ym, n=dim(ym), [y,m]=ym.split('-').map(Number);
   const excl = cat==='all' && S.calMode!=='all';        // leave out monthly bills so they don't swamp the shading
   const val = {};
-  for(const e of es){ if(excl && LIVING_EXCL.has(e.cat)) continue; val[e.date]=(val[e.date]||0)+signed(e); }
+  for(const e of es){ if((excl && LIVING_EXCL.has(e.cat)) || (e.cat==='refund' && cat!=='refund')) continue; val[e.date]=(val[e.date]||0)+signed(e); }
   const vals = Object.values(val); const mx = Math.max(1,...vals);
   const today = todayStr();
   const lead = (new Date(y,m-1,1).getDay()+6)%7;                // weeks start on Monday
@@ -1212,7 +1213,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v28';
+const APP_VERSION='v29';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
