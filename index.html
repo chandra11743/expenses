@@ -275,7 +275,7 @@ const CATS = [
   {id:'repaid', name:'Paid back by friend', icon:'💵', income:true, friend:true},
   {id:'borrowed', name:'Borrowed from friend', icon:'🙏', friend:true, owe:true, track:true},   // just a reminder: not spending
   {id:'payback', name:'Paid back to friend', icon:'📤', friend:true, owe:true},                 // counts as spending
-  {id:'refund', name:'Refunds', icon:'↩️', income:true},
+  {id:'refund', name:'Refunds', icon:'↩️', income:true, reason:true},   // standalone: not linked to any category
 ];
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income && !c.track);
@@ -387,10 +387,8 @@ function stats(ym){
   }
   const refund = by.refund||0;
   const refundFor = {};
-  for(const e of es) if(e.cat==='refund'){ const f = CAT[e.refFor]&&!CAT[e.refFor].income ? e.refFor : 'medical'; refundFor[f]=(refundFor[f]||0)+e.amt; }
   const net = {...by}; delete net.refund; delete net.repaid;
   net.lent = (by.lent||0) - (by.repaid||0);
-  for(const [f,x] of Object.entries(refundFor)) net[f] = (net[f]||0) - x;
   const gross = EXP_CATS.reduce((s,c)=>s+by[c.id],0);
   const total = gross - refund - (by.repaid||0);
   const living = total - [...LIVING_EXCL].reduce((s,k)=>s+(CAT[k]?.income ? -(by[k]||0) : (by[k]||0)),0);
@@ -481,7 +479,7 @@ function renderHome(){
     const b = +c.budgets[k.id]||0;
     const avg = st.days? spent/st.days : 0;
     if(k.income){
-      h += `<div class="cat"><div class="row"><div class="ic">${k.icon}</div><div><div class="nm">${k.name}</div><div class="meta">${Object.keys(st.refundFor).length? 'Taken off: '+Object.entries(st.refundFor).map(([f,x])=>CAT[f].name+' '+sgd(x)).join(', ') : 'Money received back · reduces the category it’s for'}</div></div>
+      h += `<div class="cat"><div class="row"><div class="ic">${k.icon}</div><div><div class="nm">${k.name}</div><div class="meta">Money received back · taken off the month total</div></div>
         <div class="amt num"><b class="pos">+${sgd(st.by.refund)}</b></div></div></div>`;
       continue;
     }
@@ -489,7 +487,6 @@ function renderHome(){
     const pct = b? Math.min(100, spent/b*100) : 0;
     const rem = b - spent;
     let meta = `Avg ${sgd(avg)}/day`;
-    if(st.refundFor[k.id]) meta += ` · after ${sgd(st.refundFor[k.id])} refund`;
     if(k.id==='home' && st.inrHome) meta += ` · ${inr(st.inrHome)}`;
     h += `<div class="cat" data-cat="${k.id}"><div class="row"><div class="ic">${k.icon}</div><div style="min-width:0"><div class="nm">${k.name}</div><div class="meta">${meta}</div></div>
       <div class="amt num"><b>${sgd(spent)}</b><div class="meta">${b? (rem>=0? sgd(rem)+' left' : '<span class="neg">'+sgd(-rem)+' over</span>') : 'no budget'}</div></div></div>
@@ -515,7 +512,7 @@ function renderHome(){
 function entRow(e){
   const k = CAT[e.cat]||{name:e.cat,icon:'•'};
   const s = e.sub && k.subs ? k.subs.find(x=>x.id===e.sub) : null;
-  const title = s ? s.name : e.cat==='refund' ? 'Refund · '+(CAT[e.refFor]||CAT.medical).name : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : e.cat==='payback' ? 'Paid back to '+esc(e.friend||'friend') : e.cat==='borrowed' ? 'Borrowed from '+esc(e.friend||'friend') : k.name;
+  const title = s ? s.name : e.cat==='refund' ? 'Refund' : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : e.cat==='payback' ? 'Paid back to '+esc(e.friend||'friend') : e.cat==='borrowed' ? 'Borrowed from '+esc(e.friend||'friend') : k.name;
   const extra = [];
   if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
@@ -731,7 +728,7 @@ function renderAnalysis(){
     }
   }
   h += `<tr><td><b>Total</b></td><td class="num"><b>${sgd0(st.budgetTotal)}</b></td><td class="num"><b>${sgd(st.total)}</b></td><td class="num"><b>${st.budgetTotal?sgd(st.budgetTotal-st.total):'–'}</b></td><td class="num"><b>${sgd(st.avg)}</b></td><td></td></tr>`;
-  h += `</tbody></table></div><div class="small muted" style="margin-top:6px">Spending is shown after refunds (${sgd(st.refund)} received${Object.keys(st.refundFor).length?': '+Object.entries(st.refundFor).map(([f,x])=>CAT[f].name+' '+sgd(x)).join(', '):''}).</div></div>`;
+  h += `</tbody></table></div><div class="small muted" style="margin-top:6px">Categories show what you spent. Refunds (${sgd(st.refund)} received) are taken off the month total only.</div></div>`;
 
   // trend
   h += `<div class="card"><h2>Last 6 months — spent vs saved</h2>${trendChart()}</div>`;
@@ -1062,8 +1059,6 @@ function drawSheet(){
   const k = CAT[E.cat] || {};
   let h = `<div class="row" style="justify-content:space-between"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
   <label class="f">Category</label><div class="chips">${CATS.filter(c=>!c.friend).map(c=>`<button class="chip ${c.id===E.cat?'on':''}" data-c="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>${E.cat?'':'<div class="small muted" style="margin-top:6px">Choose a category</div>'}`;
-  if(k.income){ const rf = E.refFor||'medical';
-    h += `<label class="f">Refund for</label><div class="chips">${BUDGET_CATS.map(c=>`<button class="chip ${c.id===rf?'on':''}" data-rf="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>`; }
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.icon} ${s.name}</button>`;
     h += `<label class="f">Daily food</label><div class="chips">${k.subs.filter(s=>!s.group).map(chip).join('')}</div>
           <label class="f">Other food</label><div class="chips">${k.subs.filter(s=>s.group).map(chip).join('')}</div>`; }
@@ -1072,14 +1067,13 @@ function drawSheet(){
   if(E.cat==='home' && curCode()!==homeCode()) h += `<div class="grid2"><div><label class="f">Amount in ${homeCode()} (${curInfo(homeCode()).sym.trim()})</label><input class="in num" type="number" inputmode="decimal" id="eInr" value="${E.inr?Math.round(E.inr):''}" placeholder="0"></div>
     <div><label class="f">Rate: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
     <div class="small muted" id="rateNote" style="margin-top:6px">Enter either ${curCode()} or ${homeCode()} — the other is calculated.</div>`;
-  const ph = {subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
+  const ph = {refund:'e.g. insurance claim, shop return, cashback', subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
   h += `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label><input class="in" id="eNote" value="${esc(E.note)}" placeholder="${ph}" ${k.reason?'required':''}>
   <div class="btns" style="margin-top:14px"><button class="btn primary" id="eSave">Save</button>${E.id?'':'<button class="btn" id="eSaveMore">Save &amp; add another</button>'}${E.id?'<button class="btn danger" id="eDel">Delete</button>':''}</div>`;
   openSheet(h);
   const amt=$('#eAmt');
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; drawSheet(); });
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; drawSheet(); });
-  document.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{ readSheet(); E.refFor=b.dataset.rf; drawSheet(); });
   if(E.cat==='home' && $('#eInr')){
     const ie=$('#eInr'), re=$('#eRate');
     amt.oninput=()=>{ const r=+re.value; if(r&&amt.value) ie.value=Math.round(+amt.value*r); };
@@ -1113,11 +1107,10 @@ function commitEntry(more){
   if(!E.cat || !CAT[E.cat]){ toast('Choose a category'); return; }
   if(E.cat==='food' && !E.sub){ toast('Choose breakfast, lunch, dinner, coffee, groceries or delivery'); return; }
   if(!(amt>0)){ toast('Enter an amount'); $('#eAmt').focus(); return; }
-  if(CAT[E.cat].reason && !(E.note||'').trim()){ toast('Add a reason for this miscellaneous expense'); $('#eNote').focus(); return; }
+  if(CAT[E.cat].reason && !(E.note||'').trim()){ toast(E.cat==='refund'?'Add a reason for this refund':'Add a reason for this miscellaneous expense'); $('#eNote').focus(); return; }
   const now=Date.now();
   const rec = {id:E.id||uid(), date:E.date, cat:E.cat, amt, note:(E.note||'').trim(), upd:now, cr:E.cr||now};
   if(E.cat==='food') rec.sub=E.sub;
-  if(E.cat==='refund') rec.refFor=E.refFor||'medical';
   rec.cur = curCode();
   if(E.cat==='home'){ if(curCode()===homeCode()){ rec.rate=1; rec.inr=amt; } else { rec.rate=+E.rate||null; rec.inr= +E.inr || (rec.rate? Math.round(amt*rec.rate):null); } rec.homeCur=homeCode(); }
   DB.entries[rec.id]=rec; S.lastCat=E.cat;
@@ -1213,7 +1206,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v29';
+const APP_VERSION='v30';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
@@ -1303,7 +1296,7 @@ function download(blob,name){ const a=document.createElement('a'); a.href=URL.cr
 function exportCSV(ym){
   const es = Object.values(DB.entries).filter(e=>!e.del && (!ym||e.date.startsWith(ym))).sort((a,b)=>a.date.localeCompare(b.date));
   const q=v=>{ v=String(v??''); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; };
-  const rows=[['Date','Category','Food type','Amount '+curCode(),'Amount sent home','Home currency','Rate','Note']].concat(es.map(e=>[e.date,e.cat==='refund'?'Refund ('+(CAT[e.refFor]||CAT.medical).name+')':(CAT[e.cat]?.name||e.cat),e.sub?CAT.food.subs.find(s=>s.id===e.sub)?.name:'',(CAT[e.cat]?.income?-e.amt:e.amt).toFixed(2),e.cat==='home'?(e.inr||''):'',e.cat==='home'?(e.homeCur||'INR'):'',e.cat==='home'?(e.rate||''):'',e.note||'']));
+  const rows=[['Date','Category','Food type','Amount '+curCode(),'Amount sent home','Home currency','Rate','Note']].concat(es.map(e=>[e.date,e.cat==='refund'?'Refund':(CAT[e.cat]?.name||e.cat),e.sub?CAT.food.subs.find(s=>s.id===e.sub)?.name:'',(CAT[e.cat]?.income?-e.amt:e.amt).toFixed(2),e.cat==='home'?(e.inr||''):'',e.cat==='home'?(e.homeCur||'INR'):'',e.cat==='home'?(e.rate||''):'',e.note||'']));
   download(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}), `expenses-${slug(curProfile().name)}-${ym||'all'}.csv`);
 }
 
@@ -1455,7 +1448,7 @@ function loadSample(){
     if(days>=12) add(m+'-12','entertainment',15.5,{note:'Movie'});
     if(days>=14) add(m+'-14','medical',68,{note:'GP visit'});
     if(days>=19) add(m+'-19','shopping',46.9,{note:'Clothes'});
-    if(days>=22) add(m+'-22','refund',40,{note:'Insurance claim',refFor:'medical'});
+    if(days>=22) add(m+'-22','refund',40,{note:'Insurance claim'});
   };
   month(pm,dim(pm)); month(ym,today);
   const b={ac:45,misc:40,food:750,travel:120,temple:60,entertainment:60,medical:80,laundry:30,shopping:150,rent:900,home:1200};
