@@ -10,7 +10,7 @@
 <meta name="referrer" content="no-referrer">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
   color-scheme: light;
@@ -260,6 +260,9 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .hero .hpace small{display:block;font-size:11.5px;opacity:.85}
 .hero .hpace b{font-size:17px;font-weight:800}
 .hero .hnote{font-size:12px;margin-top:8px;font-weight:600}
+.hero .hbl{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;cursor:pointer}
+.stl.sub2{font-size:13px;color:var(--text-2);padding-left:10px}
+.tbl{border-collapse:collapse;font-size:14px}.tbl th{font-size:12px;color:var(--text-2);font-weight:600;text-align:right;padding:6px 4px;border-bottom:1px solid var(--border)}.tbl td{padding:7px 4px;border-bottom:1px solid var(--border)}.tbl td.num{text-align:right}
 .hero .hs{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;margin-top:8px;opacity:.9;flex-wrap:wrap}
 .qs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
 @media (min-width:560px){.qs{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -521,7 +524,8 @@ function balancesCard(){
 function accountsStrip(){
   const all=funds(), fs=all.filter(f=>!isEF(f)), efs=all.filter(f=>isEF(f)), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0), efTot=efs.reduce((a,f)=>a+liveBal(f),0);
   return `<div class="card" data-bal="1"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Spending accounts <span class="muted num" style="font-weight:600;font-size:14px">${used.length? bal(tot):''}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet()">Manage</button></span></h2>
-    <div class="acc">${efs.length?`<button class="ac" onclick="go('budget');S.fundOpen=true;renderBudget()"><div class="ai">🛟</div><div class="an">Emergency fund</div><div class="av2 num">${bal(efTot)}</div></button>`:''}${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(f.name)}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
+    <div class="acc">${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(f.name)}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
+${efs.length?`<button class="ac" onclick="go('budget');S.fundOpen=true;renderBudget()"><div class="ai">🛟</div><div class="an">Emergency fund</div><div class="av2 num">${bal(efTot)}</div></button>`:''}
     <button class="ac add" onclick="xferForm()" aria-label="Add money or transfer">⇄</button></div></div>`;
 }
 function balancesSheet(){
@@ -830,27 +834,28 @@ function renderHome(){
   const isCur = S.ym===curYM(), past = S.ym<curYM();
   h += monthEndCard();
   // ---- Hero: the one number that matters ----
-  const hasBud = st.budgetTotal>0;
-  const heroVal = hasBud? st.budgetLeft : st.salary? st.saved : -st.total;
-  const heroLbl = hasBud? (past?'Budget left at month end':'Left to spend') : st.salary? (past?'Money left at month end':'Money left this month') : 'Spent this month';
+  const hasBud = st.budgetTotal>0, money = isCur && anyBalanceSet();
+  const heroVal = money? moneyIn() : hasBud? st.budgetLeft : st.salary? st.saved : -st.total;
+  const heroLbl = money? 'Money left to spend' : hasBud? (past?'Budget left at month end':'Left to spend') : st.salary? (past?'Money left at month end':'Money left this month') : 'Spent this month';
   const base = hasBud? st.budgetTotal : st.salary;
   const pct = base? Math.max(0,Math.min(100, (hasBud? (st.budgetTotal-st.budgetLeft) : st.total)/base*100)) : 0;
   const pace = livingPace(st);
-  h += `<div class="hero ${heroVal<0&&base?'over':''}">
+  h += `<div class="hero ${heroVal<0&&(base||money)?'over':''}">
     <div class="ht"><span>${ymLabel(S.ym)}${isCur?' · '+st.left+' day'+(st.left===1?'':'s')+' left':''}</span><span>${st.salary?'Salary '+sgd0(st.salary):''}</span></div>
-    <div class="hl">${heroVal<0&&base? (hasBud?'Over budget by':'Overspent by') : heroLbl}</div>
-    <div class="hv num">${sgd(Math.abs(heroVal))}</div>
+    <div class="hl">${heroVal<0&&money? 'Accounts in the budget are short by' : heroVal<0&&base? (hasBud?'Over budget by':'Overspent by') : heroLbl}</div>
+    <div class="hv num"${money?' role="button" tabindex="0" onclick="moneySheet()" style="cursor:pointer"':''}>${sgd(Math.abs(heroVal))}${money?' <span style="font-size:15px;opacity:.75;font-weight:600">ⓘ</span>':''}</div>
+    ${money?`<div class="small" style="opacity:.85;margin-top:2px">In ${funds().filter(f=>!isEF(f)).map(f=>esc(f.name)).join(', ')||'no accounts'} · emergency fund kept aside</div>`:''}
     ${base?`<div class="hp"><i style="width:${pct}%"></i></div>`:''}
-    <div class="hs"><span class="num">${sgd(st.total)} spent${base?' of '+sgd0(base)+(hasBud?' budget':' salary'):''}</span></div>
-    ${st.days? `<div class="hpace"><div><small>Your daily avg · living</small><b class="num">${sgd(st.avgLiving)}</b></div>${isCur && pace.canDay!==null? `<div><small>Can spend / day · living</small><b class="num">${sgd(Math.max(0,pace.canDay))}</b></div>` : `<div><small>Living spent</small><b class="num">${sgd(pace.spent)}</b></div>`}</div>`:''}
-    ${isCur && pace.canDay!==null && st.days? `<div class="hnote">${pace.canDay-st.avgLiving>=0? '✓ On track: '+sgd(pace.canDay-st.avgLiving)+'/day under your living budget' : '⚠ '+sgd(st.avgLiving-pace.canDay)+'/day over your living budget'}</div>` : (isCur && !pace.budget && st.days? '<div class="hnote">Set budgets for food, travel and other daily costs to see your daily limit.</div>':'')}
+    <div class="hs"><span class="num">${sgd(st.total)} spent${base?' of '+sgd0(base)+(hasBud?' budget':' salary'):''}</span>${money&&hasBud?`<button class="hbl num" onclick="moneySheet()">Budget left ${st.budgetLeft<0?'−':''}${sgd(Math.abs(st.budgetLeft))} ›</button>`:''}</div>
+    ${st.days? `<div class="hpace" role="button" tabindex="0" onclick="paceSheet()" style="cursor:pointer"><div><small>Your daily avg · living</small><b class="num">${sgd(st.avgLiving)}</b></div>${isCur && pace.canDay!==null? `<div><small>Can spend / day · living</small><b class="num">${sgd(Math.max(0,pace.canDay))}</b></div>` : `<div><small>Living spent</small><b class="num">${sgd(pace.spent)}</b></div>`}</div>`:''}
+    ${isCur && pace.canDay!==null && st.days? `<div class="hnote" onclick="paceSheet()" style="cursor:pointer">${pace.canDay-st.avgLiving>=0? '✓ On track: '+sgd(pace.canDay-st.avgLiving)+'/day under your living budget' : '⚠ '+sgd(st.avgLiving-pace.canDay)+'/day over your living budget'} <span style="opacity:.75;font-weight:500">· tap for the math</span></div>` : (isCur && !pace.budget && st.days? '<div class="hnote">Set budgets for food, travel and other daily costs to see your daily limit.</div>':'')}
   </div>`;
   // ---- Quick stats: today and yesterday ----
-  const tile=(l,v,sub,cls='')=>`<div class="q"><div class="l">${l}</div><div class="v num ${cls}">${v}</div><div class="s">${sub}</div></div>`;
+  const tile=(l,v,sub,cls='',ds='')=>`<div class="q"${ds?` role="button" tabindex="0" onclick="daySheet('${ds}')" style="cursor:pointer"`:''}><div class="l">${l}${ds?' <span class="muted">›</span>':''}</div><div class="v num ${cls}">${v}</div><div class="s">${sub}</div></div>`;
   if(isCur){
     const y=new Date(); y.setDate(y.getDate()-1); const yd=dstr(y), t0=daySpend(today), t1=daySpend(yd);
     const lbl=(ds,x)=>{ const [Y,M,D]=ds.split('-').map(Number); return new Date(Y,M-1,D).toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'})+' · '+x.n+' entr'+(x.n===1?'y':'ies'); };
-    h += `<div class="qs">${tile('Today spent', sgd(t0.s), lbl(today,t0))}${tile('Yesterday spent', sgd(t1.s), lbl(yd,t1))}</div>`;
+    h += `<div class="qs">${tile('Today spent', sgd(t0.s), lbl(today,t0),'',today)}${tile('Yesterday spent', sgd(t1.s), lbl(yd,t1),'',yd)}</div>`;
   } else {
     h += `<div class="qs">${tile('Daily living avg', sgd(st.avgLiving), 'excl. bills &amp; misc')}${tile('Sent home', inr(st.inrHome), sgd(st.by.home))}</div>`;
   }
@@ -1226,6 +1231,49 @@ function trendChart(){
 }
 
 /* ============ BUDGET ============ */
+/* Money left = balances of the accounts in this month's budget */
+function moneyIn(){ return r2(funds().filter(f=>!isEF(f)).reduce((a,f)=>a+liveBal(f),0)); }
+function moneySheet(){
+  const ym=curYM(), st=stats(ym), mon=ymLabel(ym,true).split(' ')[0], inB=funds().filter(f=>!isEF(f)), efs=funds().filter(f=>isEF(f));
+  const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`, sg=v=>(v<0?'−':'+')+sgd(Math.abs(v));
+  const B=st.cfg.budgets||{}, budgeted=EXP_CATS.filter(k=>(+B[k.id]||0)>0).reduce((a,k)=>a+(st.by[k.id]||0),0), unb=r2(st.gross-budgeted);
+  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), have=moneyIn(), diff=r2(have-calc);
+  let h=`<div class="sheettop"><h3>Money left to spend</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="card" style="margin-top:10px"><h2>In the ${mon} budget</h2>${inB.map(f=>ln(esc(f.icon||'💰')+' '+esc(f.name),sgd(liveBal(f)))).join('')||'<div class="small muted">No accounts in the budget.</div>'}
+      ${ln('Money left to spend',sgd(have),'tot')}
+      <div class="small muted" style="margin-top:8px">Emergency fund kept aside: ${efs.map(f=>esc(f.name)+' '+sgd(liveBal(f))).join(', ')||'none'} = <b class="num">${sgd(efKept(ym))}</b>. Change which accounts count on the Budget tab.</div></div>
+    <div class="card"><h2>Why “Budget left” is different</h2>
+      ${ln('Budget left <span class="small muted">budgets − spending in those categories</span>',sgd(st.budgetLeft))}
+      ${ln(plan<0?'Budgets are more than salary + savings used':'Salary + savings used is more than budgets',sg(plan),'sub2')}
+      ${st.refund?ln('Refunds (not taken off any budget)',sg(st.refund),'sub2'):''}
+      ${st.by.repaid?ln('Friends paid back',sg(st.by.repaid),'sub2'):''}
+      ${unb?ln('Spending with no budget (subscriptions, friends…)',sg(-unb),'sub2'):''}
+      ${ln('Money left (worked out)',sgd(calc),'tot')}
+      ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">Usually a payment or refund logged without “Paid with”, or a balance that needs updating.</div>`}
+      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + savings used ${sgd(st.extra)} + refunds ${sgd(st.refund)} + friends paid back ${sgd(st.by.repaid||0)} − spending ${sgd(st.gross)} = ${sgd(calc)}.</div></div>`;
+  openSheet(h);
+}
+/* How the two living-pace figures are worked out */
+function paceSheet(){
+  const ym=S.ym, st=stats(ym), cats=LIVING_CATS(), B=st.cfg.budgets||{}, p=livingPace(st), cur=ym===curYM();
+  const rows=cats.map(k=>`<tr><td>${k.icon} ${k.name}</td><td class="num">${sgd(st.net[k.id]||0)}</td><td class="num">${+B[k.id]?sgd0(+B[k.id]):'—'}</td></tr>`).join('');
+  openSheet(`<div class="sheettop"><h3>Daily living pace</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="small muted" style="margin-top:6px">Daily living = everyday spending. Rent, AC, subscriptions, money sent home, Miscellaneous, friends and refunds are left out.</div>
+    <table class="tbl" style="width:100%;margin-top:10px"><thead><tr><th style="text-align:left">Category</th><th>Spent</th><th>Budget</th></tr></thead><tbody>${rows}
+      <tr style="font-weight:800"><td>Total</td><td class="num">${sgd(p.spent)}</td><td class="num">${sgd0(p.budget)}</td></tr></tbody></table>
+    <div class="card" style="margin-top:12px"><h2>Your daily avg · living</h2><div class="num" style="font-size:15px">${sgd(p.spent)} ÷ ${st.days} day${st.days===1?'':'s'} so far = <b>${sgd(st.avgLiving)}</b> a day</div></div>
+    ${cur&&p.canDay!==null?`<div class="card"><h2>Can spend / day · living</h2><div class="num" style="font-size:15px">(${sgd0(p.budget)} − ${sgd(p.spent)}) ÷ ${st.left} day${st.left===1?'':'s'} left (incl. today) = <b>${sgd(Math.max(0,p.canDay))}</b> a day</div>
+      <div class="small ${p.canDay>=st.avgLiving?'pos':'neg'}" style="margin-top:8px;font-weight:600">${p.canDay>=st.avgLiving?'On track: you spend '+sgd(p.canDay-st.avgLiving)+'/day less than you can.':'Over pace: you spend '+sgd(st.avgLiving-p.canDay)+'/day more than you can.'}</div></div>`:''}`);
+}
+/* What was spent on one day */
+function daySheet(ds){
+  const es=Object.values(DB.entries).filter(e=>!e.del && e.date===ds && CAT[e.cat] && !CAT[e.cat].track).sort((a,b)=>(b.cr||0)-(a.cr||0));
+  const sp=es.filter(e=>!CAT[e.cat].income), inc=es.filter(e=>CAT[e.cat].income), t=daySpend(ds);
+  openSheet(`<div class="sheettop"><h3>${dayLabel(ds)} · ${sgd(t.s)}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="list" style="margin-top:10px">${sp.map(entRow).join('')||'<div class="empty">Nothing spent on this day.</div>'}</div>
+    ${inc.length?`<div class="small muted" style="margin:12px 2px 6px;font-weight:700">Money in (not counted as spending)</div><div class="list">${inc.map(entRow).join('')}</div>`:''}
+    <div class="btns" style="margin-top:12px"><button class="btn primary" onclick="closeSheet();openEntry(null,'${ds}')">+ Add on this day</button></div>`);
+}
 /* Budget tab: every source of money, ticked = used for this month's budget, not ticked = emergency fund */
 function sourcesCard(){
   const ym=S.ym, mon=ymLabel(ym,true).split(' ')[0], all=funds(), us=useSet(ym), cur=ym>=curYM(), end=ym+'-'+pad(dim(ym));
@@ -1641,7 +1689,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v36';
+const APP_VERSION='v37';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
