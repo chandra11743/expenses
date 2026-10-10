@@ -137,6 +137,8 @@ input.in:focus,select.in:focus{border-color:var(--accent)}
 .bigamt{font-size:26px;font-weight:650;text-align:right}
 .day{margin-bottom:12px}
 .day .dh{display:flex;justify-content:space-between;font-size:13px;color:var(--text-2);font-weight:600;padding:0 4px 6px}
+.eye{border:0;background:var(--surface-2);color:var(--text-2);border-radius:10px;width:36px;height:36px;display:inline-grid;place-items:center;cursor:pointer;flex:none}
+.eye svg{width:20px;height:20px}
 .ent{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--border);cursor:pointer}
 .ent:first-child{border-top:0}
 .ent:hover{background:var(--surface-2)}
@@ -399,19 +401,28 @@ function acctTx(id){
 function liveBal(f){ return r2((+f.amt||0) + acctTx(f.id).filter(x=>x.after).reduce((a,x)=>a+x.d,0)); }
 function setBalance(id,v){ saveFunds(allFunds().map(f=>f.id===id?{...f,amt:r2(+v||0),at:Date.now()}:f)); }
 function payChips(sel, attr, label){ return `<label class="f">${label}</label><div class="chips">${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`; }
+/* Balances are hidden until the eye is tapped (remembered on this device only) */
+const EYEKEY='dailyExpenseTracker.showBal';
+function showBal(){ try{ return localStorage.getItem(EYEKEY)==='1'; }catch(e){ return false; } }
+function toggleBal(ev){ if(ev) ev.stopPropagation(); try{ localStorage.setItem(EYEKEY, showBal()?'0':'1'); }catch(e){} render(); if($('#sheetBg').classList.contains('open') && $('#bEye')) balancesSheet(); }
+const HIDDEN='S$ ••••';
+const bal = v => showBal()? sgd(v) : HIDDEN;
+const eyeBtn = id => `<button class="eye" id="${id}" onclick="toggleBal(event)" aria-label="${showBal()?'Hide balances':'Show balances'}" title="${showBal()?'Hide balances':'Show balances'}">${showBal()
+  ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+  : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.1-5.9M9.9 5.2A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>'}</button>`;
 function balancesCard(){
   const fs=funds(), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0);
   return `<div class="card fcard" data-bal="1" onclick="balancesSheet()" style="cursor:pointer"><div class="row" style="justify-content:space-between;gap:10px">
-    <div class="row" style="gap:10px"><div class="ic" style="font-size:22px">💳</div><div><div style="font-weight:650">Balances</div>
-    <div class="small muted">${used.length? used.map(f=>esc(f.name)+' '+sgd0(liveBal(f))).join(' · ') : 'Set your account balances to see what’s left in each'}</div></div></div>
-    <div class="num" style="font-weight:700;font-size:18px">${sgd(tot)}</div></div></div>`;
+    <div class="row" style="gap:10px;min-width:0"><div class="ic" style="font-size:22px">💳</div><div style="min-width:0"><div style="font-weight:650">Balances</div>
+    <div class="small muted">${!used.length? 'Set your account balances to see what’s left in each' : showBal()? used.map(f=>esc(f.name)+' '+sgd0(liveBal(f))).join(' · ') : used.map(f=>esc(f.name)).join(' · ')}</div></div></div>
+    <div class="row" style="gap:8px"><div class="num" style="font-weight:700;font-size:18px">${bal(tot)}</div>${eyeBtn('hEye')}</div></div></div>`;
 }
 function balancesSheet(){
   const ym=curYM();
   const row=f=>{ const paid=acctTx(f.id).filter(x=>x.d<0 && x.e.date.startsWith(ym) && x.e.cat!=='xfer').reduce((a,x)=>a-x.d,0);
     return `<div class="ent" data-acct="${esc(f.id)}" style="cursor:pointer"><div class="ic">${esc(f.icon||'💰')}</div><div class="t"><div>${esc(f.name)}${isEF(f)?' <span class="small muted">· emergency fund</span>':''}</div><div>${paid?'Paid '+sgd(paid)+' this month':(f.at?'Balance set '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'Balance not set yet')}</div></div>
-      <div class="num" style="font-weight:700">${sgd(liveBal(f))}</div></div>`; };
-  openSheet(`<div class="row" style="justify-content:space-between"><h3>💳 Balances</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+      <div class="num" style="font-weight:700">${bal(liveBal(f))}</div></div>`; };
+  openSheet(`<div class="row" style="justify-content:space-between"><h3>💳 Balances</h3><div class="row" style="gap:8px">${eyeBtn('bEye')}<button class="btn sm" onclick="closeSheet()">Close</button></div></div>
     <div class="small muted">Payments you log with “Paid with” come off these balances. Tap an account to update its balance from your bank app or to see its payments.</div>
     <div class="btns" style="margin-top:10px"><button class="btn primary" id="bXfer">+ Add money / transfer</button></div>
     <div class="list" style="margin-top:10px">${funds().map(row).join('')}</div>
@@ -576,7 +587,6 @@ function renderHome(){
     <div class="kpi"><div class="l">Sent home</div><div class="v num">${inr(st.inrHome)}</div><div class="s">${sgd(st.by.home)}</div></div>
   </div></div>`;
 
-  h += balancesCard() + friendsCard('lend') + friendsCard('owe');
   h += `<div class="card"><h2>Categories</h2>`;
   for(const k of CATS){
     if(k.friend || k.track) continue;
@@ -607,6 +617,8 @@ function renderHome(){
     h += `</div>`;
   }
   h += `</div>`;
+
+  h += balancesCard() + splitCard();
 
   // recent
   const recent = st.es.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.cr||0)-(a.cr||0)).slice(0,6);
@@ -1077,6 +1089,13 @@ function friendLedger(dir='lend'){
   return Object.values(map).map(f=>({...f, owed:r2(f.lent-f.back), items:f.items.sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0))}))
     .sort((a,b)=>b.owed-a.owed || a.name.localeCompare(b.name));
 }
+function splitCard(){
+  const row=dir=>{ const T=FTX[dir], open=friendLedger(dir).filter(f=>f.owed>0.004), tot=open.reduce((a,f)=>a+f.owed,0);
+    return `<div class="ent fcard" data-fdir="${dir}" onclick="friendsSheet('${dir}')"><div class="ic">${T.icon}</div>
+      <div class="t"><div>${T.title}</div><div>${open.length? open.slice(0,3).map(f=>esc(f.name)+' '+sgd0(f.owed)).join(' · ')+(open.length>3?' · +'+(open.length-3)+' more':'') : T.empty}</div></div>
+      <div class="num" style="font-weight:700">${sgd(tot)}</div></div>`; };
+  return `<div class="card"><h2>🤝 Split with friends</h2><div class="list" style="border:0">${row('lend')}${row('owe')}</div></div>`;
+}
 function friendsCard(dir='lend'){
   const T=FTX[dir], L=friendLedger(dir), open=L.filter(f=>f.owed>0.004), tot=open.reduce((a,f)=>a+f.owed,0);
   return `<div class="card fcard" data-fdir="${dir}" onclick="friendsSheet('${dir}')" style="cursor:pointer"><div class="row" style="justify-content:space-between;gap:10px">
@@ -1323,7 +1342,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v33';
+const APP_VERSION='v34';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
