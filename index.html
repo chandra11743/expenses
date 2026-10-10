@@ -300,6 +300,7 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .datechips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .datechips input[type=date]{width:auto;padding:7px 10px;border-radius:999px;font-size:13px}
 .bigsave{width:100%;padding:14px;font-size:16px;border-radius:14px}
+.actrow{display:flex;gap:10px;margin-top:16px}.actrow .btn{padding:14px 10px;font-size:16px;border-radius:14px;justify-content:center;min-width:0}.actrow .danger{flex:1;border-color:var(--bad)}.actrow .primary{flex:2}
 .sheettop{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .headbtn{border:0;background:transparent;cursor:pointer;color:var(--text-2);font-size:13px;display:flex;align-items:center;padding:6px 8px;border-radius:8px}
 .headbtn:hover{background:var(--surface-2)}
@@ -600,8 +601,7 @@ function xferForm(src, back, origin, preset){
     <div id="xPrev" class="kpi" style="margin-top:12px;display:none"></div>
     <label class="f">Date</label><div class="datechips"><button class="chip" data-xd="${todayStr()}">Today</button><button class="chip" data-xd="${yest}">Yesterday</button><input class="in" type="date" id="xDate" value="${e.date}" aria-label="Pick a date"></div>
     <label class="f" for="xNote">Note (optional)</label><input class="in" id="xNote" value="${esc(e.note)}" placeholder="e.g. Oct salary, ATM, NETS top-up">
-    <div style="margin-top:16px"><button class="btn primary bigsave" id="xSave">Save</button></div>
-    ${e.id?'<div class="btns" style="margin-top:8px;justify-content:center"><button class="btn danger" id="xDel">Delete</button></div>':''}`);
+    ${e.id? '<div class="actrow"><button class="btn danger" id="xDel">Delete</button><button class="btn primary" id="xSave">Save changes</button></div>' : '<div style="margin-top:16px"><button class="btn primary bigsave" id="xSave">Save</button></div>'}`);
   const amt=$('#xAmt');
   const upd=()=>{ const a=r2(parseFloat(amt.value)||0), box=$('#xPrev'), lines=[];
     const line=(id,d)=>{ const f=funds().find(x=>x.id===id); if(!f) return; const b=liveBal(f); lines.push(`<div style="display:flex;justify-content:space-between;font-size:13px"><span class="muted">${esc(f.name)}</span><span class="num">${bal(b)} → <b>${bal(b+d)}</b></span></div>`); };
@@ -1487,7 +1487,7 @@ function friendForm(kind, name, src, amt){
     <div><label class="f">${first?T.amtA:T.amtB} (${curCode()})</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="ffAmt" value="${e.amt}" placeholder="0.00"></div></div>
     <label class="f" for="ffNote">${first?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${first?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
     ${payChips(pay, 'data-ffpay', MONEY_IN.has(e.cat)? 'Received in' : 'Paid with')}
-    <div class="btns" style="margin-top:14px"><button class="btn primary" id="ffSave">Save</button>${e.id?'<button class="btn danger" id="ffDel">Delete</button>':''}</div>`;
+    ${e.id? '<div class="actrow"><button class="btn danger" id="ffDel">Delete</button><button class="btn primary" id="ffSave">Save changes</button></div>' : '<div style="margin-top:16px"><button class="btn primary bigsave" id="ffSave">Save</button></div>'}`;
   openSheet(h);
   $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend, dir) : friendsSheet(dir);
   document.querySelectorAll('[data-ffpay]').forEach(b=>b.onclick=()=>{ pay = pay===b.dataset.ffpay? '' : b.dataset.ffpay; document.querySelectorAll('[data-ffpay]').forEach(x=>x.classList.toggle('on',x.dataset.ffpay===pay)); });
@@ -1515,6 +1515,9 @@ function closeSheet(){
 function dismissSheet(){ E=null; S.calOpen=false; $('#sheetBg').classList.remove('open'); }
 $('#sheetBg').addEventListener('click',ev=>{ if(ev.target.id==='sheetBg') dismissSheet(); });
 document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') dismissSheet(); });
+/* Phone keyboards: show "Done" and close the keyboard when it is pressed (never saves by itself; budget boxes save as they lose focus) */
+document.addEventListener('focusin',ev=>{ const t=ev.target; if(t && t.tagName==='INPUT' && !t.hasAttribute('enterkeyhint')) t.setAttribute('enterkeyhint','done'); });
+document.addEventListener('keydown',ev=>{ const t=ev.target; if(ev.key!=='Enter' || !t || t.tagName!=='INPUT' || ev.isComposing) return; if(!t.closest('#sheet, main, .tabpanel, [id^="tab-"]')) return; ev.preventDefault(); t.blur(); });
 
 function openEntry(id, presetDate){
   const src = id? DB.entries[id] : null;
@@ -1544,8 +1547,8 @@ function drawSheet(){
   h += `<label class="f">${k.income? 'Received in' : 'Paid with'}</label><div class="hscroll">${funds().map(f=>`<button class="chip ${f.id===E.pay?'on':''}" data-pay="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`;
   const ph = {refund:'e.g. insurance claim, shop return, cashback', subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
   h += `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label><input class="in" id="eNote" value="${esc(E.note)}" placeholder="${ph}" ${k.reason?'required':''}>
-  <div style="margin-top:16px"><button class="btn primary bigsave" id="eSave">${E.id?'Save changes':'Save'}</button></div>
-  <div class="btns" style="margin-top:8px;justify-content:center">${E.id?'<button class="btn danger" id="eDel">Delete</button>':'<button class="btn" id="eSaveMore">Save &amp; add another</button>'}</div>`;
+  ${E.id? '<div class="actrow"><button class="btn danger" id="eDel">Delete</button><button class="btn primary" id="eSave">Save changes</button></div>'
+    : '<div style="margin-top:16px"><button class="btn primary bigsave" id="eSave">Save</button></div><div class="btns" style="margin-top:8px;justify-content:center"><button class="btn" id="eSaveMore">Save &amp; add another</button></div>'}`;
   openSheet(h);
   const amt=$('#eAmt');
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; drawSheet(); });
@@ -1689,7 +1692,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v37';
+const APP_VERSION='v38';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
