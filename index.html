@@ -244,6 +244,9 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .tgl:checked{background:var(--accent)} .tgl:checked::after{left:21px}
 .efrow label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);margin-top:4px;cursor:pointer}
 .efrow input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.efrow input.tgl{width:44px;height:26px;margin:0}
+.efrow .lnk,.srcb{background:none;border:0;padding:0;cursor:pointer;font:inherit}
+.srcb{display:flex;gap:10px;align-items:center;min-width:0;flex:1;text-align:left;color:var(--text)}
 /* ---- v35 redesign components ---- */
 .hero{background:linear-gradient(135deg,var(--hero-1),var(--hero-2));color:#fff;border-radius:24px;padding:18px 18px 16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(26,79,160,.28)}
 .hero.over{--hero-1:#d14343;--hero-2:#8f2424;box-shadow:0 10px 30px rgba(160,36,36,.25)}
@@ -453,7 +456,14 @@ const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'
 function allFunds(){ const own=(DB.settings.funds||[]); if(!own.length) return DEFAULT_FUNDS.map(f=>({...f}));
   const have=new Set(own.map(f=>f.id)); return [...own, ...DEFAULT_FUNDS.filter(d=>!have.has(d.id)).map(f=>({...f}))]; }
 const fkey = n => { const k=String(n||'').toLowerCase().replace(/[^a-z0-9]/g,''); return k.startsWith('ezlink')? 'ezlink' : k; };
-const isEF = f => f.ef ?? (f.id==='cash' || f.id==='dbs');   // only DBS Bank and Cash are emergency-fund money (plus accounts added there)
+const isEFDefault = f => f.ef ?? (f.id==='cash' || f.id==='dbs');   // starting choice before any month was set: DBS Bank and Cash kept aside
+/* Accounts whose money is used for a month's budget (ticked on the Budget tab). Every other account is emergency fund.
+   A month without its own choice uses the last choice made. */
+function useSet(ym){ ym=(typeof ym==='string'&&ym)||curYM();
+  const ks=Object.keys(DB.months).filter(k=>k<=ym && DB.months[k] && !DB.months[k].del && Array.isArray(DB.months[k].useIn)).sort();
+  if(ks.length) return new Set(DB.months[ks[ks.length-1]].useIn);
+  return new Set(funds().filter(f=>!isEFDefault(f)).map(f=>f.id)); }
+const isEF = (f, ym) => !useSet(typeof ym==='string'? ym : undefined).has(f.id);
 // Visible accounts. Removed ones are hidden; a duplicate with the same name (e.g. two EZ-Link cards) is left out if it has no balance or payments.
 function funds(){
   const list=allFunds().filter(f=>!f.hidden), used=new Set();
@@ -467,7 +477,14 @@ function funds(){
 }
 function fundsTotal(){ return funds().reduce((a,f)=>a+liveBal(f),0); }
 // Money added to a month's budget = the balance at the moment it was ticked (so later spending isn't counted twice)
-function fundsIncluded(ym){ const c=cfg(ym), ids=new Set(c.fundsIn||[]), snap=c.fundsAmt||{}; return funds().filter(f=>ids.has(f.id) && isEF(f)).reduce((a,f)=>a+(snap[f.id]!=null? +snap[f.id] : (+f.amt||0)),0); }
+/* Balance of an account at the end of a day = balance now minus everything logged with it after that day */
+function balOn(f, ds){ return r2(liveBal(f) - acctTx(f.id).filter(x=>x.e.date>ds).reduce((a,x)=>a+x.d,0)); }
+/* Emergency fund for a month: accounts not ticked for that month (balance now, or at the month's end for past months) */
+function efKept(ym){ const cur=ym>=curYM(), end=ym+'-'+pad(dim(ym));
+  return r2(funds().filter(f=>isEF(f,ym)).reduce((a,f)=>a+(cur? liveBal(f) : balOn(f,end)),0)); }
+/* Savings used in a month's budget = savings brought into the month (opening balance) − what stays in the emergency fund.
+   Negative = some of this month's money was put aside. With every payment logged, Money left this month = balance of the ticked accounts. */
+function fundsIncluded(ym){ const op=openingOf(ym); if(op===null) return 0; return r2(op - efKept(ym)); }
 /* ============ Accounts / payment methods: balance = entered balance ± everything logged after it was entered ============ */
 const MONEY_IN = new Set(['refund','repaid','borrowed']);
 const PAYKEY='dailyExpenseTracker.lastPay';
@@ -502,9 +519,9 @@ function balancesCard(){
     <div class="row" style="gap:8px"><div class="num" style="font-weight:700;font-size:18px">${bal(tot)}</div>${eyeBtn('hEye')}</div></div></div>`;
 }
 function accountsStrip(){
-  const fs=funds(), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0);
-  return `<div class="card" data-bal="1"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Accounts <span class="muted num" style="font-weight:600;font-size:14px">${used.length? bal(tot):''}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet()">Manage</button></span></h2>
-    <div class="acc">${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(f.name)}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
+  const all=funds(), fs=all.filter(f=>!isEF(f)), efs=all.filter(f=>isEF(f)), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0), efTot=efs.reduce((a,f)=>a+liveBal(f),0);
+  return `<div class="card" data-bal="1"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Spending accounts <span class="muted num" style="font-weight:600;font-size:14px">${used.length? bal(tot):''}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet()">Manage</button></span></h2>
+    <div class="acc">${efs.length?`<button class="ac" onclick="go('budget');S.fundOpen=true;renderBudget()"><div class="ai">🛟</div><div class="an">Emergency fund</div><div class="av2 num">${bal(efTot)}</div></button>`:''}${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(f.name)}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
     <button class="ac add" onclick="xferForm()" aria-label="Add money or transfer">⇄</button></div></div>`;
 }
 function balancesSheet(){
@@ -514,21 +531,21 @@ function balancesSheet(){
     return `<div class="ent" data-acct="${esc(f.id)}" style="cursor:pointer"><div class="ic">${esc(f.icon||'💰')}</div><div class="t"><div>${esc(f.name)}</div><div>${paid?'Paid '+sgd(paid)+' this month':(f.at?'Balance set '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'Balance not set yet')}</div></div>
       <div class="num" style="font-weight:700">${bal(liveBal(f))}</div></div>`; };
   openSheet(`<div class="sheettop"><h3>Accounts</h3><div class="row" style="gap:8px">${eyeBtn('bEye')}<button class="btn sm" onclick="closeSheet()">Close</button></div></div>
-    <div class="kpi" style="margin-top:10px"><div class="l">Total in all accounts</div><div class="v num" style="font-size:26px">${bal(tot)}</div><div class="s">Everyday ${bal(totE)} · Emergency fund ${bal(totF)}</div></div>
+    <div class="kpi" style="margin-top:10px"><div class="l">Total in all accounts</div><div class="v num" style="font-size:26px">${bal(tot)}</div><div class="s">In the budget ${bal(totE)} · Emergency fund ${bal(totF)}</div></div>
     <div class="btns" style="margin-top:10px"><button class="btn primary" id="bXfer" style="flex:1">⇄ Transfer</button><button class="btn" id="bAddT" style="flex:1">+ Add account</button></div>
-    <div class="small muted" style="margin:14px 2px 6px;font-weight:700">Everyday</div>
-    <div class="list">${every.map(row).join('')||'<div class="empty">No everyday accounts.</div>'}</div>
+    <div class="small muted" style="margin:14px 2px 6px;font-weight:700">Spending money · in the ${ymLabel(ym,true)} budget</div>
+    <div class="list">${every.map(row).join('')||'<div class="empty">No accounts in the budget. Choose them on the Budget tab.</div>'}</div>
     <div class="small muted" style="margin:14px 2px 6px;font-weight:700">Emergency fund</div>
     <div class="list">${ef.map(row).join('')||'<div class="empty">No emergency fund accounts.</div>'}</div>
     <div id="bAddBox" class="hidden" style="margin-top:12px"><div class="grid2"><div><label class="f" for="bNew">Name</label><input class="in" id="bNew" placeholder="e.g. POSB, Wise" autocomplete="off"></div>
       <div><label class="f" for="bNewAmt">Current balance (${curCode()})</label><input class="in num" id="bNewAmt" type="number" inputmode="decimal" step="0.01" placeholder="0.00"></div></div>
-      <div class="btns" style="margin-top:8px"><button class="btn primary" id="bAdd">Add everyday account</button></div></div>
-    <div class="small muted" style="margin-top:12px">Payments you log with “Paid with” come off these balances. Tap an account to update its balance, rename or remove it, or see its payments.</div>`);
+      <div class="btns" style="margin-top:8px"><button class="btn primary" id="bAdd">Add account</button></div></div>
+    <div class="small muted" style="margin-top:12px">Payments you log with “Paid with” come off these balances. Tap an account to update its balance, rename or remove it, or see its payments. Choose which accounts are in the budget on the Budget tab.</div>`);
   $('#bXfer').onclick=()=>xferForm();
   $('#bAddT').onclick=()=>{ $('#bAddBox').classList.remove('hidden'); $('#bNew').focus(); };
   $('#bAdd').onclick=()=>{ const n=($('#bNew').value||'').trim(); if(!n){ toast('Type a name for the account'); $('#bNew').focus(); return; }
     if(/^\s*[\d.,]+\s*$/.test(n)){ toast('That looks like an amount. Put the name here and the amount in the balance box.'); $('#bNew').focus(); return; }
-    const a=parseFloat($('#bNewAmt').value), now=Date.now(); saveFunds([...allFunds(),{id:'f'+now.toString(36),name:n,icon:'💳',amt:isNaN(a)?0:r2(a),at:isNaN(a)?undefined:now,ef:false}]); render(); toast('Added '+n); balancesSheet(); };
+    const a=parseFloat($('#bNewAmt').value), now=Date.now(), nid='f'+now.toString(36), us=useSet(curYM()); saveFunds([...allFunds(),{id:nid,name:n,icon:'💳',amt:isNaN(a)?0:r2(a),at:isNaN(a)?undefined:now,ef:false}]); us.add(nid); setMonthFlag(curYM(),{useIn:[...us]}); reOpening(); render(); toast('Added '+n); balancesSheet(); };
   document.querySelectorAll('[data-acct]').forEach(r=>r.onclick=()=>accountSheet(r.dataset.acct));
 }
 function txTitle(e,id){
@@ -542,14 +559,14 @@ function accountSheet(id, back){
   const item=x=>`<div class="ent" data-tx="${esc(x.e.id)}" style="cursor:pointer;${x.after?'':'opacity:.55'}"><div class="ic">${x.e.cat==='xfer'?'🔁':(CAT[x.e.cat]?.icon||'•')}</div>
     <div class="t"><div>${txTitle(x.e,id)}${x.e.note?' · '+esc(x.e.note):''}</div><div>${dayLabel(x.e.date)}${x.after?'':' · already in the balance you entered'}</div></div>
     <div class="num ${x.d>0?'pos':''}" style="font-weight:600">${x.d>0?'+':'−'}${sgd(Math.abs(x.d))}</div></div>`;
-  openSheet(`<div class="sheettop"><h3>${esc(f.icon||'💰')} ${esc(f.name)}</h3><button class="btn sm" id="aBack">${back==='ef'?'Back':'All accounts'}</button></div>
+  openSheet(`<div class="sheettop"><h3>${esc(f.icon||'💰')} ${esc(f.name)}</h3><button class="btn sm" id="aBack">${back==='ef'||back==='budget'?'Back':'All accounts'}</button></div>
     <div class="kpis" style="margin-top:8px"><div class="kpi"><div class="l">Balance now</div><div class="v num">${sgd(liveBal(f))}</div><div class="s">${f.at?'set to '+sgd(+f.amt||0)+' on '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'not set yet'}</div></div>
       <div class="kpi"><div class="l">Paid this month</div><div class="v num">${sgd(paid)}</div><div class="s">${ymLabel(ym,true)}${isEF(f)?' · emergency fund':''}</div></div></div>
     <div class="grid2"><div><label class="f" for="aName">Name</label><input class="in" id="aName" value="${esc(f.name)}" autocomplete="off"></div>
       <div><label class="f" for="aBal">Balance in your bank app</label><input class="in num" id="aBal" type="number" inputmode="decimal" step="0.01" value="${liveBal(f)}"></div></div>
     <div class="btns" style="margin-top:10px"><button class="btn primary" id="aSave">Save</button><button class="btn" id="aXfer">⇄ Transfer</button><button class="btn danger" id="aDel">Delete account</button></div>
     ${tx.length?`<div class="list" style="margin-top:12px">${tx.slice(0,60).map(item).join('')}</div>`:'<div class="empty" style="margin-top:12px">No payments with this account yet.</div>'}`);
-  const goBack=()=> back==='ef'? efSheet() : balancesSheet();
+  const goBack=()=> back==='ef'? efSheet() : back==='budget'? closeSheet() : balancesSheet();
   $('#aBack').onclick=goBack;
   $('#aSave').onclick=()=>{ const n=($('#aName').value||'').trim(), v=parseFloat($('#aBal').value);
     if(!n){ toast('The account needs a name'); $('#aName').focus(); return; }
@@ -558,7 +575,7 @@ function accountSheet(id, back){
     saveFunds(allFunds().map(x=>x.id!==id? x : (changedBal? {...x,name:n,amt:r2(v),at:Date.now()} : {...x,name:n})));
     render(); toast(changedBal? n+' balance set to '+sgd(v) : 'Saved'); accountSheet(id, back); };
   $('#aXfer').onclick=()=>xferForm(null,id);
-  confirmBtn($('#aDel'),'Tap again to delete',()=>{ saveFunds(allFunds().map(x=>x.id===id?{...x,hidden:true}:x)); cleanFundsIn(); render(); toast(f.name+' deleted'); goBack(); });
+  confirmBtn($('#aDel'),'Tap again to delete',()=>{ saveFunds(allFunds().map(x=>x.id===id?{...x,hidden:true}:x)); cleanFundsIn(); reOpening(); render(); toast(f.name+' deleted'); goBack(); });
   document.querySelectorAll('[data-tx]').forEach(r=>r.onclick=()=>{ const e=DB.entries[r.dataset.tx]; if(!e) return; if(e.cat==='xfer') xferForm(e,id); else openEntry(e.id); });
 }
 /* Transfer between accounts (also: add money from outside, move savings). Never counted as spending. */
@@ -624,8 +641,8 @@ function setMonthFlag(ym, obj){
   DB.months[ym]={...cur, ...obj, upd:Date.now()}; save();
 }
 /* Money in and out of your accounts in a month (transfers between your own accounts don't count) */
-function flows(ym){
-  const st=stats(ym); let borrowed=0;
+function flows(ym, lite){
+  const st=stats(ym, lite); let borrowed=0;
   for(const e of Object.values(DB.entries)) if(!e.del && e.cat==='borrowed' && e.date.startsWith(ym)) borrowed+=e.amt;
   const salary=st.salary, refunds=st.refund, repaid=st.by.repaid||0, spending=r2(st.gross);
   return {st, salary, refunds, repaid, borrowed:r2(borrowed), spending, net:r2(salary+refunds+repaid+borrowed-spending)};
@@ -636,14 +653,16 @@ function anyBalanceSet(){ return funds().some(f=>f.at); }
 function openingOf(ym, depth=0){
   const m=DB.months[ym];
   if(m && !m.del && typeof m.opening==='number') return m.opening;
-  if(depth<24){ const pm=addMonths(ym,-1), po=openingOf(pm, depth+1); if(po!==null) return r2(po+flows(pm).net); }
+  if(depth<24){ const pm=addMonths(ym,-1), po=openingOf(pm, depth+1); if(po!==null) return r2(po+flows(pm,true).net); }
   return null;
 }
 function ensureOpening(){
   const ym=curYM(); if(!anyBalanceSet()) return;
   if(openingOf(ym)!==null) return;
-  setMonthFlag(ym,{opening: r2(actualTotal()-flows(ym).net), openingAuto:true, openingAt:Date.now()});
+  setMonthFlag(ym,{opening: r2(actualTotal()-flows(ym,true).net), openingAuto:true, openingAt:Date.now()});
 }
+/* When an account is added or deleted, a worked-out (not typed) opening balance is worked out again */
+function reOpening(){ const ym=curYM(), m=DB.months[ym]; if(m && m.openingAuto) setMonthFlag(ym,{opening: r2(actualTotal()-flows(ym,true).net), openingAt:Date.now()}); }
 function statementData(ym){
   const fl=flows(ym), op=openingOf(ym), cur=ym===curYM();
   const expected = op===null? null : r2(op+fl.net);
@@ -671,7 +690,7 @@ function statementCard(ym, compact){
   if(d.actual!==null) h+= ln('Your account balances', sgd(d.actual),'muted') + diffBox;
   if(d.diff!==null && !ok) h+=`<div class="small muted" style="margin-top:8px">${d.diff>0?'Your accounts hold more than expected':'Your accounts hold less than expected'}: a payment or income without an account (“Paid with” / “Received in”), or a balance that needs updating.${d.noAcct?` <b>${d.noAcct} entr${d.noAcct===1?'y':'ies'}</b> this month have no account.`:''}</div>`;
   if(d.needSalary) h+=`<div class="stdiff" style="margin-top:10px"><span>Salary isn’t in an account yet</span><button class="btn sm primary" onclick="xferForm(null,null,null,{title:'Salary in',from:'',to:'${esc((funds().find(f=>f.id==='dbs')||funds()[0]||{}).id||'')}',amt:${d.salary},note:'Salary ${ymLabel(ym,true)}',salaryFor:'${ym}'})">Add salary</button></div>`;
-  h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div><div class="small muted">Salary + refunds + friends repaid − spending${c.extra?' (+ '+sgd0(c.extra)+' emergency fund used)':''}</div>`;
+  h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div><div class="small muted">Salary + refunds + friends repaid − spending${c.extra>0.004?' + '+sgd(c.extra)+' of savings used':c.extra<-0.004?' − '+sgd(-c.extra)+' put aside':''}</div>`;
   return h+`<div class="btns" style="margin-top:12px"><button class="btn sm" onclick="editOpening('${ym}')">Edit opening balance</button></div></div>`;
 }
 function statementSheet(ym){ openSheet(`<div class="sheettop"><h3>Monthly statement</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>${statementCard(ym)}`); }
@@ -716,7 +735,7 @@ function cleanFundsIn(noSave){
 
 /* ============ Calculations ============ */
 function monthEntries(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date.startsWith(ym) && !CAT[e.cat]?.track); }   // borrowed money is only a reminder, never spending
-function stats(ym){
+function stats(ym, lite){
   const es = monthEntries(ym);
   const by = {}; CATS.forEach(c=>by[c.id]=0);
   const sub = Object.fromEntries(CAT.food.subs.map(s=>[s.id,0]));
@@ -744,10 +763,11 @@ function stats(ym){
   let budgetLeft = 0;
   EXP_CATS.forEach(k=>{ const b=+c.budgets[k.id]||0; if(b>0) budgetLeft += b - net[k.id]; });
   const dailyFood = DAILY_FOOD.reduce((a,k)=>a+sub[k],0);
+  const X = lite? 0 : fundsIncluded(ym);
   return {es, by, net, sub, dailyFood, refund, refundFor, gross, total, living, inrHome, daily, dailyLiving, cfg:c, salary:+c.salary||0,
           days, left:daysLeft(ym), dim:dim(ym), budgetTotal, budgetLeft,
-          extra:fundsIncluded(ym), income:(+c.salary||0)+fundsIncluded(ym),
-          saved:(+c.salary||0) + fundsIncluded(ym) - total,
+          extra:X, income:(+c.salary||0)+X,
+          saved:(+c.salary||0) + X - total,
           avg: days? (total+refund)/days : 0, avgLiving: days? living/days : 0};
 }
 /* Spending (not refunds, transfers or money coming back) on one day, with the number of entries */
@@ -1206,30 +1226,48 @@ function trendChart(){
 }
 
 /* ============ BUDGET ============ */
+/* Budget tab: every source of money, ticked = used for this month's budget, not ticked = emergency fund */
+function sourcesCard(){
+  const ym=S.ym, mon=ymLabel(ym,true).split(' ')[0], all=funds(), us=useSet(ym), cur=ym>=curYM(), end=ym+'-'+pad(dim(ym));
+  const b=f=>cur? liveBal(f) : balOn(f,end);
+  const inB=all.filter(f=>us.has(f.id)).reduce((a,f)=>a+b(f),0), ef=efKept(ym), op=openingOf(ym), used=fundsIncluded(ym), st=stats(ym);
+  let h=`<div class="card"><h2>Accounts · ${ymLabel(ym)}</h2><div class="small muted" style="margin:-4px 0 6px">Turn on the accounts you're spending from in ${mon}. The rest stay as your emergency fund.</div>`;
+  for(const f of all) h+=`<div class="efrow"><button class="srcb" data-fsrc="${esc(f.id)}"><span style="font-size:20px">${esc(f.icon||'💰')}</span><span style="min-width:0"><span class="nm" style="display:block">${esc(f.name)}</span><span class="small num muted">${sgd(b(f))}${f.at?'':' · balance not set'}</span></span></button>
+      <label class="row" style="gap:8px;font-size:12px;color:var(--text-2);cursor:pointer;margin:0"><span>${us.has(f.id)?'In budget':'Emergency'}</span><input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${us.has(f.id)?'checked':''} aria-label="Use ${esc(f.name)} in the ${mon} budget"></label></div>`;
+  h+=`<div class="kpis" style="margin-top:12px"><div class="kpi"><div class="l">In the budget</div><div class="v num">${sgd(inB)}</div><div class="s">money to spend</div></div><div class="kpi"><div class="l">Emergency fund</div><div class="v num">${sgd(ef)}</div><div class="s">kept aside</div></div></div>`;
+  if(op===null) return h+`<div class="small muted" style="margin-top:10px">Set your account balances to see how last month's savings fit into this budget.</div></div>`;
+  const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
+  h+=`<div style="margin-top:12px">`+ln(`Savings brought into ${mon} <span class="small muted">balance on 1 ${mon}</span>`, sgd(op))+
+     (used>=-0.004? ln(`− Used in the ${mon} budget`, '('+sgd(Math.max(0,used))+')') : ln(`+ Put aside from ${mon}'s money`, sgd(-used)))+
+     ln('Emergency fund', sgd(ef),'tot')+`</div>
+    <div class="small muted" style="margin-top:8px">Last month's savings isn't a separate account. It is already inside the balances above. Turning an account on moves its money from savings into this month's budget.</div>`;
+  if(cur){ const d=r2(inB-st.saved), ok=Math.abs(d)<0.005;
+    h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${st.saved<0?'neg':'pos'}">${sgd(st.saved)}</b></div>
+      <div class="stdiff ${ok?'ok':'bad'}"><span>${ok?'Matches your budget accounts':'Budget accounts hold '+(d>0?'more':'less')}</span><span class="num">${ok?'✓':(d>0?'+':'−')+sgd(Math.abs(d))}</span></div>
+      ${ok?'':`<div class="small muted" style="margin-top:6px">A payment or refund logged without “Paid with”, or a balance that needs updating. <button class="lnk" style="float:none" onclick="statementSheet('${ym}')">See statement</button></div>`}`; }
+  return h+`</div>`;
+}
+function bindSources(){
+  document.querySelectorAll('[data-fsrc]').forEach(b=>b.onclick=()=>accountSheet(b.dataset.fsrc,'budget'));
+  document.querySelectorAll('[data-use]').forEach(i=>i.onchange=()=>{ const us=useSet(S.ym); i.checked? us.add(i.dataset.use) : us.delete(i.dataset.use);
+    setMonthFlag(S.ym,{useIn:[...us]}); const f=funds().find(x=>x.id===i.dataset.use);
+    toast((f?f.name:'Account')+(i.checked?' is now in the '+ymLabel(S.ym,true)+' budget':' moved to the emergency fund')); render(); });
+}
 function fundCard(){
-  const fs=funds().filter(isEF), inc=new Set(cfg(S.ym).fundsIn||[]), incAmt=fundsIncluded(S.ym), kept=fs.filter(f=>!inc.has(f.id)).reduce((a,f)=>a+liveBal(f),0);
-  let h=`<div class="card"><div class="fhead"><div><h2 style="margin:0">Emergency fund</h2><div class="small muted">Not part of the budget unless you tick it</div></div><button class="btn sm" id="fToggle">${S.fundOpen?'Hide':'Show'}</button></div>`;
-  if(!S.fundOpen) return h+`<div class="small muted" style="margin-top:8px">${fs.map(f=>esc(f.name)).join(' and ')||'No accounts'} · kept aside, hidden${incAmt?' · '+sgd(incAmt)+' used in '+ymLabel(S.ym,true):''}.</div></div>`;
-  h+=`<div class="kpis" style="margin-top:10px"><div class="kpi"><div class="l">Kept aside</div><div class="v num">${sgd(kept)}</div></div>
-      <div class="kpi"><div class="l">Used in ${ymLabel(S.ym,true)} budget</div><div class="v num">${sgd(incAmt)}</div></div></div>`;
-  for(const f of fs){
-    h+=`<div class="efrow"><div><div class="nm">${esc(f.name)}</div><label><input type="checkbox" data-finc="${esc(f.id)}" ${inc.has(f.id)?'checked':''}> Use in ${ymLabel(S.ym,true)} budget</label></div>
-      <button class="lnk num" data-fedit="${esc(f.id)}" style="font-size:15px;font-weight:800;color:var(--text)">${sgd(liveBal(f))} ›</button></div>`;
-  }
+  const fs=funds().filter(f=>isEF(f,S.ym)), cur=S.ym>=curYM(), end=S.ym+'-'+pad(dim(S.ym)), kept=efKept(S.ym);
+  let h=`<div class="card"><div class="fhead"><div><h2 style="margin:0">Emergency fund</h2><div class="small muted">Accounts turned off above · kept aside, not in the budget</div></div><button class="btn sm" id="fToggle">${S.fundOpen?'Hide':'Show'}</button></div>`;
+  if(!S.fundOpen) return h+`<div class="small muted" style="margin-top:8px">${fs.map(f=>esc(f.name)).join(', ')||'No accounts'} · ${sgd(kept)} kept aside.</div></div>`;
+  h+=`<div class="kpi" style="margin-top:10px"><div class="l">Kept aside</div><div class="v num">${sgd(kept)}</div></div>`;
+  for(const f of fs) h+=`<div class="efrow"><div class="nm">${esc(f.icon||'💰')} ${esc(f.name)}</div><button class="lnk num" data-fedit="${esc(f.id)}" style="float:none;font-size:15px;font-weight:800;color:var(--text)">${sgd(cur?liveBal(f):balOn(f,end))} ›</button></div>`;
+  if(!fs.length) h+=`<div class="empty">Every account is in the budget. Turn one off above to keep it aside.</div>`;
   h+=`<div class="btns" style="margin-top:12px"><button class="btn primary" id="fMove" style="flex:1">+ Move to savings</button><button class="btn" id="fManage" style="flex:1">Add / rename / delete</button></div></div>`;
   return h;
 }
 function saveFunds(list){ DB.settings.funds=list; DB.settings.upd=Date.now(); save(); }
-function setFundIncluded(id,on){
-  const c=cfg(S.ym); const cur=new Set(c.fundsIn||[]), snap={...(c.fundsAmt||{})}; const f=funds().find(x=>x.id===id);
-  if(on){ cur.add(id); snap[id]=f? liveBal(f) : 0; } else { cur.delete(id); delete snap[id]; }
-  setMonthFlag(S.ym,{salary:+c.salary||0, budgets:{...(c.budgets||{})}, fundsIn:[...cur], fundsAmt:snap});
-}
 function bindFundCard(){
   $('#fToggle').onclick=()=>{ S.fundOpen=!S.fundOpen; renderBudget(); };
-  if(!S.fundOpen) return;
-  document.querySelectorAll('[data-finc]').forEach(i=>i.onchange=()=>{ setFundIncluded(i.dataset.finc,i.checked); toast(i.checked?'Added to '+ymLabel(S.ym,true)+' budget':'Removed from '+ymLabel(S.ym,true)+' budget'); renderBudget(); });
   document.querySelectorAll('[data-fedit]').forEach(b=>b.onclick=()=>accountSheet(b.dataset.fedit,'ef'));
+  if(!S.fundOpen) return;
   $('#fMove').onclick=()=>moveSavings(0);
   $('#fManage').onclick=efSheet;
 }
@@ -1248,7 +1286,7 @@ function efSheet(){
     if(!n){ toast('Type a name for the account'); $('#efName').focus(); return; }
     if(/^\s*[\d.,]+\s*$/.test(n)){ toast('That looks like an amount. Put the name here and the amount in the balance box.'); $('#efName').focus(); return; }
     const now=Date.now(); saveFunds([...allFunds(),{id:'f'+now.toString(36),name:n,icon:'💰',amt:isNaN(a)?0:r2(a),at:isNaN(a)?undefined:now,ef:true}]);
-    render(); toast('Added '+n); efSheet(); };
+    reOpening(); render(); toast('Added '+n); efSheet(); };
 }
 function renderBudget(){
   const c = cfg(S.ym), st = stats(S.ym), B = c.budgets||{}, next = addMonths(S.ym,1);
@@ -1268,15 +1306,15 @@ function renderBudget(){
   h += `<div class="card"><h2>Daily living<span class="small muted num" style="float:right;font-weight:600">${sgd(L.s)} of ${sgd0(L.b)}</span></h2>${living.map(row).join('')}</div>`;
   h += `<div class="card"><h2>Bills &amp; one-offs<span class="small muted num" style="float:right;font-weight:600">${sgd(Bi.s)} of ${sgd0(Bi.b)}</span></h2>${bills.map(row).join('')}</div>`;
   h += `<div class="small muted" style="margin:-4px 4px 14px">Changes save automatically. Later months reuse this budget until you change them.</div>`;
-  h += fundCard();
+  h += sourcesCard() + fundCard();
   $('#tab-budget').innerHTML = h;
-  bindFundCard();
+  bindSources(); bindFundCard();
   const root=$('#tab-budget');
   const read=()=>{ const v={}; root.querySelectorAll('[data-b]').forEach(i=>{ const x=+i.value||0; if(x>0) v[i.dataset.b]=r2(x); }); return {budgets:v, salary:r2(+$('#bSalary').value||0)}; };
   const summary=()=>{ const {budgets,salary}=read(), total=BUDGET_CATS.reduce((a,k)=>a+(budgets[k.id]||0),0), extra=fundsIncluded(S.ym), saving=salary+extra-total;
     $('#bSum').innerHTML=`<div class="bsum"><div><span>Salary</span><b class="num">${sgd0(salary)}</b></div><div><span>Budgeted</span><b class="num">${sgd0(total)}</b></div><div><span>Planned saving</span><b class="num ${saving<0?'neg':'pos'}">${saving<0?'−':''}${sgd0(Math.abs(saving))}</b></div></div>
-      ${extra?`<div class="small muted" style="margin-top:6px">Includes ${sgd0(extra)} from your emergency fund.</div>`:''}
-      ${saving<0&&salary?`<div class="warnbox">Budgets are ${sgd(-saving)} more than your salary${extra?' and the emergency money you included':''}. Lower a budget or use savings.</div>`:''}`; };
+      ${extra>0.004?`<div class="small muted" style="margin-top:6px">Includes ${sgd(extra)} of savings from the accounts in this budget.</div>`:extra<-0.004?`<div class="small muted" style="margin-top:6px">${sgd(-extra)} of this month's money is put aside in the emergency fund.</div>`:''}
+      ${saving<0&&salary?`<div class="warnbox">Budgets are ${sgd(-saving)} more than your salary${extra>0.004?' and the savings you included':''}. Lower a budget${funds().some(f=>isEF(f,S.ym))?' or turn on an emergency account below':''}.</div>`:''}`; };
   const persistB=()=>{ const {budgets,salary}=read(); setMonthFlag(S.ym,{salary, budgets}); toast('Saved'); summary();
     setTimeout(()=>{ const a=document.activeElement; if(S.tab==='budget' && !(a && a.tagName==='INPUT' && root.contains(a))) renderBudget(); },400); };
   root.querySelectorAll('[data-b], #bSalary').forEach(i=>{ i.oninput=summary; i.onchange=persistB; });
@@ -1603,7 +1641,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v35';
+const APP_VERSION='v36';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
