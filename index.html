@@ -364,15 +364,28 @@ function cfg(ym){
 
 /* ============ Emergency fund (cash / NETS / bank) — kept out of the budget unless ticked for a month ============ */
 const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'NETS',icon:'💳',amt:0},{id:'dbs',name:'DBS Bank',icon:'🏦',amt:0},{id:'mari',name:'Mari Bank',icon:'🟠',amt:0},{id:'ezlink',name:'EZ-Link card',icon:'🚇',amt:0}];
-function funds(){ const own=(DB.settings.funds||[]); if(!own.length) return DEFAULT_FUNDS.map(f=>({...f}));
+function allFunds(){ const own=(DB.settings.funds||[]); if(!own.length) return DEFAULT_FUNDS.map(f=>({...f}));
   const have=new Set(own.map(f=>f.id)); return [...own, ...DEFAULT_FUNDS.filter(d=>!have.has(d.id)).map(f=>({...f}))]; }
+const fkey = n => { const k=String(n||'').toLowerCase().replace(/[^a-z0-9]/g,''); return k.startsWith('ezlink')? 'ezlink' : k; };
+const isEF = f => f.ef ?? (f.id==='cash' || f.id==='dbs');   // only DBS Bank and Cash are emergency-fund money (plus accounts added there)
+// Visible accounts. Removed ones are hidden; a duplicate with the same name (e.g. two EZ-Link cards) is left out if it has no balance or payments.
+function funds(){
+  const list=allFunds().filter(f=>!f.hidden), used=new Set();
+  for(const e of Object.values(DB.entries)){ if(e.del) continue; if(e.pay) used.add(e.pay); if(e.from) used.add(e.from); if(e.to) used.add(e.to); }
+  const data=f=>(+f.amt||0)!==0 || !!f.at || used.has(f.id), groups={}, drop=new Set();
+  list.forEach(f=>(groups[fkey(f.name)]=groups[fkey(f.name)]||[]).push(f));
+  for(const g of Object.values(groups)){ if(g.length<2) continue;
+    const keep = g.find(data) || g.find(f=>DEFAULT_FUNDS.some(d=>d.id===f.id)) || g[0];
+    g.forEach(f=>{ if(f!==keep && !data(f)) drop.add(f.id); }); }
+  return list.filter(f=>!drop.has(f.id));
+}
 function fundsTotal(){ return funds().reduce((a,f)=>a+liveBal(f),0); }
 // Money added to a month's budget = the balance at the moment it was ticked (so later spending isn't counted twice)
-function fundsIncluded(ym){ const c=cfg(ym), ids=new Set(c.fundsIn||[]), snap=c.fundsAmt||{}; return funds().filter(f=>ids.has(f.id)).reduce((a,f)=>a+(snap[f.id]!=null? +snap[f.id] : (+f.amt||0)),0); }
+function fundsIncluded(ym){ const c=cfg(ym), ids=new Set(c.fundsIn||[]), snap=c.fundsAmt||{}; return funds().filter(f=>ids.has(f.id) && isEF(f)).reduce((a,f)=>a+(snap[f.id]!=null? +snap[f.id] : (+f.amt||0)),0); }
 /* ============ Accounts / payment methods: balance = entered balance ± everything logged after it was entered ============ */
 const MONEY_IN = new Set(['refund','repaid','borrowed']);
 const PAYKEY='dailyExpenseTracker.lastPay';
-function fundName(id){ const f=funds().find(x=>x.id===id); return f? f.name : ''; }
+function fundName(id){ const f=allFunds().find(x=>x.id===id); return f? f.name : ''; }
 function lastPay(){ try{ const v=localStorage.getItem(PAYKEY)||''; return funds().some(f=>f.id===v)? v : ''; }catch(e){ return ''; } }
 function setLastPay(v){ try{ if(v) localStorage.setItem(PAYKEY,v); }catch(e){} }
 function acctTx(id){
@@ -384,7 +397,7 @@ function acctTx(id){
   return out.sort((a,b)=>b.e.date.localeCompare(a.e.date)||(b.e.cr||0)-(a.e.cr||0));
 }
 function liveBal(f){ return r2((+f.amt||0) + acctTx(f.id).filter(x=>x.after).reduce((a,x)=>a+x.d,0)); }
-function setBalance(id,v){ saveFunds(funds().map(f=>f.id===id?{...f,amt:r2(+v||0),at:Date.now()}:f)); }
+function setBalance(id,v){ saveFunds(allFunds().map(f=>f.id===id?{...f,amt:r2(+v||0),at:Date.now()}:f)); }
 function payChips(sel, attr, label){ return `<label class="f">${label}</label><div class="chips">${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`; }
 function balancesCard(){
   const fs=funds(), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0);
@@ -396,13 +409,15 @@ function balancesCard(){
 function balancesSheet(){
   const ym=curYM();
   const row=f=>{ const paid=acctTx(f.id).filter(x=>x.d<0 && x.e.date.startsWith(ym) && x.e.cat!=='xfer').reduce((a,x)=>a-x.d,0);
-    return `<div class="ent" data-acct="${esc(f.id)}" style="cursor:pointer"><div class="ic">${esc(f.icon||'💰')}</div><div class="t"><div>${esc(f.name)}</div><div>${paid?'Paid '+sgd(paid)+' this month':(f.at?'Balance set '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'Balance not set yet')}</div></div>
+    return `<div class="ent" data-acct="${esc(f.id)}" style="cursor:pointer"><div class="ic">${esc(f.icon||'💰')}</div><div class="t"><div>${esc(f.name)}${isEF(f)?' <span class="small muted">· emergency fund</span>':''}</div><div>${paid?'Paid '+sgd(paid)+' this month':(f.at?'Balance set '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'Balance not set yet')}</div></div>
       <div class="num" style="font-weight:700">${sgd(liveBal(f))}</div></div>`; };
   openSheet(`<div class="row" style="justify-content:space-between"><h3>💳 Balances</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="small muted">Payments you log with “Paid with” come off these balances. Tap an account to update its balance from your bank app or to see its payments.</div>
     <div class="btns" style="margin-top:10px"><button class="btn primary" id="bXfer">+ Add money / transfer</button></div>
-    <div class="list" style="margin-top:10px">${funds().map(row).join('')}</div>`);
+    <div class="list" style="margin-top:10px">${funds().map(row).join('')}</div>
+    <div class="row" style="gap:8px;margin-top:10px"><input class="in" id="bNew" placeholder="Add a card or account (e.g. POSB, Wise)"><button class="btn sm" id="bAdd">Add</button></div>`);
   $('#bXfer').onclick=()=>xferForm();
+  $('#bAdd').onclick=()=>{ const n=($('#bNew').value||'').trim(); if(!n){ toast('Type a name first'); return; } saveFunds([...allFunds(),{id:'f'+Date.now().toString(36),name:n,icon:'💳',amt:0,ef:false}]); render(); toast('Added '+n); balancesSheet(); };
   document.querySelectorAll('[data-acct]').forEach(r=>r.onclick=()=>accountSheet(r.dataset.acct));
 }
 function txTitle(e,id){
@@ -421,19 +436,22 @@ function accountSheet(id){
       <div class="kpi"><div class="l">Paid this month</div><div class="v num">${sgd(paid)}</div><div class="s">${ymLabel(ym,true)}</div></div></div>
     <label class="f" for="aBal">Update balance to match your bank app</label>
     <div class="row" style="gap:8px"><input class="in num" id="aBal" type="number" inputmode="decimal" step="0.01" value="${liveBal(f)}"><button class="btn primary" id="aSave">Save</button></div>
-    <div class="btns" style="margin-top:10px"><button class="btn" id="aXfer">+ Add money / transfer</button></div>
+    <div class="btns" style="margin-top:10px"><button class="btn" id="aXfer">+ Add money / transfer</button><button class="btn danger" id="aDel">Remove account</button></div>
     ${tx.length?`<div class="list" style="margin-top:10px">${tx.slice(0,60).map(item).join('')}</div>`:'<div class="empty" style="margin-top:12px">No payments with this account yet.</div>'}`);
   $('#aBack').onclick=balancesSheet;
   $('#aSave').onclick=()=>{ const v=parseFloat($('#aBal').value); if(isNaN(v)){ toast('Enter the balance'); return; } setBalance(id,v); render(); toast(f.name+' balance set to '+sgd(v)); accountSheet(id); };
   $('#aXfer').onclick=()=>xferForm(null,id);
+  confirmBtn($('#aDel'),'Tap again to remove',()=>{ saveFunds(allFunds().map(x=>x.id===id?{...x,hidden:true}:x)); render(); toast(f.name+' removed'); balancesSheet(); });
   document.querySelectorAll('[data-tx]').forEach(r=>r.onclick=()=>{ const e=DB.entries[r.dataset.tx]; if(!e) return; if(e.cat==='xfer') xferForm(e,id); else openEntry(e.id); });
 }
-function xferForm(src, back){
+function xferForm(src, back, origin){
   const e = src || {id:null, from:'', to:back||'', amt:'', date:todayStr(), note:''};
   let from=e.from||'', to=e.to||'';
   const opts=(sel,attr,outside)=>`<div class="chips">${outside?`<button class="chip ${!sel?'on':''}" ${attr}="">💼 Outside (salary, etc.)</button>`:''}${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`;
-  openSheet(`<div class="row" style="justify-content:space-between"><h3>${e.id?'Edit':''} 🔁 Add money / transfer</h3><button class="btn sm" id="xBack">Back</button></div>
-    <div class="small muted">Salary in, cash withdrawal, card or EZ-Link top-up. Not counted as spending.</div>
+  const fromAdd = origin==='add';
+  openSheet(`<div class="row" style="justify-content:space-between"><h3>${e.id?'Edit transfer':fromAdd?'Add':'🔁 Add money / transfer'}</h3><button class="btn sm" id="xBack">${fromAdd?'Close':'Back'}</button></div>
+    ${fromAdd?'<div class="seg" style="margin-top:8px"><button id="xToExp">Expense</button><button class="on">🔁 Transfer</button></div>':''}
+    <div class="small muted" style="margin-top:6px">Recharge NETS or EZ-Link, bank to bank, ATM withdrawal, or salary in. Not counted as spending.</div>
     <label class="f">From</label>${opts(from,'data-xf',true)}
     <label class="f">To</label>${opts(to,'data-xt',false)}
     <div class="grid2"><div><label class="f">Date</label><input class="in" type="date" id="xDate" value="${e.date}"></div>
@@ -442,14 +460,16 @@ function xferForm(src, back){
     <div class="btns" style="margin-top:14px"><button class="btn primary" id="xSave">Save</button>${e.id?'<button class="btn danger" id="xDel">Delete</button>':''}</div>`);
   const pick=(attr,set)=>document.querySelectorAll(`[${attr}]`).forEach(b=>b.onclick=()=>{ set(b.getAttribute(attr)); document.querySelectorAll(`[${attr}]`).forEach(x=>x.classList.toggle('on',x===b)); });
   pick('data-xf',v=>from=v); pick('data-xt',v=>to=v);
-  $('#xBack').onclick=()=> back? accountSheet(back) : balancesSheet();
+  $('#xBack').onclick=()=> fromAdd? closeSheet() : back? accountSheet(back) : balancesSheet();
+  if($('#xToExp')) $('#xToExp').onclick=()=>openEntry(null);
   $('#xSave').onclick=()=>{
     const a=r2(parseFloat($('#xAmt').value));
     if(!to){ toast('Choose where the money goes'); return; }
     if(from===to){ toast('From and To must be different'); return; }
     if(!(a>0)){ toast('Enter an amount'); $('#xAmt').focus(); return; }
     const now=Date.now(), rec={id:e.id||uid(), date:$('#xDate').value||todayStr(), cat:'xfer', from, to, amt:a, note:($('#xNote').value||'').trim(), upd:now, cr:e.cr||now, cur:curCode()};
-    DB.entries[rec.id]=rec; save(); render(); toast(`Added ${sgd(a)} to ${fundName(to)}`); back? accountSheet(back) : balancesSheet(); };
+    DB.entries[rec.id]=rec; save(); render(); toast(from? `Moved ${sgd(a)} from ${fundName(from)} to ${fundName(to)}` : `Added ${sgd(a)} to ${fundName(to)}`);
+    if(fromAdd) closeSheet(); else if(back) accountSheet(back); else balancesSheet(); };
   if($('#xDel')) confirmBtn($('#xDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id],del:true,upd:Date.now()}; save(); render(); toast('Deleted'); back? accountSheet(back) : balancesSheet(); });
 }
 
@@ -902,12 +922,12 @@ function trendChart(){
 
 /* ============ BUDGET ============ */
 function fundCard(){
-  const fs=funds(), inc=new Set(cfg(S.ym).fundsIn||[]), incAmt=fundsIncluded(S.ym), kept=fs.filter(f=>!inc.has(f.id)).reduce((a,f)=>a+liveBal(f),0);
+  const fs=funds().filter(isEF), inc=new Set(cfg(S.ym).fundsIn||[]), incAmt=fundsIncluded(S.ym), kept=fs.filter(f=>!inc.has(f.id)).reduce((a,f)=>a+liveBal(f),0);
   let h=`<div class="card"><div class="fhead"><h2 style="margin:0">🔒 Emergency fund</h2><button class="btn sm" id="fToggle">${S.fundOpen?'Hide':'Show'}</button></div>`;
   if(!S.fundOpen){
-    return h+`<div class="small muted" style="margin-top:6px">Cash, NETS, bank and EZ-Link money kept aside. Hidden, and not part of the budget${incAmt?' — part of it is included in this month’s budget':''}.</div></div>`;
+    return h+`<div class="small muted" style="margin-top:6px">DBS Bank and cash kept aside. Hidden, and not part of the budget${incAmt?' — part of it is included in this month’s budget':''}.</div></div>`;
   }
-  h+=`<div class="small muted" style="margin:6px 0 4px">Not counted in your budget or savings. Tick an account to add its money to ${ymLabel(S.ym)}'s budget. Balances go down when you pay with that account.</div>`;
+  h+=`<div class="small muted" style="margin:6px 0 4px">Not counted in your budget or savings. Tick an account to add its money to ${ymLabel(S.ym)}'s budget. Balances go down when you pay with that account. NETS, EZ-Link and other cards are only in 💳 Balances on Home.</div>`;
   for(const f of fs){
     h+=`<div class="frow"><div class="ic">${esc(f.icon||'💰')}</div><div><div class="nm">${esc(f.name)}</div>
       <label><input type="checkbox" data-finc="${esc(f.id)}" ${inc.has(f.id)?'checked':''}> Include in ${ymLabel(S.ym,true)} budget</label></div>
@@ -930,7 +950,7 @@ function bindFundCard(){
   if(!S.fundOpen) return;
   document.querySelectorAll('[data-famt]').forEach(i=>i.onchange=()=>{ setBalance(i.dataset.famt, i.value); renderBudget(); });
   document.querySelectorAll('[data-finc]').forEach(i=>i.onchange=()=>{ setFundIncluded(i.dataset.finc,i.checked); toast(i.checked?'Added to '+ymLabel(S.ym,true)+' budget':'Removed from '+ymLabel(S.ym,true)+' budget'); renderBudget(); });
-  $('#fAdd').onclick=()=>{ const n=($('#fNewName').value||'').trim(); if(!n){ toast('Type a name first'); return; } saveFunds([...funds(),{id:'f'+Date.now().toString(36),name:n,icon:'💰',amt:0}]); renderBudget(); };
+  $('#fAdd').onclick=()=>{ const n=($('#fNewName').value||'').trim(); if(!n){ toast('Type a name first'); return; } saveFunds([...allFunds(),{id:'f'+Date.now().toString(36),name:n,icon:'💰',amt:0,ef:true}]); renderBudget(); };
 }
 function renderBudget(){
   const c = cfg(S.ym), st = stats(S.ym), B = c.budgets||{};
@@ -1150,6 +1170,7 @@ function guessMeal(){ const h=new Date().getHours(); if(h<11) return 'breakfast'
 function drawSheet(){
   const k = CAT[E.cat] || {};
   let h = `<div class="row" style="justify-content:space-between"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+  ${E.id?'':'<div class="seg" style="margin-top:8px"><button class="on">Expense</button><button id="eXfer">🔁 Transfer</button></div>'}
   <label class="f">Category</label><div class="chips">${CATS.filter(c=>!c.friend && !c.track).map(c=>`<button class="chip ${c.id===E.cat?'on':''}" data-c="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>${E.cat?'':'<div class="small muted" style="margin-top:6px">Choose a category</div>'}`;
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.icon} ${s.name}</button>`;
     h += `<label class="f">Daily food</label><div class="chips">${k.subs.filter(s=>!s.group).map(chip).join('')}</div>
@@ -1176,6 +1197,7 @@ function drawSheet(){
     $('#eDate').onchange=()=>{ readSheet(); E.rate=''; loadRate(); };
     if(!E.rate) loadRate();
   }
+  if($('#eXfer')) $('#eXfer').onclick=()=>{ E=null; xferForm(null,null,'add'); };
   $('#eSave').onclick=()=>commitEntry(false);
   if($('#eSaveMore')) $('#eSaveMore').onclick=()=>commitEntry(true);
   if($('#eDel')) confirmBtn($('#eDel'),'Tap again to delete',()=>{ DB.entries[E.id]={...DB.entries[E.id],del:true,upd:Date.now()}; save(); closeSheet(); toast('Deleted'); render(); });
@@ -1301,7 +1323,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v32';
+const APP_VERSION='v33';
 const CKEY='dailyExpenseTracker.cloud';
 function cloudCfg(){ try{ return JSON.parse(localStorage.getItem(CKEY)||'null'); }catch(e){ return null; } }
 function saveCloudCfg(o){ try{ localStorage.setItem(CKEY, JSON.stringify(o)); }catch(e){} try{ idb.set('cloudCfg', o); }catch(e){} }
