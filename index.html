@@ -301,6 +301,7 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .datechips input[type=date]{width:auto;padding:7px 10px;border-radius:999px;font-size:13px}
 .bigsave{width:100%;padding:14px;font-size:16px;border-radius:14px}
 .acrow{display:flex;align-items:center;gap:10px}.acrow .srcb .ic{flex:none}
+.ordb{display:flex;gap:6px;flex:none}.ordb .btn{min-width:40px;padding:6px 10px}.ordb .btn:disabled{opacity:.35}
 .swl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2);cursor:pointer;flex:none}.swl .tgl{width:44px;height:26px;margin:0}
 .salbtn{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--accent);background:var(--surface);color:var(--text);cursor:pointer;font:inherit}
 .actrow{display:flex;gap:10px;margin-top:16px}.actrow .btn{padding:14px 10px;font-size:16px;border-radius:14px;justify-content:center;min-width:0}.actrow .danger{flex:1;border-color:var(--bad)}.actrow .primary{flex:2}
@@ -534,17 +535,18 @@ ${efs.length?`<button class="ac" onclick="balancesSheet({})"><div class="ai">�
 }
 /* ============ Accounts screen: the one place to switch Spending / Emergency, set balances, add salary ============ */
 function salaryIn(ym){ return r2(Object.values(DB.entries).filter(e=>!e.del && e.cat==='xfer' && e.salaryFor===ym).reduce((a,e)=>a+e.amt,0)); }
-let ACC_CTX='home', ACC_DEL=false;   // where Accounts was opened from; delete mode only from Settings
+let ACC_CTX='home', ACC_DEL=false, ACC_ORD=false;   // where Accounts was opened from; delete mode only from Settings
 function balancesSheet(opt){
-  if(opt && typeof opt==='object' && !(opt instanceof Event)){ ACC_CTX = opt.settings? 'settings' : 'home'; ACC_DEL=false; } else if(opt instanceof Event){ ACC_CTX='home'; ACC_DEL=false; }
-  const fromSet = ACC_CTX==='settings', del = fromSet && ACC_DEL;
+  if(opt && typeof opt==='object' && !(opt instanceof Event)){ ACC_CTX = opt.settings? 'settings' : 'home'; ACC_DEL=false; ACC_ORD=false; } else if(opt instanceof Event){ ACC_CTX='home'; ACC_DEL=false; ACC_ORD=false; }
+  const fromSet = ACC_CTX==='settings', del = fromSet && ACC_DEL, ord = fromSet && ACC_ORD && !del;
   const ym=curYM(), mon=ymLabel(ym,true).split(' ')[0], fs=funds(), us=useSet(ym), every=fs.filter(f=>us.has(f.id)), ef=fs.filter(f=>!us.has(f.id));
   const tot=fs.reduce((a,f)=>a+liveBal(f),0), totE=every.reduce((a,f)=>a+liveBal(f),0), totF=ef.reduce((a,f)=>a+liveBal(f),0);
   const st=stats(ym), sal=+st.salary||0, got=salaryIn(ym), m=DB.months[ym]||{};
   const salNote = got>0.004? `Added ${sgd(got)}${sal&&got<sal-0.004?' of '+sgd0(sal):''} ✓` : m.openingAuto? `Not needed for ${mon}: your balances were set after it came in` : sal? `${sgd0(sal)} not in an account yet` : 'Set your salary on the Budget tab';
-  const row=f=>{ const on=us.has(f.id), paid=acctTx(f.id).filter(x=>x.d<0 && x.e.date.startsWith(ym) && x.e.cat!=='xfer').reduce((a,x)=>a-x.d,0);
+  const n=fs.length, row=(f,k)=>{ const on=us.has(f.id), paid=acctTx(f.id).filter(x=>x.d<0 && x.e.date.startsWith(ym) && x.e.cat!=='xfer').reduce((a,x)=>a-x.d,0);
     return `<div class="ent acrow"><button class="srcb" data-acct="${esc(f.id)}"><span class="ic">${esc(f.icon||'💰')}</span><span class="t" style="min-width:0"><span style="display:block">${esc(f.name)}</span><span class="small muted num" style="display:block">${bal(liveBal(f))}${paid?' · paid '+sgd(paid)+' this month':f.at?'':' · balance not set'}</span></span></button>
-      ${del? `<button class="btn sm danger" data-adel="${esc(f.id)}">Delete</button>` : `<label class="swl"><span>${on?'Spending':'Emergency'}</span><input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${on?'checked':''} aria-label="${esc(f.name)}: spending account"></label>`}</div>
+      ${ord? `<span class="ordb"><button class="btn sm" data-up="${esc(f.id)}" aria-label="Move ${esc(f.name)} up" ${k===0?'disabled':''}>▲</button><button class="btn sm" data-dn="${esc(f.id)}" aria-label="Move ${esc(f.name)} down" ${k===n-1?'disabled':''}>▼</button></span>`
+       : del? `<button class="btn sm danger" data-adel="${esc(f.id)}">Delete</button>` : `<label class="swl"><span>${on?'Spending':'Emergency'}</span><input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${on?'checked':''} aria-label="${esc(f.name)}: spending account"></label>`}</div>
       ${del && Math.abs(liveBal(f))>0.004? `<div class="hidden small" data-awarn="${esc(f.id)}" style="padding:8px 12px 12px;color:var(--warn)">${esc(f.name)} has ${sgd(liveBal(f))}. Move it to another account first, or it leaves your totals.<div class="btns" style="margin-top:8px"><button class="btn sm" data-amove="${esc(f.id)}">⇄ Move money</button><button class="btn sm danger" data-adel2="${esc(f.id)}">Delete anyway</button></div></div>` : ''}`; };
   const op=openingOf(ym), used=fundsIncluded(ym), calc=r2(st.saved), diff=r2(totE-calc), ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
   openSheet(`<div class="sheettop"><h3>Accounts</h3><div class="row" style="gap:8px">${eyeBtn('bEye')}<button class="btn sm" onclick="closeSheet()">Close</button></div></div>
@@ -553,8 +555,8 @@ function balancesSheet(opt){
     <button class="salbtn" id="bSal"><span style="font-size:22px">💼</span><span style="flex:1;text-align:left"><b>Salary in · ${mon}</b><span class="small muted" style="display:block">${salNote}</span></span><span class="muted">›</span></button>
     <div class="small muted" style="margin:14px 2px 6px;font-weight:700">Your accounts · switch on = Spending (shows on Home), off = Emergency fund</div>
     <div class="list">${fs.map(row).join('')||'<div class="empty">No accounts yet.</div>'}</div>
-    ${del? `<div class="stdiff bad" style="margin-top:10px"><span>Delete mode: tap Delete twice to remove an account. Past entries stay in your history.</span></div><div class="btns" style="margin-top:10px"><button class="btn primary" id="bDelDone" style="flex:1">Done</button></div>`
-      : `<div class="btns" style="margin-top:10px"><button class="btn" id="bXfer" style="flex:1">⇄ Transfer</button><button class="btn" id="bAddT" style="flex:1">+ Add account</button>${fromSet?'<button class="btn danger" id="bDelM" style="flex:1">🗑 Remove</button>':''}</div>`}
+    ${ord? `<div class="stdiff" style="margin-top:10px"><span>Reorder: use ▲ ▼. This order is used in “Paid with”, Transfer and on Home.</span></div><div class="btns" style="margin-top:10px"><button class="btn primary" id="bOrdDone" style="flex:1">Done</button></div>` : del? `<div class="stdiff bad" style="margin-top:10px"><span>Delete mode: tap Delete twice to remove an account. Past entries stay in your history.</span></div><div class="btns" style="margin-top:10px"><button class="btn primary" id="bDelDone" style="flex:1">Done</button></div>`
+      : `<div class="btns" style="margin-top:10px"><button class="btn" id="bXfer" style="flex:1">⇄ Transfer</button><button class="btn" id="bAddT" style="flex:1">+ Add account</button></div>${fromSet?'<div class="btns" style="margin-top:8px"><button class="btn" id="bOrdM" style="flex:1">↕ Reorder</button><button class="btn danger" id="bDelM" style="flex:1">🗑 Remove</button></div>':''}`}
     <div id="bAddBox" class="hidden card" style="margin-top:12px;box-shadow:none;border:1px solid var(--border)"><h2>Add an account</h2>
       <div class="grid2"><div><label class="f" for="bNew">Name</label><input class="in" id="bNew" placeholder="e.g. POSB, Wise" autocomplete="off"></div>
       <div><label class="f" for="bNewAmt">Current balance (${curCode()})</label><input class="in num" id="bNewAmt" type="number" inputmode="decimal" step="0.01" placeholder="0.00"></div></div>
@@ -573,13 +575,19 @@ function balancesSheet(opt){
   const delAcct=id=>{ const f=funds().find(x=>x.id===id); if(!f) return; saveFunds(allFunds().map(x=>x.id===id?{...x,hidden:true}:x)); const u=useSet(ym); if(u.has(id)){ u.delete(id); setMonthFlag(ym,{useIn:[...u]}); }
     cleanFundsIn(); reOpening(); render(); toast(f.name+' deleted'); balancesSheet(); };
   $('#bSal').onclick=()=>salarySheet(ym);
-  if(del){ $('#bDelDone').onclick=()=>{ ACC_DEL=false; balancesSheet(); };
+  if(ord){ $('#bOrdDone').onclick=()=>{ ACC_ORD=false; balancesSheet(); };
+    const mv=(id,dir)=>{ const vis=funds().map(f=>f.id), i=vis.indexOf(id), j=i+dir; if(i<0||j<0||j>=vis.length) return;
+      const all=allFunds(), a=all.findIndex(f=>f.id===id), b=all.findIndex(f=>f.id===vis[j]); [all[a],all[b]]=[all[b],all[a]]; saveFunds(all); render(); balancesSheet(); };
+    document.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>mv(b.dataset.up,-1));
+    document.querySelectorAll('[data-dn]').forEach(b=>b.onclick=()=>mv(b.dataset.dn,1));
+  } else if(del){ $('#bDelDone').onclick=()=>{ ACC_DEL=false; balancesSheet(); };
     document.querySelectorAll('[data-adel]').forEach(b=>{ const id=b.dataset.adel, w=document.querySelector(`[data-awarn="${id}"]`);
       if(w) b.onclick=()=>{ w.classList.toggle('hidden'); }; else confirmBtn(b,'Tap again to delete',()=>delAcct(id)); });
     document.querySelectorAll('[data-adel2]').forEach(b=>confirmBtn(b,'Tap again to delete',()=>delAcct(b.dataset.adel2)));
     document.querySelectorAll('[data-amove]').forEach(b=>b.onclick=()=>xferForm(null,null,null,{title:'Move money',from:b.dataset.amove,to:(funds().find(f=>f.id!==b.dataset.amove)||{}).id||'',amt:r2(liveBal(funds().find(f=>f.id===b.dataset.amove))),note:'Before deleting the account'}));
   } else {
   if($('#bDelM')) $('#bDelM').onclick=()=>{ ACC_DEL=true; balancesSheet(); };
+  if($('#bOrdM')) $('#bOrdM').onclick=()=>{ ACC_ORD=true; balancesSheet(); };
   $('#bXfer').onclick=()=>xferForm();
   $('#bMove').onclick=()=>moveSavings(0);
   let kind='spend'; document.querySelectorAll('#bNewKind [data-k]').forEach(b=>b.onclick=()=>{ kind=b.dataset.k; document.querySelectorAll('#bNewKind [data-k]').forEach(x=>x.classList.toggle('on',x===b)); });
@@ -1569,7 +1577,7 @@ function friendForm(kind, name, src, amt){
 
 /* ============ Add / edit entry sheet ============ */
 let E = null; // entry being edited
-function openSheet(html){ $('#sheet').innerHTML=html; $('#sheetBg').classList.add('open'); }
+function openSheet(html){ $('#sheet').innerHTML=html; $('#sheetBg').classList.add('open'); $('#sheet').querySelectorAll('.hscroll .chip.on').forEach(c=>{ const h=c.parentElement; h.scrollLeft=Math.max(0,c.offsetLeft-h.offsetLeft-24); }); }
 function closeSheet(){
   if(E && E.back==='cal'){ E=null; calSheet(); return; }
   $('#sheetBg').classList.remove('open'); E=null; S.calOpen=false;
@@ -1754,7 +1762,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v40';
+const APP_VERSION='v41';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
