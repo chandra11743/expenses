@@ -78,7 +78,7 @@ header.top h1{font-size:17px;margin:0;font-weight:650}
 .pindots i.on{background:var(--text)}
 .lock{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 .lock .box{width:100%;max-width:340px;text-align:center}
-body.locked main,body.locked nav.tabs,body.locked .fab,body.locked .monthnav,body.locked #syncBtn{visibility:hidden}
+body.locked main,body.locked nav.tabs,body.locked .fab,body.locked .fabcalc,body.locked .monthnav,body.locked #syncBtn{visibility:hidden}
 body.locked::after{content:"Locked. Tap the name at the top to unlock or switch profile.";position:fixed;left:16px;right:16px;top:40%;text-align:center;color:var(--text-2)}
 .monthnav{display:flex;align-items:center;gap:2px}
 .monthnav button{border:0;background:transparent;width:34px;height:34px;border-radius:8px;font-size:20px;cursor:pointer;color:var(--text-2)}
@@ -86,7 +86,7 @@ body.locked::after{content:"Locked. Tap the name at the top to unlock or switch 
 .monthnav .mlabel{width:auto;min-width:104px;padding:0 10px;font-size:15px;font-weight:650;color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .monthnav .mlabel svg{width:15px;height:15px;color:var(--accent)}
 .sheet .monthnav .mlabel{cursor:default}
-main{max-width:760px;margin:0 auto;padding:12px 16px 24px}
+main{max-width:760px;margin:0 auto;padding:12px 16px 84px}
 .card{background:var(--surface);border:1px solid var(--card-border);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
 .card h2{font-size:16px;margin:0 0 12px;color:var(--text);font-weight:700;letter-spacing:-.01em}
 .card h2 .lnk,.sechead .lnk{float:right;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;background:none;border:0;padding:0}
@@ -122,7 +122,17 @@ nav.tabs button svg{width:22px;height:22px}
 nav.tabs button.on{color:var(--accent);font-weight:700}
 nav.tabs button.on svg{background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:12px;padding:3px 12px;width:46px;height:28px;box-sizing:border-box;margin-top:-3px}
 .fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:31;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 6px 20px rgba(42,120,214,.4)}
-@media (min-width:800px){.fab{right:calc(50% - 370px)}}
+@media (min-width:800px){.fab{right:calc(50% - 370px)}.fabcalc{right:calc(50% - 300px)}}
+.fabcalc{position:fixed;right:88px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:31;width:46px;height:46px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.calcpad{margin:10px 0 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:12px}
+.calcpad .expr{font-size:16px;color:var(--text-2);text-align:right;min-height:22px;word-break:break-all}
+.calcpad .res{font-size:32px;font-weight:800;text-align:right;margin:2px 0 10px;min-height:40px}
+.calcpad .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.calcpad .keys button{height:52px;border-radius:12px;border:0;background:var(--surface);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit}
+.calcpad .keys button:active{transform:scale(.96)}
+.calcpad .keys .op{background:rgba(42,120,214,.18);color:var(--accent)}
+.calcpad .keys .eq{background:var(--accent);color:#fff}
+.calcpad .keys .c{color:var(--bad)}
 .btn{border:1px solid var(--border);background:var(--surface);padding:10px 16px;border-radius:12px;cursor:pointer;font-weight:600}
 .btn:hover{background:var(--surface-2)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -329,6 +339,7 @@ svg.chart text{fill:var(--muted);font-size:11px}
   <section id="tab-settings" class="hidden"></section>
 </main>
 
+<button class="fabcalc" id="fabCalc" aria-label="Calculator" title="Calculator">🧮</button>
 <button class="fab" id="fab" aria-label="Add expense">+</button>
 
 <nav class="tabs">
@@ -1589,12 +1600,57 @@ document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') dismissSheet(); 
 document.addEventListener('focusin',ev=>{ const t=ev.target; if(t && t.tagName==='INPUT' && !t.hasAttribute('enterkeyhint')) t.setAttribute('enterkeyhint','done'); });
 document.addEventListener('keydown',ev=>{ const t=ev.target; if(ev.key!=='Enter' || !t || t.tagName!=='INPUT' || ev.isComposing) return; if(!t.closest('#sheet, main, .tabpanel, [id^="tab-"]')) return; ev.preventDefault(); t.blur(); });
 
-function openEntry(id, presetDate){
+/* ============ Calculator: numbers, + − × ÷, %, brackets. Own parser (no eval). ============ */
+let CALC='';
+function calcEval(src){
+  const t=String(src).replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-'); let i=0;
+  const peek=()=>t[i], eat=c=>{ if(t[i]===c){ i++; return true; } return false; };
+  function num(){ const m=/^\d*\.?\d+|^\d+\./.exec(t.slice(i)); if(!m) throw 0; i+=m[0].length; return parseFloat(m[0]); }
+  function prim(){ let v; if(eat('-')) return {v:-val(prim())};
+    if(eat('(')){ v=expr(); if(!eat(')')) throw 0; } else v=num();
+    if(eat('%')) return {v, pct:true}; return {v}; }
+  const val=p=>p.pct? p.v/100 : p.v;
+  function term(){ const f=prim(); let v=val(f), single=true;
+    while(peek()==='*'||peek()==='/'){ single=false; const o=t[i++], g=val(prim()); if(o==='*') v*=g; else { if(g===0) throw 0; v/=g; } }
+    return single&&f.pct? {v:f.v, pct:true, pv:v} : {v}; }
+  function expr(){ const a=term(); let v=a.pct? a.pv : a.v;
+    while(peek()==='+'||peek()==='-'){ const o=t[i++], b=term(); const d=b.pct? v*b.v/100 : b.v; v = o==='+'? v+d : v-d; }
+    return v; }
+  if(!t.trim()) throw 0; const v=expr(); if(i!==t.length || !isFinite(v)) throw 0; return v;
+}
+function calcFmt(v){ const r=Math.round(v*100)/100; return r.toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function calcSheet(){
+  const keys=['7','8','9','÷','4','5','6','×','1','2','3','−','.','0','⌫','+','C','%','( )','='];
+  openSheet(`<div class="sheettop"><h3>🧮 Calculator</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="calcpad"><div class="expr num" id="cExpr"></div><div class="res num" id="cRes"></div>
+    <div class="keys">${keys.map(k=>`<button data-k="${k}" class="${'÷×−+'.includes(k)&&k.length===1?'op':k==='='?'eq':k==='C'?'c':k==='( )'?'op':''}" aria-label="${k==='⌫'?'Delete':k==='( )'?'Brackets':k}">${k}</button>`).join('')}</div></div>
+    <div class="btns"><button class="btn" id="cCopy" style="flex:1">Copy result</button><button class="btn primary" id="cAdd" style="flex:1">+ Add as expense</button></div>`);
+  const res=()=>{ try{ return calcEval(CALC); }catch(e){ return null; } };
+  const draw=()=>{ $('#cExpr').textContent=CALC||'0'; const v=res(); $('#cRes').textContent = v===null? (CALC?'…':'') : '= '+calcFmt(v); };
+  const press=k=>{ const last=CALC.slice(-1), ops='+−×÷';
+    if(k==='C') CALC='';
+    else if(k==='⌫') CALC=CALC.slice(0,-1);
+    else if(k==='='){ const v=res(); if(v!==null) CALC=String(Math.round(v*100)/100); }
+    else if(k==='( )'){ const open=(CALC.match(/\(/g)||[]).length-(CALC.match(/\)/g)||[]).length; CALC += (open>0 && /[\d)%]/.test(last))? ')' : (/[\d)%]/.test(last)? '×(' : '('); }
+    else if(ops.includes(k)){ if(!CALC && k!=='−') return; if(ops.includes(last)) CALC=CALC.slice(0,-1); CALC+=k; }
+    else if(k==='%'){ if(/[\d)]/.test(last)) CALC+='%'; }
+    else if(k==='.'){ const seg=CALC.split(/[+−×÷()]/).pop(); if(seg.includes('.')) return; CALC += /\d/.test(last)? '.' : '0.'; }
+    else { if(last==='%'||last===')') CALC+='×'; CALC+=k; }
+    if(CALC.length>60) CALC=CALC.slice(0,60); draw(); };
+  document.querySelectorAll('#sheet [data-k]').forEach(b=>b.onclick=()=>press(b.dataset.k));
+  const kd=ev=>{ if(!$('#cExpr')){ document.removeEventListener('keydown',kd); return; } const m={'*':'×','/':'÷','-':'−','+':'+','Enter':'=','=':'=','Backspace':'⌫','Escape':null,'(':'( )',')':'( )','%':'%','.':'.',',':'.','c':'C','C':'C'};
+    let k=/^\d$/.test(ev.key)? ev.key : m[ev.key]; if(k===undefined||k===null) return; ev.preventDefault(); press(k); };
+  if(window.__calcKd) document.removeEventListener('keydown',window.__calcKd); window.__calcKd=kd; document.addEventListener('keydown',kd);
+  $('#cCopy').onclick=async()=>{ const v=res(); if(v===null){ toast('Nothing to copy yet'); return; } const s2=(Math.round(v*100)/100).toFixed(2); try{ await navigator.clipboard.writeText(s2); toast('Copied '+s2); }catch(e){ toast('Result: '+s2); } };
+  $('#cAdd').onclick=()=>{ const v=res(); if(v===null||!(v>0)){ toast('Work out a positive amount first'); return; } CALC=''; closeSheet(); openEntry(null,null,(Math.round(v*100)/100).toFixed(2)); };
+  draw();
+}
+function openEntry(id, presetDate, presetAmt){
   const src = id? DB.entries[id] : null;
   if(src && CAT[src.cat]?.friend){ friendForm(src.cat, src.friend, src); return; }
   const defDate = presetDate || (S.ym===curYM()? todayStr() : (S.ym<curYM()? S.ym+'-'+pad(dim(S.ym)) : S.ym+'-01'));
   if(src && src.cat==='xfer'){ xferForm(src); return; }
-  E = src? {...src} : {id:null, date:defDate, cat:null, sub:null, amt:'', inr:'', rate:'', note:'', pay:lastPay()};
+  E = src? {...src} : {id:null, date:defDate, cat:null, sub:null, amt:presetAmt||'', inr:'', rate:'', note:'', pay:lastPay()};
   if(S.calOpen) E.back='cal';
   drawSheet();
 }
@@ -1762,7 +1818,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v41';
+const APP_VERSION='v42';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2028,6 +2084,7 @@ function go(t){ S.tab=t; try{ localStorage.setItem(TABKEY,t); }catch(e){} window
 (function(){ try{ const t=localStorage.getItem(TABKEY); if(t && document.querySelector('nav.tabs button[data-tab="'+t+'"]')) S.tab=t; }catch(e){} })();
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 $('#fab').onclick=()=>openEntry(null);
+$('#fabCalc').onclick=()=>calcSheet();
 $('#mLabel').onclick=()=>calSheet();
 $('#profBtn').onclick=profileSheet;
 $('#mPrev').onclick=()=>{ S.ym=addMonths(S.ym,-1); render(); };
