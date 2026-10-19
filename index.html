@@ -258,22 +258,22 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .efrow .lnk,.srcb{background:none;border:0;padding:0;cursor:pointer;font:inherit}
 .srcb{display:flex;gap:10px;align-items:center;min-width:0;flex:1;text-align:left;color:var(--text)}
 /* ---- v35 redesign components ---- */
-.hero{background:linear-gradient(135deg,var(--hero-1),var(--hero-2));color:#fff;border-radius:24px;padding:18px 18px 16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(26,79,160,.28)}
+.hero{background:linear-gradient(135deg,var(--hero-1),var(--hero-2));color:#fff;border-radius:20px;padding:14px 16px 12px;margin-bottom:12px;box-shadow:0 10px 30px rgba(26,79,160,.28)}
 .hero.over{--hero-1:#d14343;--hero-2:#8f2424;box-shadow:0 10px 30px rgba(160,36,36,.25)}
-.hero .ht{display:flex;justify-content:space-between;gap:8px;font-size:13px;opacity:.85}
-.hero .hl{font-size:13px;margin-top:14px;opacity:.85}
-.hero .hv{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:2px}
-.hero .hp{height:8px;border-radius:5px;background:rgba(255,255,255,.22);margin-top:14px;overflow:hidden}
+.hero .ht{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.85}
+.hero .hl{font-size:12px;margin-top:8px;opacity:.85}
+.hero .hv{font-size:31px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:2px}
+.hero .hp{height:6px;border-radius:4px;background:rgba(255,255,255,.22);margin-top:10px;overflow:hidden}
 .hero .hp i{display:block;height:100%;border-radius:5px;background:#fff}
-.hero .hpace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-.hero .hpace div{background:rgba(255,255,255,.13);border-radius:14px;padding:8px 12px}
-.hero .hpace small{display:block;font-size:11.5px;opacity:.85}
-.hero .hpace b{font-size:17px;font-weight:800}
-.hero .hnote{font-size:12px;margin-top:8px;font-weight:600}
-.hero .hbl{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;cursor:pointer}
+.hero .hpace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+.hero .hpace div{background:rgba(255,255,255,.13);border-radius:12px;padding:5px 10px}
+.hero .hpace small{display:block;font-size:11px;opacity:.85}
+.hero .hpace b{font-size:15px;font-weight:800}
+.hero .hnote{font-size:11.5px;margin-top:6px;font-weight:600}
+.hero .hbl{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;cursor:pointer}
 .stl.sub2{font-size:13px;color:var(--text-2);padding-left:10px}
 .tbl{border-collapse:collapse;font-size:14px}.tbl th{font-size:12px;color:var(--text-2);font-weight:600;text-align:right;padding:6px 4px;border-bottom:1px solid var(--border)}.tbl td{padding:7px 4px;border-bottom:1px solid var(--border)}.tbl td.num{text-align:right}
-.hero .hs{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;margin-top:8px;opacity:.9;flex-wrap:wrap}
+.hero .hs{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;margin-top:6px;opacity:.9;flex-wrap:wrap}
 .qs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
 @media (min-width:560px){.qs{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .q{background:var(--surface);border:1px solid var(--card-border);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);min-width:0}
@@ -1040,11 +1040,11 @@ function renderHome(){
     <div class="ht"><span>${ymLabel(S.ym)}${isCur?' · '+st.left+' day'+(st.left===1?'':'s')+' left':''}</span><span>${st.salary?'Salary '+sgd0(st.salary):''}</span></div>
     <div class="hl">${heroVal<0&&money? 'Accounts in the budget are short by' : heroVal<0&&base? (hasBud?'Over budget by':'Overspent by') : heroLbl}</div>
     <div class="hv num"${money?' role="button" tabindex="0" onclick="moneySheet()" style="cursor:pointer"':''}>${sgd(Math.abs(heroVal))}${money?' <span style="font-size:15px;opacity:.75;font-weight:600">ⓘ</span>':''}</div>
-    ${money?`<div class="small" style="opacity:.85;margin-top:2px">In ${funds().filter(f=>isSpend(f)).map(f=>esc(f.name)).join(', ')||'no accounts'}${creditDueTotal()>0.004?' · after '+sgd(creditDueTotal())+' credit bills':''} · emergency fund kept aside</div>`:''}
+    ${money?`<div style="font-size:11.5px;opacity:.85;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">In ${funds().filter(f=>isSpend(f)).map(f=>esc(shortName(f))).join(', ')||'no accounts'}${creditDueTotal()>0.004?' · after '+sgd(creditDueTotal())+' bills':''} · emergency kept aside</div>`:''}
     ${base?`<div class="hp"><i style="width:${pct}%"></i></div>`:''}
     <div class="hs"><span class="num">${sgd(st.total)} spent${base?' of '+sgd0(base)+(hasBud?' budget':' salary'):''}</span>${money&&hasBud?`<button class="hbl num" onclick="moneySheet()">Budget left ${st.budgetLeft<0?'−':''}${sgd(Math.abs(st.budgetLeft))} ›</button>`:''}</div>
     ${st.days? `<div class="hpace" role="button" tabindex="0" onclick="paceSheet()" style="cursor:pointer"><div><small>Your daily avg · living</small><b class="num">${sgd(st.avgLiving)}</b></div>${isCur && pace.canDay!==null? `<div><small>Can spend / day · living</small><b class="num">${sgd(Math.max(0,pace.canDay))}</b></div>` : `<div><small>Living spent</small><b class="num">${sgd(pace.spent)}</b></div>`}</div>`:''}
-    ${isCur && pace.canDay!==null && st.days? `<div class="hnote" onclick="paceSheet()" style="cursor:pointer">${pace.canDay-st.avgLiving>=0? '✓ On track: '+sgd(pace.canDay-st.avgLiving)+'/day under your living budget' : '⚠ '+sgd(st.avgLiving-pace.canDay)+'/day over your living budget'} <span style="opacity:.75;font-weight:500">· tap for the math</span></div>` : (isCur && !pace.budget && st.days? '<div class="hnote">Set budgets for food, travel and other daily costs to see your daily limit.</div>':'')}
+    ${isCur && pace.canDay!==null && st.days? `<div class="hnote" onclick="paceSheet()" style="cursor:pointer">${pace.canDay-st.avgLiving>=0? '✓ On track: '+sgd(pace.canDay-st.avgLiving)+'/day under your living budget' : '⚠ '+sgd(st.avgLiving-pace.canDay)+'/day over your living budget'} <span style="opacity:.75;font-weight:500">›</span></div>` : (isCur && !pace.budget && st.days? '<div class="hnote">Set budgets for food, travel and other daily costs to see your daily limit.</div>':'')}
   </div>`;
   // ---- Quick stats: today and yesterday ----
   const tile=(l,v,sub,cls='',ds='')=>`<div class="q"${ds?` role="button" tabindex="0" onclick="daySheet('${ds}')" style="cursor:pointer"`:''}><div class="l">${l}${ds?' <span class="muted">›</span>':''}</div><div class="v num ${cls}">${v}</div><div class="s">${sub}</div></div>`;
@@ -1949,7 +1949,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v46';
+const APP_VERSION='v47';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2235,13 +2235,15 @@ render();
   if(!o){ setTimeout(()=>toast('That sync link isn’t valid'),600); return; }
   if(cloudOn()){ setTimeout(()=>toast('This device is already syncing — link ignored'),600); return; }
   go('settings'); setTimeout(()=>{ const i=$('#cCode'); if(i){ i.value=connCode(o); i.scrollIntoView({block:'center'}); } toast('Check the code, then tap Connect'); },300); })();
-/* Back button: closes an open sheet, then returns to Home; on Home, pressing back twice closes the app. */
+/* Back button: closes an open sheet; from Calendar/Analysis/Budget/Settings goes to Home, and the next back closes the app.
+   On Home after using it, back once shows "Press back again to close". The guard history entry is re-added on taps,
+   because Chrome skips history entries that no tap followed. */
 (function(){ if(!(history.pushState && window.matchMedia)) return; let exitT=0;
   const guard=()=>{ try{ if(!(history.state&&history.state.g)) history.pushState({g:1},''); }catch(e){} };
-  guard();
+  guard(); ['pointerdown','keydown'].forEach(t=>document.addEventListener(t,()=>guard(),{capture:true,passive:true}));
   window.addEventListener('popstate',()=>{
     if($('#sheetBg').classList.contains('open')){ closeSheet(); guard(); return; }
-    if(S.tab!=='home'){ go('home'); guard(); return; }
+    if(S.tab!=='home'){ go('home'); return; }
     if(Date.now()-exitT<2000) return;
     exitT=Date.now(); toast('Press back again to close');
     setTimeout(()=>{ if(Date.now()-exitT>=1900) guard(); },2000);
