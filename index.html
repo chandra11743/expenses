@@ -280,13 +280,13 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .q .l{font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:6px}
 .q .v{font-size:18px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 .q .s{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acc{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none}
-.acc::-webkit-scrollbar{display:none}
-.ac{flex:none;min-width:128px;background:var(--surface-2);border-radius:16px;padding:12px 14px;cursor:pointer;border:0;text-align:left;color:var(--text)}
-.ac .ai{font-size:20px}
-.ac .an{font-size:12.5px;color:var(--text-2);margin-top:6px;white-space:nowrap}
-.ac .av2{font-size:16px;font-weight:700;margin-top:1px}
-.ac.add{display:grid;place-items:center;min-width:76px;color:var(--accent);font-weight:700;font-size:22px}
+.acc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ac{display:flex;align-items:center;gap:5px;min-width:0;background:var(--surface-2);border-radius:999px;padding:6px 9px;cursor:pointer;border:0;text-align:left;color:var(--text);font:inherit}
+.ac .ai{font-size:14px;line-height:1}
+.ac .an{flex:1;font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ac .av2{font-size:12px;font-weight:700;white-space:nowrap}
+.ac .av2 .muted{font-size:12px!important}
+.ac.add{justify-content:center;color:var(--accent);font-weight:700;font-size:12.5px}
 .tc{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--border)}
 .tc:first-of-type{border-top:0}
 .tc .ic{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;font-size:19px}
@@ -299,12 +299,28 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .amtbox .cur{font-size:22px;font-weight:700;color:var(--muted)}
 .amtbox input{border:0;outline:none;background:transparent;font-size:44px;font-weight:800;letter-spacing:-.02em;width:7ch;text-align:left;padding:0;color:var(--text)}
 .amtbox input::placeholder{color:var(--border)}
-.cgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.ct{border:1.5px solid transparent;background:var(--surface-2);border-radius:16px;padding:10px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--text);min-width:0}
-.ct .ci{font-size:22px;line-height:1}
-.ct .cn{font-size:11.5px;font-weight:600;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ct{border:1.5px solid transparent;background:var(--surface-2);border-radius:14px;padding:7px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--text);min-width:0}
+.ct .ci{font-size:18px;line-height:1}
+.ct .cn{font-size:10.5px;font-weight:600;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .ct.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
 .ct.on .cn{color:var(--accent)}
+.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.fgrid .chip{padding:6px 4px;font-size:12px;text-align:center;overflow:hidden;text-overflow:ellipsis}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.pt{border:1.5px solid var(--border);background:var(--surface);border-radius:12px;padding:6px 2px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--text);min-width:0;font:inherit}
+.pt .pi{font-size:16px;line-height:1.1}.pt .pn{font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pt .ps{font-size:9.5px;color:var(--muted);white-space:nowrap}
+.pt.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface))}.pt.on .pn{color:var(--accent)}
+.acsec{border:1px solid var(--border);border-radius:16px;margin-top:12px;overflow:hidden;background:var(--surface)}
+.acsec .ah{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--surface-2);font-weight:700;font-size:13.5px}
+.acsec .ah .num{font-weight:800}
+.ar{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 14px;border-top:1px solid var(--border)}
+.ar:first-of-type{border-top:0}
+.ar .srcb{flex:1}.ar .ab{font-weight:800;font-size:15px;text-align:right;flex:none}
+.ar .tgl{width:44px;height:26px;margin:0;flex:none}
+.kp3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.kp3 .kpi{padding:10px}.kp3 .kpi .v{font-size:17px}
+.iconbar{display:flex;gap:8px;margin-top:10px}.iconbar .btn{flex:1;padding:9px 6px;font-size:13.5px}
 .hscroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
 .hscroll::-webkit-scrollbar{display:none}
 .datechips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -366,8 +382,8 @@ const CATS = [
     {id:'breakfast', name:'Breakfast', icon:'🍳'},
     {id:'lunch', name:'Lunch', icon:'🍛'},
     {id:'dinner', name:'Dinner', icon:'🍲'},
-    {id:'coffee', name:'Coffee / Drinks', icon:'☕'},
-    {id:'groceries', name:'Groceries (to cook)', icon:'🥬', group:'other'},
+    {id:'coffee', name:'Drinks', icon:'🥤'},
+    {id:'groceries', name:'Groceries', icon:'🥬', group:'other'},
     {id:'delivery', name:'Online delivery', icon:'🛵', group:'other'}]},
   {id:'travel', name:'Travel', icon:'🚌'},
   {id:'temple', name:'Temple', icon:'🛕'},
@@ -398,7 +414,7 @@ const DAILY_FOOD = ['breakfast','lunch','dinner','coffee'];
 // Food budget can be split into three parts; stored as budgets['food:daily'] etc.
 const FOOD_PARTS = [
   {id:'daily', name:'Daily food', hint:'Breakfast, lunch, dinner, coffee', icon:'🍛', subs:DAILY_FOOD},
-  {id:'groceries', name:'Groceries (to cook)', hint:'Shopping to cook at home', icon:'🥬', subs:['groceries']},
+  {id:'groceries', name:'Groceries', hint:'Shopping to cook at home', icon:'🥬', subs:['groceries']},
   {id:'delivery', name:'Online delivery', hint:'GrabFood, foodpanda, Deliveroo', icon:'🛵', subs:['delivery']},
 ];
 const KEY_BASE = 'dailyExpenseTracker.v1';
@@ -473,7 +489,7 @@ function cfg(ym){
 }
 
 /* ============ Emergency fund (cash / NETS / bank) — kept out of the budget unless ticked for a month ============ */
-const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'NETS',icon:'💳',amt:0},{id:'dbs',name:'DBS Bank',icon:'🏦',amt:0},{id:'mari',name:'Mari Bank',icon:'🟠',amt:0},{id:'ezlink',name:'EZ-Link card',icon:'🚇',amt:0},{id:'shopee',name:'Shopee PayLater',icon:'🛒',amt:0,credit:true,limit:500,due:1},{id:'grab',name:'Grab PayLater',icon:'🟢',amt:0,credit:true,limit:0,due:1},{id:'maricc',name:'Mari Credit Card',icon:'💳',amt:0,credit:true,limit:500,due:1}];
+const DEFAULT_FUNDS=[{id:'cash',name:'Cash',icon:'💵',amt:0},{id:'nets',name:'NETS',icon:'💳',amt:0},{id:'dbs',name:'DBS Bank',icon:'🏦',amt:0},{id:'mari',name:'Mari Bank',icon:'🟠',amt:0},{id:'ezlink',name:'EZ-Link card',icon:'🚇',amt:0},{id:'shopee',name:'Shopee PayLater',icon:'🛒',amt:0,credit:true,limit:500,due:1},{id:'grab',name:'Grab PayLater',icon:'🟢',amt:0,credit:true,limit:500,due:1},{id:'maricc',name:'Mari Credit Card',icon:'💳',amt:0,credit:true,limit:500,due:1}];
 function allFunds(){ const own=(DB.settings.funds||[]); if(!own.length) return DEFAULT_FUNDS.map(f=>({...f}));
   const have=new Set(own.map(f=>f.id)); return [...own, ...DEFAULT_FUNDS.filter(d=>!have.has(d.id)).map(f=>({...f}))]; }
 const fkey = n => { const k=String(n||'').toLowerCase().replace(/[^a-z0-9]/g,''); return k.startsWith('ezlink')? 'ezlink' : k; };
@@ -485,6 +501,14 @@ function useSet(ym){ ym=(typeof ym==='string'&&ym)||curYM();
   if(ks.length) return new Set(DB.months[ks[ks.length-1]].useIn);
   return new Set(funds().filter(f=>!f.credit && !isEFDefault(f)).map(f=>f.id)); }
 const isCredit = f => !!(f && f.credit);
+const SHORT_NAMES={nets:'NETS',mari:'Mari',ezlink:'EZLink',dbs:'DBS',maricc:'Credit',shopee:'Shopee',grab:'Grab',cash:'Cash'};
+const shortName = f => (f && (f.short || SHORT_NAMES[f.id] || f.name)) || '';
+/* One-time (synced): payment order NETS · Mari · EZLink · DBS / Credit · Shopee · Grab · Cash, short names, Grab PayLater limit 500 */
+function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
+  const order=['nets','mari','ezlink','dbs','maricc','shopee','grab','cash'], all=allFunds();
+  const sorted=[...order.map(id=>all.find(f=>f.id===id)).filter(Boolean), ...all.filter(f=>!order.includes(f.id))]
+    .map(f=> f.id==='grab' && !(+f.limit>0)? {...f, limit:500} : f);
+  DB.settings.funds=sorted; DB.settings.layoutV=1; DB.settings.upd=Date.now(); return true; }
 const isEF = (f, ym) => !isCredit(f) && !useSet(typeof ym==='string'? ym : undefined).has(f.id);
 const isSpend = (f, ym) => !isCredit(f) && !isEF(f, ym);
 // Visible accounts. Removed ones are hidden; a duplicate with the same name (e.g. two EZ-Link cards) is left out if it has no balance or payments.
@@ -524,7 +548,11 @@ function acctTx(id){
 }
 function liveBal(f){ return r2((+f.amt||0) + acctTx(f.id).filter(x=>x.after).reduce((a,x)=>a+x.d,0)); }
 function setBalance(id,v){ saveFunds(allFunds().map(f=>f.id===id?{...f,amt:r2(+v||0),at:Date.now()}:f)); }
-function payChips(sel, attr, label){ return `<label class="f">${label}</label><div class="chips">${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`; }
+function payGrid(sel, attr, list, extra){ list=list||funds();
+  return `<div class="pgrid">${extra||''}${list.map(f=>{ const av=isCredit(f)? availOf(f) : null;
+    return `<button class="pt ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}" title="${esc(f.name)}"><span class="pi">${esc(f.icon||'💰')}</span><span class="pn">${esc(shortName(f))}</span>${av!==null?`<span class="ps num">${sgd0(av)} left</span>`:''}</button>`; }).join('')}</div>`; }
+function payChips(sel, attr, label){ return `<label class="f">${label}</label>`+payGrid(sel, attr); }
+function payChipsOld(sel, attr, label){ return `<label class="f">${label}</label><div class="chips">${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`; }
 /* Balances are hidden until the eye is tapped (remembered on this device only) */
 const EYEKEY='dailyExpenseTracker.showBal';
 function showBal(){ try{ return localStorage.getItem(EYEKEY)==='1'; }catch(e){ return false; } }
@@ -544,9 +572,9 @@ function balancesCard(){
 function accountsStrip(){
   const all=funds(), fs=all.filter(f=>isSpend(f)), efs=all.filter(f=>isEF(f)), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0), efTot=efs.reduce((a,f)=>a+liveBal(f),0);
   return `<div class="card" data-bal="1"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Spending accounts <span class="muted num" style="font-weight:600;font-size:14px">${used.length? bal(tot):''}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet({})">Manage</button></span></h2>
-    <div class="acc">${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(f.name)}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
-${funds().some(isCredit)?`<button class="ac" onclick="balancesSheet({})"><div class="ai">💳</div><div class="an">Credit owed</div><div class="av2 num">${bal(funds().filter(isCredit).reduce((a,f)=>a+Math.max(0,owedOf(f)),0))}</div></button>`:''}${efs.length?`<button class="ac" onclick="balancesSheet({})"><div class="ai">🛟</div><div class="an">Emergency fund</div><div class="av2 num">${bal(efTot)}</div></button>`:''}
-    <button class="ac add" onclick="xferForm()" aria-label="Add money or transfer">⇄</button></div></div>`;
+    <div class="acc">${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(shortName(f))}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
+${funds().some(isCredit)?`<button class="ac" onclick="balancesSheet({})"><div class="ai">💳</div><div class="an">Owed</div><div class="av2 num">${bal(funds().filter(isCredit).reduce((a,f)=>a+Math.max(0,owedOf(f)),0))}</div></button>`:''}${efs.length?`<button class="ac" onclick="balancesSheet({})"><div class="ai">🛟</div><div class="an">Emergency</div><div class="av2 num">${bal(efTot)}</div></button>`:''}
+    <button class="ac add" onclick="xferForm()" aria-label="Add money or transfer">⇄ Transfer</button></div></div>`;
 }
 /* ============ Credit accounts (PayLater, credit card) and EMI ============
    A credit account's balance is negative: what you owe. Spending on it raises what you owe; a transfer into it is a bill payment.
@@ -608,45 +636,50 @@ let ACC_CTX='home', ACC_DEL=false, ACC_ORD=false;   // where Accounts was opened
 function balancesSheet(opt){
   if(opt && typeof opt==='object' && !(opt instanceof Event)){ ACC_CTX = opt.settings? 'settings' : 'home'; ACC_DEL=false; ACC_ORD=false; } else if(opt instanceof Event){ ACC_CTX='home'; ACC_DEL=false; ACC_ORD=false; }
   const fromSet = ACC_CTX==='settings', del = fromSet && ACC_DEL, ord = fromSet && ACC_ORD && !del;
-  const ym=curYM(), mon=ymLabel(ym,true).split(' ')[0], all=funds(), fs=all.filter(f=>!isCredit(f)), cr=all.filter(isCredit), us=useSet(ym), every=fs.filter(f=>us.has(f.id)), ef=fs.filter(f=>!us.has(f.id));
-  const tot=fs.reduce((a,f)=>a+liveBal(f),0), totE=every.reduce((a,f)=>a+liveBal(f),0), totF=ef.reduce((a,f)=>a+liveBal(f),0);
+  const ym=curYM(), mon=ymLabel(ym,true).split(' ')[0], all=funds(), us=useSet(ym), cr=all.filter(isCredit), every=all.filter(f=>!isCredit(f)&&us.has(f.id)), ef=all.filter(f=>!isCredit(f)&&!us.has(f.id));
+  const totE=every.reduce((a,f)=>a+liveBal(f),0), totF=ef.reduce((a,f)=>a+liveBal(f),0), crDue=cr.reduce((a,f)=>a+dueAt(f),0), crOwed=cr.reduce((a,f)=>a+Math.max(0,owedOf(f)),0);
   const st=stats(ym), sal=+st.salary||0, got=salaryIn(ym), m=DB.months[ym]||{};
-  const salNote = got>0.004? `Added ${sgd(got)}${sal&&got<sal-0.004?' of '+sgd0(sal):''} ✓` : m.openingAuto? `Not needed for ${mon}: your balances were set after it came in` : sal? `${sgd0(sal)} not in an account yet` : 'Set your salary on the Budget tab';
-  const crOwed=cr.reduce((a,f)=>a+Math.max(0,owedOf(f)),0);
-  const n=fs.length, row=(f,k,arr)=>{ arr=arr||fs; const N=arr.length; const on=us.has(f.id), paid=acctTx(f.id).filter(x=>x.d<0 && x.e.date.startsWith(ym) && x.e.cat!=='xfer').reduce((a,x)=>a-x.d,0);
-    return `<div class="ent acrow"><button class="srcb" data-acct="${esc(f.id)}"><span class="ic">${esc(f.icon||'💰')}</span><span class="t" style="min-width:0"><span style="display:block">${esc(f.name)}</span>${isCredit(f)? `<span class="small muted num" style="display:block">Owe ${bal(Math.max(0,owedOf(f)))}${+f.limit>0?' of '+sgd0(+f.limit):''} · due ${niceDate(nextDue(f))}${dueAt(f)>0.004?' · '+bal(dueAt(f))+' due':''}${overdueOf(f)>0.004?' · <b class="neg">overdue</b>':''}</span>${+f.limit>0?`<span class="cbar"><i style="width:${Math.min(100,Math.max(0,owedOf(f))/(+f.limit)*100)}%"></i></span>`:''}` : ''}<span class="small muted num" style="display:${isCredit(f)?'none':'block'}">${bal(liveBal(f))}${paid?' · paid '+sgd(paid)+' this month':f.at?'':' · balance not set'}</span></span></button>
-      ${ord? `<span class="ordb"><button class="btn sm" data-up="${esc(f.id)}" aria-label="Move ${esc(f.name)} up" ${k===0?'disabled':''}>▲</button><button class="btn sm" data-dn="${esc(f.id)}" aria-label="Move ${esc(f.name)} down" ${k===N-1?'disabled':''}>▼</button></span>`
-       : del? `<button class="btn sm danger" data-adel="${esc(f.id)}">Delete</button>` : isCredit(f)? `<span class="row" style="gap:6px;flex:none"><button class="btn sm" data-cal="${esc(f.id)}" aria-label="Add payment reminder to calendar">📅</button><button class="btn sm primary" data-pb="${esc(f.id)}">Pay</button></span>` : `<label class="swl"><span>${on?'Spending':'Emergency'}</span><input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${on?'checked':''} aria-label="${esc(f.name)}: spending account"></label>`}</div>
-      ${del && Math.abs(liveBal(f))>0.004? `<div class="hidden small" data-awarn="${esc(f.id)}" style="padding:8px 12px 12px;color:var(--warn)">${esc(f.name)} has ${sgd(liveBal(f))}. Move it to another account first, or it leaves your totals.<div class="btns" style="margin-top:8px"><button class="btn sm" data-amove="${esc(f.id)}">⇄ Move money</button><button class="btn sm danger" data-adel2="${esc(f.id)}">Delete anyway</button></div></div>` : ''}`; };
+  const salNote = got>0.004? `Added ${sgd(got)}${sal&&got<sal-0.004?' of '+sgd0(sal):''} ✓` : m.openingAuto? `Not needed for ${mon}: balances were set after it came in` : sal? `${sgd0(sal)} not in an account yet` : 'Set your salary on the Budget tab';
+  // one row: icon · name/sub · amount · control (switch, Pay, arrows or Delete)
+  const row=(f,k,arr)=>{ const N=arr.length, c=isCredit(f), on=us.has(f.id);
+    const sub = c? `${+f.limit>0? sgd0(availOf(f))+' of '+sgd0(+f.limit)+' left · ':''}due ${niceDate(nextDue(f))}${overdueOf(f)>0.004?' · <b class="neg">overdue</b>':''}`
+                 : (f.at? 'Updated '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}) : 'Balance not set');
+    const amt = c? (owedOf(f)>0.004? '<span class="neg">'+bal(owedOf(f))+'</span>' : bal(0)) : bal(liveBal(f));
+    const ctl = ord? `<span class="ordb"><button class="btn sm" data-up="${esc(f.id)}" aria-label="Move ${esc(f.name)} up" ${k===0?'disabled':''}>▲</button><button class="btn sm" data-dn="${esc(f.id)}" aria-label="Move ${esc(f.name)} down" ${k===N-1?'disabled':''}>▼</button></span>`
+      : del? `<button class="btn sm danger" data-adel="${esc(f.id)}">Delete</button>`
+      : c? `<button class="btn sm ${dueAt(f)>0.004?'primary':''}" data-pb="${esc(f.id)}">Pay</button>`
+      : `<input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${on?'checked':''} aria-label="${esc(f.name)}: ${on?'spending account (turn off to keep as emergency fund)':'emergency fund (turn on to use for spending)'}">`;
+    return `<div class="ar"><button class="srcb" data-acct="${esc(f.id)}"><span class="ic">${esc(f.icon||'💰')}</span><span class="t" style="min-width:0"><span style="display:block;font-weight:650">${esc(f.name)}</span><span class="small muted" style="display:block">${sub}</span>${c&&+f.limit>0?`<span class="cbar"><i style="width:${Math.min(100,Math.max(0,owedOf(f))/(+f.limit)*100)}%"></i></span>`:''}</span></button>
+      ${ord||del? '' : `<span class="ab num">${amt}</span>`}${ctl}</div>
+      ${del && Math.abs(liveBal(f))>0.004? `<div class="hidden small" data-awarn="${esc(f.id)}" style="padding:8px 14px 12px;color:var(--warn)">${esc(f.name)} ${c?'still has '+sgd(owedOf(f))+' owed':'has '+sgd(liveBal(f))}. ${c?'Pay it off first':'Move it to another account first'}, or it leaves your totals.<div class="btns" style="margin-top:8px">${c?'':`<button class="btn sm" data-amove="${esc(f.id)}">⇄ Move money</button>`}<button class="btn sm danger" data-adel2="${esc(f.id)}">Delete anyway</button></div></div>` : ''}`; };
+  const sec=(title,total,arr,extra)=> arr.length||extra? `<div class="acsec"><div class="ah"><span>${title}</span><span class="num">${total}</span></div>${arr.map((f,k)=>row(f,k,arr)).join('')}${extra||''}</div>` : '';
   const op=openingOf(ym), used=fundsIncluded(ym), calc=r2(st.saved), diff=r2(totE+creditNet()-calc), ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
   openSheet(`<div class="sheettop"><h3>Accounts</h3><div class="row" style="gap:8px">${eyeBtn('bEye')}<button class="btn sm" onclick="closeSheet()">Close</button></div></div>
-    <div class="kpis" style="margin-top:10px"><div class="kpi"><div class="l">Spending · money left</div><div class="v num">${bal(totE)}</div></div><div class="kpi"><div class="l">🛟 Emergency fund</div><div class="v num">${bal(totF)}</div></div></div>
-    <div class="small muted" style="margin:6px 2px 0">Total in bank accounts ${bal(tot)}${cr.length?' · 💳 credit owed '+bal(crOwed):''}</div>
-    <button class="salbtn" id="bSal"><span style="font-size:22px">💼</span><span style="flex:1;text-align:left"><b>Salary in · ${mon}</b><span class="small muted" style="display:block">${salNote}</span></span><span class="muted">›</span></button>
-    <div class="small muted" style="margin:14px 2px 6px;font-weight:700">Your accounts · switch on = Spending (shows on Home), off = Emergency fund</div>
-    <div class="list">${fs.map((f,k)=>row(f,k,fs)).join('')||'<div class="empty">No accounts yet.</div>'}</div>
-    ${cr.length?`<div class="small muted" style="margin:14px 2px 6px;font-weight:700">💳 Credit &amp; PayLater · money you owe, paid on the due day</div><div class="list">${cr.map((f,k)=>row(f,k,cr)).join('')}</div>`:''}
-    ${ord? `<div class="stdiff" style="margin-top:10px"><span>Reorder: use ▲ ▼. This order is used in “Paid with”, Transfer and on Home.</span></div><div class="btns" style="margin-top:10px"><button class="btn primary" id="bOrdDone" style="flex:1">Done</button></div>` : del? `<div class="stdiff bad" style="margin-top:10px"><span>Delete mode: tap Delete twice to remove an account. Past entries stay in your history.</span></div><div class="btns" style="margin-top:10px"><button class="btn primary" id="bDelDone" style="flex:1">Done</button></div>`
-      : `<div class="btns" style="margin-top:10px"><button class="btn" id="bXfer" style="flex:1">⇄ Transfer</button><button class="btn" id="bAddT" style="flex:1">+ Add account</button></div>${fromSet?'<div class="btns" style="margin-top:8px"><button class="btn" id="bOrdM" style="flex:1">↕ Reorder</button><button class="btn danger" id="bDelM" style="flex:1">🗑 Remove</button></div>':''}`}
+    <div class="kp3"><div class="kpi"><div class="l">Money left</div><div class="v num">${bal(r2(totE-crDue))}</div></div><div class="kpi"><div class="l">💳 Bills due</div><div class="v num ${crDue>0.004?'neg':''}">${bal(crDue)}</div></div><div class="kpi"><div class="l">🛟 Kept aside</div><div class="v num">${bal(totF)}</div></div></div>
+    ${ord? `<div class="stdiff" style="margin-top:10px"><span>Reorder with ▲ ▼ — this order is used in “Paid with”, Transfer and on Home.</span></div><div class="btns" style="margin-top:8px"><button class="btn primary" id="bOrdDone" style="flex:1">Done</button></div>`
+      : del? `<div class="stdiff bad" style="margin-top:10px"><span>Tap Delete twice to remove an account. Past entries stay in your history.</span></div><div class="btns" style="margin-top:8px"><button class="btn primary" id="bDelDone" style="flex:1">Done</button></div>`
+      : `<div class="iconbar"><button class="btn" id="bXfer">⇄ Transfer</button><button class="btn" id="bAddT">＋ Add</button>${fromSet?'<button class="btn" id="bOrdM" aria-label="Reorder accounts">↕ Order</button><button class="btn danger" id="bDelM" aria-label="Remove accounts">🗑</button>':''}</div>
+    <button class="salbtn" id="bSal"><span style="font-size:20px">💼</span><span style="flex:1;text-align:left"><b>Salary in · ${mon}</b><span class="small muted" style="display:block">${salNote}</span></span><span class="muted">›</span></button>`}
     <div id="bAddBox" class="hidden card" style="margin-top:12px;box-shadow:none;border:1px solid var(--border)"><h2>Add an account</h2>
       <div class="grid2"><div><label class="f" for="bNew">Name</label><input class="in" id="bNew" placeholder="e.g. POSB, Wise" autocomplete="off"></div>
       <div><label class="f" for="bNewAmt">Current balance (${curCode()})</label><input class="in num" id="bNewAmt" type="number" inputmode="decimal" step="0.01" placeholder="0.00"></div></div>
-      <label class="f">Use it for</label><div class="seg" id="bNewKind"><button data-k="spend" class="on">Spending</button><button data-k="ef">Emergency fund</button><button data-k="credit">Credit / PayLater</button></div>
+      <label class="f">Use it for</label><div class="seg" id="bNewKind"><button data-k="spend" class="on">Spending</button><button data-k="ef">Emergency</button><button data-k="credit">Credit</button></div>
       <div class="grid2 hidden" id="bCrBox"><div><label class="f" for="bNewLim">Credit limit (${curCode()})</label><input class="in num" id="bNewLim" type="number" inputmode="decimal" placeholder="500"></div><div><label class="f" for="bNewDue">Due day of month</label><input class="in num" id="bNewDue" type="number" inputmode="numeric" min="1" max="28" value="1"></div></div>
       <div class="btns" style="margin-top:10px"><button class="btn primary" id="bAdd">Add account</button></div></div>
-    <div class="card" style="margin-top:14px;box-shadow:none;border:1px solid var(--border)"><h2>🛟 Emergency fund</h2>
-      <div class="small muted">${ef.map(f=>esc(f.name)).join(', ')||'No accounts switched to Emergency'} · kept aside, not in Money left</div>
-      <div class="btns" style="margin-top:10px"><button class="btn primary" id="bMove" style="flex:1">+ Move to savings</button></div></div>
-    ${op===null?'':`<div class="card" style="box-shadow:none;border:1px solid var(--border)"><h2>Savings check · ${mon}</h2>
-      ${ln(`Savings brought into ${mon} <span class="small muted">balance on 1 ${mon}</span>`, sgd(op))}
+    ${ord? sec('↕ Order in “Paid with” (4 per row)', '', all) : `
+    ${sec('💳 Spending · in Money left', bal(totE), every)}
+    ${sec('🧾 Credit &amp; PayLater · you owe', crOwed>0.004? '<span class="neg">'+bal(crOwed)+'</span>' : bal(0), cr)}
+    ${sec('🛟 Emergency fund · kept aside', bal(totF), ef, del? '' : `<div class="ar" style="justify-content:flex-end"><button class="btn sm" id="bMove">＋ Move to savings</button></div>`)}`}
+    ${ord||del? '' : `<div class="small muted" style="margin:8px 2px 0">Switch on = spending money (shows on Home). Switch off = emergency fund. Tap an account to update its balance, rename it or see its payments.</div>`}
+    ${op===null||ord||del?'':`<details class="card" style="box-shadow:none;border:1px solid var(--border);margin-top:12px"><summary style="cursor:pointer;font-weight:700">Savings check · ${mon} ${Math.abs(diff)<0.005?'<span class="pos">✓</span>':'<span class="neg">≠</span>'}</summary>
+      <div style="margin-top:8px">${ln(`Savings brought into ${mon} <span class="small muted">balance on 1 ${mon}</span>`, sgd(op))}
       ${used>=-0.004? ln(`− Used in ${mon}`, '('+sgd(Math.max(0,used))+')') : ln(`+ Put aside from ${mon}'s money`, sgd(-used))}
       ${ln('Emergency fund', sgd(efKept(ym)),'tot')}
       ${ln('Money left this month', sgd(calc))}
-      ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your Spending accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Spending accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">A payment or refund without “Paid with”, or a balance that needs updating. <button class="lnk" style="float:none" onclick="statementSheet('${ym}')">See statement</button></div>`}</div>`}
-    <div class="small muted" style="margin-top:4px">Payments you log with “Paid with” come off these balances. Tap an account to update its balance, rename or delete it, or see its payments.</div>`);
+      ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your Spending accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Spending accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">A payment or refund without “Paid with”, or a balance that needs updating. <button class="lnk" style="float:none" onclick="statementSheet('${ym}')">See statement</button></div>`}</div></details>`}`);
   const delAcct=id=>{ const f=funds().find(x=>x.id===id); if(!f) return; saveFunds(allFunds().map(x=>x.id===id?{...x,hidden:true}:x)); const u=useSet(ym); if(u.has(id)){ u.delete(id); setMonthFlag(ym,{useIn:[...u]}); }
     cleanFundsIn(); reOpening(); render(); toast(f.name+' deleted'); balancesSheet(); };
-  $('#bSal').onclick=()=>salarySheet(ym);
+  if($('#bSal')) $('#bSal').onclick=()=>salarySheet(ym);
   if(ord){ $('#bOrdDone').onclick=()=>{ ACC_ORD=false; balancesSheet(); };
     const mv=(id,dir)=>{ const vis=funds().map(f=>f.id), i=vis.indexOf(id), j=i+dir; if(i<0||j<0||j>=vis.length) return;
       const all=allFunds(), a=all.findIndex(f=>f.id===id), b=all.findIndex(f=>f.id===vis[j]); [all[a],all[b]]=[all[b],all[a]]; saveFunds(all); render(); balancesSheet(); };
@@ -663,7 +696,7 @@ function balancesSheet(opt){
   $('#bXfer').onclick=()=>xferForm();
   $('#bMove').onclick=()=>moveSavings(0);
   let kind='spend'; document.querySelectorAll('#bNewKind [data-k]').forEach(b=>b.onclick=()=>{ kind=b.dataset.k; document.querySelectorAll('#bNewKind [data-k]').forEach(x=>x.classList.toggle('on',x===b)); $('#bCrBox').classList.toggle('hidden',kind!=='credit'); $('label[for=bNewAmt]').textContent = kind==='credit'? 'Amount you owe now' : 'Current balance ('+curCode()+')'; });
-  $('#bAddT').onclick=()=>{ $('#bAddBox').classList.remove('hidden'); $('#bNew').focus(); };
+  $('#bAddT').onclick=()=>{ $('#bAddBox').classList.toggle('hidden'); if(!$('#bAddBox').classList.contains('hidden')) $('#bNew').focus(); };
   $('#bAdd').onclick=()=>{ const n=($('#bNew').value||'').trim(); if(!n){ toast('Type a name for the account'); $('#bNew').focus(); return; }
     if(/^\s*[\d.,]+\s*$/.test(n)){ toast('That looks like an amount. Put the name here and the amount in the balance box.'); $('#bNew').focus(); return; }
     const a=parseFloat($('#bNewAmt').value), now=Date.now(), nid='f'+now.toString(36), u=useSet(curYM());
@@ -750,7 +783,7 @@ function xferForm(src, back, origin, preset){
   let from=e.from||'', to=e.to||'';
   const fromAdd = origin==='add';
   const yest=(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); })();
-  const opts=(sel,attr,outside)=>`<div class="chips">${outside?`<button class="chip ${!sel?'on':''}" ${attr}="">💼 Outside (salary)</button>`:''}${[...ev,...efs].map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}${isEF(f)?' · emergency':''}</button>`).join('')}</div>`;
+  const opts=(sel,attr,outside)=>payGrid(sel, attr, outside? funds().filter(f=>!isCredit(f)) : funds(), outside?`<button class="pt ${!sel?'on':''}" ${attr}="" title="Money from outside, e.g. salary"><span class="pi">💼</span><span class="pn">Salary</span></button>`:'');
   openSheet(`<div class="sheettop"><h3>${e.id?'Edit transfer':fromAdd?'Add':p.title||'Transfer'}</h3><button class="btn sm" id="xBack">${fromAdd||!back&&!p.back?'Close':'Back'}</button></div>
     ${fromAdd?'<div class="seg" style="margin-top:6px"><button id="xToExp">Expense</button><button class="on">🔁 Transfer</button></div>':''}
     <div class="small muted" style="margin-top:6px">Recharge NETS or EZ-Link, bank to bank, ATM, salary in, or move savings. Never counted as spending.</div>
@@ -1756,12 +1789,12 @@ function drawSheet(){
   <div class="cgrid">${CATS.filter(c=>!c.friend && !c.track).map(c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`).join('')}</div>
   ${E.cat?'':'<div class="small muted" style="margin-top:6px;text-align:center">Choose a category</div>'}`;
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.icon} ${s.name}</button>`;
-    h += `<label class="f">Food type</label><div class="chips">${k.subs.map(chip).join('')}</div>`; }
+    h += `<label class="f">Food type</label><div class="fgrid">${k.subs.map(chip).join('')}</div>`; }
   h += `<label class="f">Date</label><div class="datechips"><button class="chip ${E.date===todayStr()?'on':''}" data-d="${todayStr()}">Today</button><button class="chip ${E.date===yest?'on':''}" data-d="${yest}">Yesterday</button><input class="in" type="date" id="eDate" value="${E.date}" aria-label="Pick a date"></div>`;
   if(E.cat==='home' && curCode()!==homeCode()) h += `<div class="grid2"><div><label class="f">Amount in ${homeCode()} (${curInfo(homeCode()).sym.trim()})</label><input class="in num" type="number" inputmode="decimal" id="eInr" value="${E.inr?Math.round(E.inr):''}" placeholder="0"></div>
     <div><label class="f">Rate: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
     <div class="small muted" id="rateNote" style="margin-top:6px">Enter either ${curCode()} or ${homeCode()} — the other is calculated.</div>`;
-  h += `<label class="f">${k.income? 'Received in' : 'Paid with'}</label><div class="hscroll">${funds().map(f=>`<button class="chip ${f.id===E.pay?'on':''}" data-pay="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}${isCredit(f)&&availOf(f)!==null?` <span class="small" style="opacity:.7">· ${sgd0(availOf(f))} left</span>`:''}</button>`).join('')}</div>`;
+  h += `<label class="f">${k.income? 'Received in' : 'Paid with'}</label>${payGrid(E.pay,'data-pay')}`;
   { const pf=funds().find(x=>x.id===E.pay); if(isCredit(pf) && !k.income) h += `<div class="small muted" style="margin-top:6px">💳 Credit: ${E.cat==='shopping'? (E.id&&E.emi&&E.emi.n>1&&E.emiChoice===undefined? 'EMI '+E.emi.n+' months · <button class="lnk" style="float:none" id="emiChg">Change</button>' : 'after Save you choose: pay in full or EMI') : 'paid in full on '+niceDate(nextDue(pf, E.date))}</div>`; }
   const ph = {refund:'e.g. insurance claim, shop return, cashback', subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
   h += `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label><input class="in" id="eNote" value="${esc(E.note)}" placeholder="${ph}" ${k.reason?'required':''}>
@@ -1916,7 +1949,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v44';
+const APP_VERSION='v46';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -1951,7 +1984,7 @@ async function cloudSync(manual, poll){
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
     if(j.same){ if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
-    if(n){ try{ cleanupFunds(); ensureOpening(); }catch(e){} }
+    if(n){ try{ if(layoutMigrate()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
     persist();
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
@@ -2193,7 +2226,7 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 try{ if(localStorage.getItem('dailyExpenseTracker.hideOnOpen')!=='0') localStorage.setItem('dailyExpenseTracker.showBal','0'); }catch(e){}
 applyTheme();
 renderProfileBtn();
-try{ cleanupFunds(); ensureOpening(); }catch(e){}
+try{ if(layoutMigrate()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
 render();
 /* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
 /* A setup link never connects by itself: it only fills in the code on the Sync screen, and you tap Connect. */
@@ -2202,6 +2235,18 @@ render();
   if(!o){ setTimeout(()=>toast('That sync link isn’t valid'),600); return; }
   if(cloudOn()){ setTimeout(()=>toast('This device is already syncing — link ignored'),600); return; }
   go('settings'); setTimeout(()=>{ const i=$('#cCode'); if(i){ i.value=connCode(o); i.scrollIntoView({block:'center'}); } toast('Check the code, then tap Connect'); },300); })();
+/* Back button: closes an open sheet, then returns to Home; on Home, pressing back twice closes the app. */
+(function(){ if(!(history.pushState && window.matchMedia)) return; let exitT=0;
+  const guard=()=>{ try{ if(!(history.state&&history.state.g)) history.pushState({g:1},''); }catch(e){} };
+  guard();
+  window.addEventListener('popstate',()=>{
+    if($('#sheetBg').classList.contains('open')){ closeSheet(); guard(); return; }
+    if(S.tab!=='home'){ go('home'); guard(); return; }
+    if(Date.now()-exitT<2000) return;
+    exitT=Date.now(); toast('Press back again to close');
+    setTimeout(()=>{ if(Date.now()-exitT>=1900) guard(); },2000);
+  });
+})();
 initSync();
 startupLock();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
