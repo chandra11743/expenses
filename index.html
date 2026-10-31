@@ -80,7 +80,7 @@ header.top h1{font-size:17px;margin:0;font-weight:650}
 .pindots i.on{background:var(--text)}
 .lock{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 .lock .box{width:100%;max-width:340px;text-align:center}
-body.locked main,body.locked nav.tabs,body.locked .fab,body.locked .fabcalc,body.locked .monthnav,body.locked #syncBtn{visibility:hidden}
+body.locked main,body.locked nav.tabs,body.locked .fab,body.locked .fabcalc,body.locked .fabset,body.locked .monthnav,body.locked #syncBtn{visibility:hidden}
 body.locked::after{content:"Locked. Tap the name at the top to unlock or switch profile.";position:fixed;left:16px;right:16px;top:40%;text-align:center;color:var(--text-2)}
 .monthnav{display:flex;align-items:center;gap:2px}
 .monthnav button{border:0;background:transparent;width:34px;height:34px;border-radius:8px;font-size:20px;cursor:pointer;color:var(--text-2)}
@@ -381,6 +381,13 @@ svg.chart text{fill:var(--muted);font-size:11px}
 :root[data-skin] body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 :root[data-skin] .fab{bottom:calc(96px + env(safe-area-inset-bottom))}
 :root[data-skin] .fabcalc{bottom:calc(102px + env(safe-area-inset-bottom))}
+/* + sits in the middle of the bottom bar; calculator and settings float at the right above it */
+nav.tabs .navgap{flex:0 0 72px}
+.fab,:root[data-skin] .fab{left:50%;right:auto;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));width:62px;height:62px;font-size:32px;z-index:32}
+.fab:active{transform:translateX(-50%) scale(.95)}
+.fabcalc,:root[data-skin] .fabcalc{right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:46px;height:46px;display:flex;align-items:center;justify-content:center;padding:0}
+.fabset,:root[data-skin] .fabset{right:74px;color:var(--text)}
+@media (min-width:800px){.fabcalc,:root[data-skin] .fabcalc{right:calc(50% - 370px)}.fabset,:root[data-skin] .fabset{right:calc(50% - 314px)}}
 /* artwork */
 .cimg{width:1.5em;height:1.5em;vertical-align:-.38em;display:inline-block}
 .fimg{width:2.05em;height:1.28em;border-radius:.2em;vertical-align:-.3em;display:inline-block;box-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -437,11 +444,13 @@ svg.chart text{fill:var(--muted);font-size:11px}
 </main>
 
 <button class="fabcalc" id="fabCalc" aria-label="Calculator" title="Calculator">🧮</button>
+<button class="fabcalc fabset" id="fabSet" aria-label="Settings" title="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 <button class="fab" id="fab" aria-label="Add expense">+</button>
 
 <nav class="tabs">
   <button data-tab="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</button>
   <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
+  <span class="navgap" aria-hidden="true"></span>
   <button data-tab="analysis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analysis</button>
   <button data-tab="budget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>Budget</button>
 </nav>
@@ -1082,20 +1091,9 @@ function accountsStrip(){
   const all=funds(), used=all.filter(f=>isSpend(f)), tot=used.reduce((a,f)=>a+liveBal(f),0);
   const order=[...all.filter(f=>isSpend(f)), ...all.filter(isCredit)];   // emergency-fund accounts aren't in the budget, so they're left out here
   return `<div class="card" data-bal="1" style="background:none;border:0;box-shadow:none;padding:4px 0 0"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Cards &amp; wallets <span class="muted num" style="font-family:var(--font-ui);font-weight:600;font-size:14px">${bal(tot)}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet({})">Manage</button></span></h2>
-    <div class="crail" id="crail">${(order.length>1? [...order,...order,...order] : order).map(f=>cardFace(f,'st')).join('')}</div></div>`;
+    <div class="crail" id="crail">${order.map(f=>cardFace(f,'st')).join('')}</div></div>`;
 }
 document.addEventListener('click',e=>{ const c=e.target.closest && e.target.closest('.crail .cc'); if(c) accountSheet(c.dataset.cid); });
-/* Home card rail loops: the cards are drawn three times and the view jumps back to the middle copy whenever it drifts into the first or last copy */
-let RAIL_X=null;
-function bindRail(){ const r=document.getElementById('crail'); if(!r || r.dataset.loop) return; r.dataset.loop='1';
-  const n=r.children.length/3; if(!Number.isInteger(n) || n<2) return;
-  const setW=()=>r.children[n].offsetLeft - r.children[0].offsetLeft;
-  r.scrollLeft = RAIL_X!==null? RAIL_X : setW();
-  let t=null; const fix=()=>{ const w=setW(); if(!w) return; const prev=r.style.scrollSnapType; r.style.scrollSnapType='none';
-    if(r.scrollLeft < w*0.5) r.scrollLeft += w; else if(r.scrollLeft > w*1.5) r.scrollLeft -= w;
-    r.style.scrollSnapType=prev; RAIL_X=r.scrollLeft; };
-  r.addEventListener('scroll',()=>{ clearTimeout(t); t=setTimeout(fix,140); },{passive:true}); }
-new MutationObserver(()=>bindRail()).observe(document.documentElement,{childList:true,subtree:true});
 /* ============ Credit accounts (PayLater, credit card) and EMI ============
    A credit account's balance is negative: what you owe. Spending on it raises what you owe; a transfer into it is a bill payment.
    Shopping on credit can be split into an EMI: each month's instalment counts as spending in that month (the purchase itself counts 0). */
@@ -2636,7 +2634,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v68';
+const APP_VERSION='v69';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2931,6 +2929,7 @@ $('#fab').onclick=()=>openEntry(null);
     const i=ORDER.indexOf(S.tab), j=i+(dx<0?1:-1); if(j<0 || j>=ORDER.length) return; go(ORDER[j]); },{passive:true});
 })();
 $('#fabCalc').onclick=()=>calcSheet();
+$('#fabSet').onclick=()=>go('settings');
 $('#mLabel').onclick=()=>calSheet();
 $('#profBtn').onclick=profileSheet;
 $('#mPrev').onclick=()=>{ S.ym=addMonths(S.ym,-1); render(); };
