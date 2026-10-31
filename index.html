@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Daily Expenses</title>
 <meta name="description" content="Track daily spending by category, monthly budgets, salary and savings.">
-<meta name="theme-color" content="#2a78d6">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.frankfurter.dev https://api.frankfurter.app https://open.er-api.com; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
+<meta name="theme-color" content="#0A0A0C">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.frankfurter.dev https://api.frankfurter.app https://open.er-api.com; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; worker-src 'self'">
 <meta name="referrer" content="no-referrer">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Inter+Tight:wght@400;500;600;700&amp;family=Fraunces:opsz,wght@9..144,300;9..144,500&amp;family=Manrope:wght@400;500;600;700;800&amp;family=Sora:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -63,8 +65,8 @@ header.top h1{font-size:17px;margin:0;font-weight:650}
 .profbtn{display:flex;align-items:center;gap:7px;border:0;background:transparent;cursor:pointer;padding:4px 8px 4px 4px;border-radius:20px;font-weight:650;font-size:15px;color:var(--text);min-width:0;max-width:40vw}
 .profbtn:hover{background:var(--surface-2)}
 .profbtn .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
-.av.lg{width:40px;height:40px;font-size:17px}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--accent);background:var(--surface-2);border:1px solid var(--accent);font-family:var(--font-display);font-weight:var(--dw);font-size:15px;flex:none}
+.av.lg{width:40px;height:40px;font-size:21px}
 .prow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--border);cursor:pointer;border-radius:8px}
 .prow:first-child{border-top:0}
 .prow:hover{background:var(--surface-2)}
@@ -121,7 +123,7 @@ nav.tabs button{flex:1;min-width:0;border:0;background:transparent;padding:6px 0
 nav.tabs button svg{width:22px;height:22px}
 nav.tabs button.on{color:var(--accent);font-weight:700}
 nav.tabs button.on svg{background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:12px;padding:3px 12px;width:46px;height:28px;box-sizing:border-box;margin-top:-3px}
-.fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:31;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 6px 20px rgba(42,120,214,.4)}
+.fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:31;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 6px 20px -4px color-mix(in srgb,var(--accent) 55%,transparent)}
 @media (min-width:800px){.fab{right:calc(50% - 370px)}.fabcalc{right:calc(50% - 300px)}}
 .fabcalc{position:fixed;right:88px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:31;width:46px;height:46px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
 .calcpad{margin:10px 0 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:18px;padding:12px}
@@ -130,7 +132,7 @@ nav.tabs button.on svg{background:color-mix(in srgb,var(--accent) 14%,transparen
 .calcpad .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .calcpad .keys button{height:52px;border-radius:12px;border:0;background:var(--surface);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit}
 .calcpad .keys button:active{transform:scale(.96)}
-.calcpad .keys .op{background:rgba(42,120,214,.18);color:var(--accent)}
+.calcpad .keys .op{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
 .calcpad .keys .eq{background:var(--accent);color:#fff}
 .calcpad .keys .c{color:var(--bad)}
 .btn{border:1px solid var(--border);background:var(--surface);padding:10px 16px;border-radius:12px;cursor:pointer;font-weight:600}
@@ -342,6 +344,74 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .sheettop{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .headbtn{border:0;background:transparent;cursor:pointer;color:var(--text-2);font-size:13px;display:flex;align-items:center;padding:6px 8px;border-radius:8px}
 .headbtn:hover{background:var(--surface-2)}
+:root[data-skin="obsidian"][data-mode="dark"]{color-scheme:dark;--bg:#0A0A0C;--surface:#151518;--surface-2:#1d1c1e;--border:#2a2722;--text:#F4EFE6;--text-2:#cfc6b8;--muted:#8a847b;--card-border:#23211e;--hero-1:#1d1c20;--hero-2:#0c0c0e;--hero-ink:#F4EFE6;--hero-sub:#cfc6b8;--accent:#D9B77A;--accent-ink:#1a1408;--series-1:#D9B77A;--series-3:#7DC9A0;--good:#7DC9A0;--warn:#e0b05a;--bad:#e7786a;--good-bg:#16271e;--warn-bg:#2e2614;--bad-bg:#311a17;--grid:#2a2722;--shadow:none;--font-ui:'Inter Tight',system-ui,sans-serif;--font-display:'Instrument Serif',Georgia,serif;--dw:400;--hs:1.18}
+:root[data-skin="obsidian"][data-mode="light"]{color-scheme:light;--bg:#F4F1EB;--surface:#FFFFFF;--surface-2:#efe9df;--border:#e2dbcf;--text:#141416;--text-2:#4a453d;--muted:#8a847b;--card-border:#ebe4d8;--hero-1:#ffffff;--hero-2:#efe7da;--hero-ink:#141416;--hero-sub:#5d564b;--accent:#94702F;--accent-ink:#ffffff;--series-1:#94702F;--series-3:#2E7A55;--good:#2E7A55;--warn:#a06a00;--bad:#c0392b;--good-bg:#e2f1e7;--warn-bg:#f7ecd2;--bad-bg:#f8e1dd;--grid:#e6dfd2;--shadow:0 10px 30px -18px rgba(60,40,10,.35);--font-ui:'Inter Tight',system-ui,sans-serif;--font-display:'Instrument Serif',Georgia,serif;--dw:400;--hs:1.18}
+:root[data-skin="ivory"][data-mode="dark"]{color-scheme:dark;--bg:#161412;--surface:#1f1c19;--surface-2:#2a2622;--border:#38322b;--text:#F1EBDF;--text-2:#cfc4b2;--muted:#8f8576;--card-border:#2e2924;--hero-1:#211e1a;--hero-2:#181513;--hero-ink:#F1EBDF;--hero-sub:#cfc4b2;--accent:#E38D66;--accent-ink:#1c1a17;--series-1:#E38D66;--series-3:#7cc89a;--good:#7cc89a;--warn:#e0b05a;--bad:#ef8a78;--good-bg:#1c2a20;--warn-bg:#302816;--bad-bg:#33201b;--grid:#38322b;--shadow:none;--font-ui:'Manrope',system-ui,sans-serif;--font-display:'Fraunces',Georgia,serif;--dw:300;--hs:1.12}
+:root[data-skin="ivory"][data-mode="light"]{color-scheme:light;--bg:#F6F2EA;--surface:#FFFDF8;--surface-2:#f0eadd;--border:#e3dccd;--text:#1C1A17;--text-2:#4d473e;--muted:#8a8273;--card-border:#e8e1d2;--hero-1:#FFFDF8;--hero-2:#f4ede0;--hero-ink:#1C1A17;--hero-sub:#5e574b;--accent:#B4532F;--accent-ink:#ffffff;--series-1:#B4532F;--series-3:#2F7A4F;--good:#2F7A4F;--warn:#9a6a00;--bad:#b83a2a;--good-bg:#e3f0e6;--warn-bg:#f6ecd4;--bad-bg:#f7e0da;--grid:#e6dfd0;--shadow:0 1px 0 rgba(0,0,0,.03);--font-ui:'Manrope',system-ui,sans-serif;--font-display:'Fraunces',Georgia,serif;--dw:300;--hs:1.12}
+:root[data-skin="aurora"][data-mode="dark"]{color-scheme:dark;--bg:#07081A;--surface:#12142B;--surface-2:#1b1e3d;--border:#272b55;--text:#F5F6FF;--text-2:#c4c7e6;--muted:#8b8fb8;--card-border:#22264a;--hero-1:#3b2a8f;--hero-2:#0e3a63;--hero-ink:#F5F6FF;--hero-sub:#d3d5f3;--accent:#9D90FF;--accent-ink:#07081A;--series-1:#9D90FF;--series-3:#5BE3A6;--good:#5BE3A6;--warn:#ffc46b;--bad:#ff7a8a;--good-bg:#11302a;--warn-bg:#33290f;--bad-bg:#361725;--grid:#272b55;--shadow:0 18px 40px -24px rgba(80,60,200,.7);--font-ui:'Inter',system-ui,sans-serif;--font-display:'Sora',system-ui,sans-serif;--dw:600;--hs:1.0}
+:root[data-skin="aurora"][data-mode="light"]{color-scheme:light;--bg:#F3F4FB;--surface:#FFFFFF;--surface-2:#eceefa;--border:#dfe2f2;--text:#12142B;--text-2:#3f4370;--muted:#7a7fa8;--card-border:#e6e8f6;--hero-1:#ffffff;--hero-2:#eef0ff;--hero-ink:#12142B;--hero-sub:#4c5180;--accent:#5B4BE6;--accent-ink:#ffffff;--series-1:#5B4BE6;--series-3:#18986a;--good:#18986a;--warn:#a86b00;--bad:#d0405a;--good-bg:#e1f4ec;--warn-bg:#f8eed6;--bad-bg:#fbe2e7;--grid:#e3e5f3;--shadow:0 14px 32px -20px rgba(80,60,200,.35);--font-ui:'Inter',system-ui,sans-serif;--font-display:'Sora',system-ui,sans-serif;--dw:600;--hs:1.0}
+:root[data-skin="obsidian"][data-mode="dark"]{--g1:#D9B77A;--g2:#E08A5F;--g3:#9C8CF0;--g4:#7DC9A0;--g5:#E07A9A;--g6:#6FB7D9;--g7:#e7786a;--g8:#B48AD6;--g9:#A9B65A}
+:root[data-skin="obsidian"][data-mode="light"]{--g1:#94702F;--g2:#B4532F;--g3:#5B4BB0;--g4:#2E7A55;--g5:#B04A72;--g6:#2F6F96;--g7:#c0392b;--g8:#7A4A9A;--g9:#6D7A12}
+:root[data-skin="ivory"][data-mode="dark"]{--g1:#E38D66;--g2:#D9B77A;--g3:#A99BF0;--g4:#7cc89a;--g5:#E58FB0;--g6:#74B8D8;--g7:#ef8a78;--g8:#C08AD8;--g9:#B3BE5E}
+:root[data-skin="ivory"][data-mode="light"]{--g1:#B4532F;--g2:#94702F;--g3:#5A4BB0;--g4:#2F7A4F;--g5:#B04A72;--g6:#2F6F96;--g7:#b83a2a;--g8:#7A4A9A;--g9:#6D7A12}
+:root[data-skin="aurora"][data-mode="dark"]{--g1:#9D90FF;--g2:#FF9D6B;--g3:#5BE3A6;--g4:#FFC46B;--g5:#FF8AC6;--g6:#6BD3FF;--g7:#ff7a8a;--g8:#C78BFF;--g9:#C8E36B}
+:root[data-skin="aurora"][data-mode="light"]{--g1:#5B4BE6;--g2:#D9622B;--g3:#18986a;--g4:#A86B00;--g5:#C93F86;--g6:#1F7FB8;--g7:#d0405a;--g8:#8A3FD0;--g9:#6E8A00}
+
+:root[data-skin] body{font-family:var(--font-ui);letter-spacing:-.005em}
+:root[data-skin="aurora"][data-mode="dark"] body{background:radial-gradient(120% 50% at 0% 0%,#2c1d6e 0%,transparent 60%),radial-gradient(90% 40% at 100% 20%,#0b3d5e 0%,transparent 60%),#07081A;background-attachment:fixed}
+:root[data-skin="aurora"][data-mode="light"] body{background:radial-gradient(120% 50% at 0% 0%,#e2dbff 0%,transparent 60%),radial-gradient(90% 40% at 100% 20%,#d4f1ff 0%,transparent 60%),#F3F4FB;background-attachment:fixed}
+:root[data-skin="aurora"] .card{-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+:root[data-skin] .card{border-radius:22px}
+:root[data-skin] .card h2,:root[data-skin] .sheettop h3,:root[data-skin] .sheet h3{font-family:var(--font-display);font-weight:var(--dw);font-size:calc(21px * var(--hs));letter-spacing:0}
+:root[data-skin] .hero{background:linear-gradient(160deg,var(--hero-1),var(--hero-2));color:var(--hero-ink);border:1px solid var(--card-border);box-shadow:var(--shadow);border-radius:24px}
+:root[data-skin] .hero .ht,:root[data-skin] .hero .hl,:root[data-skin] .hero .hs{color:var(--hero-sub);opacity:1}
+:root[data-skin] .hero .hl{color:var(--accent);font-size:11px;letter-spacing:2.2px;text-transform:uppercase;font-weight:700}
+:root[data-skin] .hero .hv{font-family:var(--font-display);font-weight:var(--dw);font-size:calc(44px * var(--hs));letter-spacing:-.01em}
+:root[data-skin] .hero .hp{background:color-mix(in srgb,var(--hero-ink) 14%,transparent)}
+:root[data-skin] .hero .hp i{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 70%,#000),var(--accent))}
+:root[data-skin] .hero .hpace div{background:color-mix(in srgb,var(--hero-ink) 7%,transparent);border:1px solid color-mix(in srgb,var(--hero-ink) 9%,transparent)}
+:root[data-skin] .hero .hbl{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+:root[data-skin] .amtbox input{font-family:var(--font-display);font-weight:var(--dw);font-size:calc(52px * var(--hs))}
+:root[data-skin] .fab{background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 60%,#fff),var(--accent) 55%,color-mix(in srgb,var(--accent) 65%,#000));box-shadow:0 10px 24px -8px color-mix(in srgb,var(--accent) 60%,transparent)}
+:root[data-skin="aurora"] .fab{background:linear-gradient(135deg,#5EE7FF,#8B7CFF 55%,#FF7AC8)}
+:root[data-skin] nav.tabs{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));border:1px solid var(--card-border);border-radius:24px;padding:6px 6px;background:color-mix(in srgb,var(--surface) 90%,transparent)}
+:root[data-skin] body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+:root[data-skin] .fab{bottom:calc(96px + env(safe-area-inset-bottom))}
+:root[data-skin] .fabcalc{bottom:calc(102px + env(safe-area-inset-bottom))}
+/* artwork */
+.cimg{width:1.5em;height:1.5em;vertical-align:-.38em;display:inline-block}
+.fimg{width:2.05em;height:1.28em;border-radius:.2em;vertical-align:-.3em;display:inline-block;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.ent .ic{width:40px;font-size:18px}.ent .ic .cimg{width:38px;height:38px}.ent .ic .fimg{width:38px;height:24px}
+.cat .ic,.tc .ic,.brow .ic,.frow .ic{background:none!important;width:42px!important;height:42px!important}
+.cat .ic .cimg,.tc .ic .cimg,.brow .ic .cimg,.frow .ic .cimg{width:42px;height:42px}
+.ct .ci{font-size:0}.ct .ci .cimg{width:38px;height:38px}
+.pt{padding:4px 4px 5px!important}.pt .pi{display:block;width:100%;font-size:0}.pt .pi .fimg{width:100%;height:auto;aspect-ratio:1.6;border-radius:7px;vertical-align:top}
+.ar .ic .fimg,.srcb .fimg{width:40px;height:25px}
+/* card art: rail + carousel */
+.crail{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 8px;scroll-snap-type:x mandatory}.crail::-webkit-scrollbar{display:none}
+.cc{position:absolute;left:50%;top:6px;width:300px;height:188px;margin-left:-150px;border-radius:18px;overflow:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .32s;box-shadow:0 18px 26px -12px rgba(0,0,0,.55);cursor:pointer;border:0;padding:0;background:none;text-align:left;font:inherit}
+.cc.st{position:relative;left:auto;top:auto;margin:0;flex:none;width:236px;height:148px;scroll-snap-align:start;transition:none}
+.cc img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cc .cn{position:absolute;left:18px;top:12px;font-family:var(--font-display);font-weight:var(--dw);font-size:calc(24px * var(--hs, 1))}
+.cc.st .cn{font-size:calc(20px * var(--hs, 1));left:16px;top:10px}
+.cc .ck{position:absolute;right:16px;top:18px;font-size:9px;letter-spacing:2px;font-weight:700;opacity:.75}
+.cc .cl{position:absolute;left:18px;bottom:40px;font-size:9px;letter-spacing:2px;font-weight:700;opacity:.7}
+.cc .cv{position:absolute;left:18px;bottom:13px;font-size:22px;font-weight:650}
+.cc.st .cv{font-size:18px;left:16px;bottom:11px}.cc.st .cl{left:16px;bottom:33px}
+.cc .cs{position:absolute;right:16px;bottom:16px;font-size:11px;font-weight:600;opacity:.8}
+.ccar{position:relative;height:206px;margin:12px -16px 0;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.cnav{display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 6px}
+.cnav .cb{width:40px;height:40px;border-radius:20px;border:1px solid var(--border);background:none;font-size:20px;color:var(--text-2);cursor:pointer}
+.cdots{display:flex;gap:6px;align-items:center}.cdots button{width:6px;height:6px;border-radius:3px;border:0;padding:0;background:var(--border);cursor:pointer;transition:width .2s}.cdots button.on{width:20px;background:var(--accent)}
+.skins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 14px}
+.skin{border:2px solid transparent;border-radius:14px;padding:0;overflow:hidden;cursor:pointer;background:none;text-align:left;font:inherit;color:inherit}
+.skin.on{border-color:var(--accent)}
+.skin .sp{display:block;position:relative;height:70px}
+.skin .sp img{position:absolute;left:8px;top:9px;width:72px;height:45px;border-radius:6px;box-shadow:0 4px 8px rgba(0,0,0,.3)}
+.skin .sp .si{left:auto;right:6px;top:auto;bottom:6px;width:26px;height:26px;box-shadow:none}
+.skin .sn{display:block;padding:6px 8px 8px;font-size:12.5px;font-weight:700}
+.skin .sn small{display:block;font-weight:500;font-size:10.5px;opacity:.7}
+
 </style>
 </head>
 <body>
@@ -383,6 +453,390 @@ svg.chart text{fill:var(--muted);font-size:11px}
 
 <script>
 "use strict";
+const ART=(()=>{
+// Shared original artwork geometry: category glyphs (48 grid) + pattern generators.
+// Roles: a = body fill, b = accent fill, l = line on body/tile, k = line sitting on an accent shape.
+function star(cx, cy, R, r, n = 5) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) {
+    const ang = -Math.PI / 2 + i * Math.PI / n, rad = i % 2 ? r : R;
+    d += (i ? 'L' : 'M') + (cx + rad * Math.cos(ang)).toFixed(2) + ' ' + (cy + rad * Math.sin(ang)).toFixed(2);
+  }
+  return d + 'Z';
+}
+const G = {
+  food: [
+    ['b', 'path', { d: 'M10.5 23c2-5.5 7.6-8 13.5-8s11.5 2.5 13.5 8z' }],
+    ['a', 'path', { d: 'M7 23h34c0 9.6-7.6 16-17 16S7 32.6 7 23z' }],
+    ['b', 'path', { d: 'M16.5 38.4h15L30 42.5H18z' }],
+    ['l', 'path', { d: 'M28 19.5 38.5 6.5M32 20.5 42 9' }],
+    ['l', 'path', { d: 'M14.5 13c-1.8-1.8 1.8-3.6 0-6.5M20.5 12c-1.8-1.8 1.8-3.6 0-6.5' }],
+    ['l', 'path', { d: 'M7 23h34' }],
+  ],
+  travel: [
+    ['b', 'rect', { x: 12.5, y: 33, width: 6, height: 8.5, rx: 2 }],
+    ['b', 'rect', { x: 29.5, y: 33, width: 6, height: 8.5, rx: 2 }],
+    ['a', 'rect', { x: 10, y: 6, width: 28, height: 31, rx: 7 }],
+    ['b', 'rect', { x: 13.5, y: 12.5, width: 21, height: 11, rx: 3 }],
+    ['l', 'path', { d: 'M19.5 9.2h9' }],
+    ['l', 'circle', { cx: 16.5, cy: 30, r: 1.7 }],
+    ['l', 'circle', { cx: 31.5, cy: 30, r: 1.7 }],
+  ],
+  temple: [
+    ['a', 'path', { d: 'M9 42v-8h30v8zM12.5 34l2-7h19l2 7zM16.5 27l2-6.5h11l2 6.5zM20 20.5l1.6-5.5h4.8l1.6 5.5z' }],
+    ['b', 'circle', { cx: 24, cy: 12.2, r: 2.8 }],
+    ['b', 'path', { d: 'M20 42v-4.5a4 4 0 0 1 8 0V42z' }],
+    ['l', 'path', { d: 'M24 9.4V5.5M6 42h36' }],
+    ['l', 'path', { d: 'M14 30.5h20M17.5 24h13' }],
+  ],
+  fun: [
+    ['a', 'path', { d: 'M11 12h26a3 3 0 0 0 3 3v5a4 4 0 0 0 0 8v5a3 3 0 0 0-3 3H11a3 3 0 0 0-3-3v-5a4 4 0 0 0 0-8v-5a3 3 0 0 0 3-3z' }],
+    ['b', 'path', { d: star(19.5, 24.4, 6.6, 2.9) }],
+    ['l', 'path', { d: 'M31 15.5v17', 'stroke-dasharray': '2.2 3' }],
+  ],
+  medical: [
+    ['l', 'path', { d: 'M18 14v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3' }],
+    ['a', 'rect', { x: 6.5, y: 14, width: 35, height: 26, rx: 6 }],
+    ['b', 'path', { d: 'M21 19h6v5h5v6h-5v5h-6v-5h-5v-6h5z' }],
+  ],
+  laundry: [
+    ['a', 'rect', { x: 9, y: 5.5, width: 30, height: 37, rx: 6 }],
+    ['l', 'path', { d: 'M9 14h30M27 9.8h7' }],
+    ['l', 'circle', { cx: 14.5, cy: 9.8, r: 1.3 }],
+    ['b', 'circle', { cx: 24, cy: 28, r: 9 }],
+    ['k', 'path', { d: 'M16.5 29.5c2.5-2 5 2 7.5 0s5-2 7.5 0' }],
+  ],
+  salon: [
+    ['a', 'path', { d: 'M17.5 30.5 33.5 6l2.6 1.8L21 32.5zM30.5 30.5 14.5 6l-2.6 1.8L27 32.5z' }],
+    ['b', 'circle', { cx: 15, cy: 35, r: 5.6 }],
+    ['b', 'circle', { cx: 33, cy: 35, r: 5.6 }],
+    ['k', 'circle', { cx: 15, cy: 35, r: 2.2 }],
+    ['k', 'circle', { cx: 33, cy: 35, r: 2.2 }],
+    ['l', 'circle', { cx: 24, cy: 20, r: 1.4 }],
+  ],
+  shopping: [
+    ['a', 'path', { d: 'M10 16.5h28l-2 23.2a3 3 0 0 1-3 2.8H15a3 3 0 0 1-3-2.8z' }],
+    ['b', 'path', { d: 'M10 16.5h28l-.45 5.5H10.45z' }],
+    ['l', 'path', { d: 'M18 25v-10a6 6 0 0 1 12 0v10' }],
+  ],
+  rent: [
+    ['b', 'rect', { x: 28, y: 17, width: 13, height: 25, rx: 2.5 }],
+    ['a', 'rect', { x: 8, y: 7, width: 24, height: 35, rx: 3 }],
+    ['l', 'path', { d: 'M13.5 13.5h4M22.5 13.5h4M13.5 20.5h4M22.5 20.5h4M13.5 27.5h4M22.5 27.5h4M33 23h3.5M33 29h3.5' }],
+    ['b', 'rect', { x: 17, y: 34, width: 6, height: 8, rx: 1.2 }],
+    ['l', 'path', { d: 'M5 42h38' }],
+  ],
+  ac: [
+    ['a', 'rect', { x: 6, y: 8, width: 36, height: 17, rx: 5 }],
+    ['b', 'path', { d: 'M6 19.5h36v.5a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5z' }],
+    ['l', 'circle', { cx: 35.5, cy: 13.5, r: 1.3 }],
+    ['l', 'path', { d: 'M11 13.5h14' }],
+    ['l', 'path', { d: 'M14 30c-2.2 3 2.2 5 0 9M24 30c-2.2 3 2.2 5 0 9M34 30c-2.2 3 2.2 5 0 9' }],
+  ],
+  subs: [
+    ['a', 'rect', { x: 5.5, y: 9, width: 34, height: 24, rx: 5 }],
+    ['l', 'path', { d: 'M17 40h11M22.5 33v7' }],
+    ['b', 'path', { d: 'M18.5 15.8v10.4l8.6-5.2z' }],
+    ['b', 'circle', { cx: 38.5, cy: 31.5, r: 7 }],
+    ['k', 'path', { d: 'M35.4 31.5a3.1 3.1 0 1 0 1.1-2.4M35.8 27.6l.7 1.6-1.7.4' }],
+  ],
+  home: [
+    ['a', 'path', { d: 'M9 21.5 24 9l15 12.5V39a3 3 0 0 1-3 3H12a3 3 0 0 1-3-3z' }],
+    ['l', 'path', { d: 'M5.5 23.5 24 8l18.5 15.5' }],
+    ['b', 'path', { d: 'M24 37.5s-7.2-4.3-7.2-9.2a3.9 3.9 0 0 1 7.2-2.1 3.9 3.9 0 0 1 7.2 2.1c0 4.9-7.2 9.2-7.2 9.2z' }],
+  ],
+  misc: [
+    ['a', 'rect', { x: 7, y: 7, width: 15, height: 15, rx: 4 }],
+    ['b', 'circle', { cx: 33.5, cy: 14.5, r: 7.5 }],
+    ['b', 'path', { d: 'M14.5 26.5 23 41H6z' }],
+    ['a', 'rect', { x: 26, y: 26, width: 15, height: 15, rx: 7.5 }],
+    ['l', 'path', { d: 'M33.5 29.8v7.4M29.8 33.5h7.4' }],
+  ],
+  refund: [
+    ['a', 'path', { d: 'M10 5.5h23v37l-3.8-2.6-3.8 2.6-3.8-2.6-3.8 2.6-3.9-2.6-3.9 2.6z' }],
+    ['l', 'path', { d: 'M15 13h13M15 19h8M15 25h6' }],
+    ['b', 'circle', { cx: 33, cy: 31, r: 9.5 }],
+    ['k', 'path', { d: 'M37.5 31h-8.5M32.6 27.2 28.8 31l3.8 3.8' }],
+  ],
+  emi: [
+    ['a', 'rect', { x: 5.5, y: 9.5, width: 30, height: 28, rx: 5 }],
+    ['l', 'path', { d: 'M13.5 6.5v6M27.5 6.5v6M5.5 18h30M11.5 24.5h4M19 24.5h4M11.5 30.5h4' }],
+    ['b', 'circle', { cx: 34, cy: 33, r: 9 }],
+    ['k', 'circle', { cx: 34, cy: 33, r: 5.6 }],
+    ['k', 'path', { d: 'M34 30.6v4.8' }],
+  ],
+};
+const CATS = [
+  ['food', 'Food', 28], ['travel', 'Travel', 205], ['temple', 'Temple', 40], ['fun', 'Fun', 290],
+  ['medical', 'Medical', 352], ['laundry', 'Laundry', 192], ['salon', 'Salon', 328], ['shopping', 'Shopping', 262],
+  ['rent', 'Rent', 222], ['ac', 'AC bill', 178], ['subs', 'Subscriptions', 248], ['home', 'Home', 12],
+  ['misc', 'Misc', 35], ['refund', 'Refund', 150], ['emi', 'EMI', 232],
+];
+const attrs = o => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(' ');
+function el(tag, o, extra = '') { return `<${tag} ${attrs(o)} ${extra}/>`; }
+
+// guilloché rings: r(t) = R + a*sin(n t + phase)
+function guilloche(cx, cy, R, a, n, count, rstep = 2.4, phstep = 0.13, pts = 220, sx = 1, sy = 1) {
+  let out = '';
+  for (let j = 0; j < count; j++) {
+    const ph = j * phstep, rr = R + j * rstep;
+    let d = '';
+    for (let i = 0; i < pts; i++) {
+      const t = i / pts * Math.PI * 2, r = rr + a * Math.sin(n * t + ph);
+      d += (i ? 'L' : 'M') + (cx + r * Math.cos(t) * sx).toFixed(1) + ' ' + (cy + r * Math.sin(t) * sy).toFixed(1);
+    }
+    out += d + 'Z';
+  }
+  return out;
+}
+// woven wave band across a card
+function waves(x0, x1, y, rows, gap, amp, len, skew = 0.35) {
+  let d = '';
+  for (let j = 0; j < rows; j++) {
+    for (let x = x0; x <= x1; x += 6) {
+      const yy = y + j * gap + amp * Math.sin(x / len + j * skew) + amp * 0.5 * Math.sin(x / (len * 0.37) - j * 0.6);
+      d += (x === x0 ? 'M' : 'L') + x.toFixed(0) + ' ' + yy.toFixed(1);
+    }
+  }
+  return d;
+}
+// topographic contour rings (offset blobs)
+function contours(cx, cy, n, step, wob, seed) {
+  let d = '';
+  for (let j = 1; j <= n; j++) {
+    const R = j * step;
+    for (let i = 0; i <= 120; i++) {
+      const t = i / 120 * Math.PI * 2;
+      const r = R + wob * Math.sin(3 * t + seed + j * 0.25) + wob * 0.6 * Math.cos(5 * t - seed * 0.7 + j * 0.15);
+      d += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cy + r * Math.sin(t) * 0.82).toFixed(1);
+    }
+    d += 'Z';
+  }
+  return d;
+}
+
+const METAL_obs = {
+  mari: ['#f4d3c3', '#c88d78', '#7f4c3e', '#2a140f', 'Rose gold'],
+  dbs: ['#62666e', '#30333a', '#141619', '#efe2c4', 'Gunmetal'],
+  nets: ['#f1f2f4', '#bcc1c8', '#80868f', '#17191d', 'Silver'],
+  ez: ['#9aaec2', '#4f6379', '#212d3b', '#eef3f8', 'Titanium'],
+  cash: ['#f1e5c7', '#cbb07a', '#86683a', '#271d0c', 'Champagne'],
+  cc: ['#2e2e32', '#121214', '#050506', '#e6cd98', 'Onyx'],
+  spl: ['#e9b190', '#a9603d', '#552a19', '#fff2e8', 'Copper'],
+  gpl: ['#b3a6c4', '#665a7c', '#2b2539', '#f4f0fb', 'Amethyst'],
+};
+
+function card_obs(a, id, mini) {
+  const [c0, c1, c2, ink] = METAL_obs[a.id];
+  const light = ['mari', 'nets', 'cash'].includes(a.id);
+  const pat = light ? 'rgba(60,30,10,.22)' : (a.id === 'cc' || a.id === 'dbs' ? 'rgba(230,205,152,.30)' : 'rgba(255,255,255,.22)');
+  const g = guilloche(268, 36, 30, 12, 9, 26, 3.2, 0.11);
+  const g2 = guilloche(268, 36, 8, 5, 7, 6, 2.6, 0.3, 120);
+  const wv = waves(-10, 330, 150, 9, 3.2, 6, 26);
+  let s = `<svg viewBox="0 0 320 200" ${mini ? '' : `role="img" aria-label="${a.name} card"`}><defs>
+<linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c0}"/><stop offset=".48" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2=".35"><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".42" stop-color="#fff" stop-opacity="${light ? .45 : .16}"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="${id}e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient>
+<linearGradient id="${id}k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbeec9"/><stop offset=".45" stop-color="#d4af67"/><stop offset=".7" stop-color="#f3dda5"/><stop offset="1" stop-color="#9b7535"/></linearGradient>
+<filter id="${id}b" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.42" numOctaves="2" seed="${a.id.length * 7}"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .55 0 0 0 -.18"/></filter>
+<clipPath id="${id}c"><rect width="320" height="200" rx="18"/></clipPath></defs>
+<g clip-path="url(#${id}c)">
+<rect width="320" height="200" fill="url(#${id}g)"/>
+<rect width="320" height="200" filter="url(#${id}b)" opacity="${light ? .55 : .5}"/>
+<path d="${g}" fill="none" stroke="${pat}" stroke-width=".6"/>
+<path d="${g2}" fill="none" stroke="${pat}" stroke-width=".5"/>
+<path d="${wv}" fill="none" stroke="${pat}" stroke-width=".5" opacity=".8"/>
+<rect width="320" height="200" fill="url(#${id}s)"/>
+</g>
+<rect x=".75" y=".75" width="318.5" height="198.5" rx="17.4" fill="none" stroke="url(#${id}e)" stroke-width="1.5"/>
+<g transform="translate(26 ${mini ? 74 : 72})"><rect width="42" height="32" rx="6" fill="url(#${id}k)"/><path d="M0 11h13v10H0M42 11H29v10h13M13 0v32M29 0v32M13 16h16" fill="none" stroke="#7a5a24" stroke-opacity=".55" stroke-width="1"/><rect x=".5" y=".5" width="41" height="31" rx="5.5" fill="none" stroke="#fff" stroke-opacity=".5"/></g>`;
+  if (!mini) {
+    const t = (x, y, size, txt, extra = '') => `<text x="${x}" y="${y}" font-size="${size}" fill="${ink}" ${extra}>${txt}</text>`;
+    const nameSize = a.name.length > 12 ? 23 : 27;
+    s += t(26, 46, nameSize, a.name, `font-family="Instrument Serif, serif" letter-spacing=".2"`);
+    s += t(294, 40, 9.5, a.kind.toUpperCase(), `text-anchor="end" font-family="Inter Tight, sans-serif" font-weight="600" letter-spacing="2" opacity=".75"`);
+    if (a.owed) {
+      s += t(26, 146, 9.5, 'OWED', `font-family="Inter Tight, sans-serif" font-weight="600" letter-spacing="2" opacity=".65"`);
+      s += t(26, 172, 23, `S$${a.owed}`, `font-family="Inter Tight, sans-serif" font-weight="600"`);
+      s += t(294, 172, 12, `of S$${a.limit}`, `text-anchor="end" font-family="Inter Tight, sans-serif" font-weight="500" opacity=".72"`);
+      s += t(294, 146, 9.5, a.due.toUpperCase(), `text-anchor="end" font-family="Inter Tight, sans-serif" font-weight="600" letter-spacing="1.5" opacity=".65"`);
+      s += `<rect x="26" y="182" width="268" height="3" rx="1.5" fill="${ink}" opacity=".18"/><rect x="26" y="182" width="${(268 * a.pct / 100).toFixed(1)}" height="3" rx="1.5" fill="${ink}"/>`;
+    } else {
+      s += t(26, 156, 9.5, 'BALANCE', `font-family="Inter Tight, sans-serif" font-weight="600" letter-spacing="2" opacity=".65"`);
+      s += t(26, 182, 23, `S$${a.bal}`, `font-family="Inter Tight, sans-serif" font-weight="600"`);
+      // original engraved emblem
+      s += `<g transform="translate(272 168)" fill="none" stroke="${ink}" opacity=".6"><path d="M0-13 13 0 0 13-13 0z" stroke-width="1.2"/><path d="M0-7.5 7.5 0 0 7.5-7.5 0z" stroke-width="1"/><circle r="2" fill="${ink}" stroke="none"/></g>`;
+    }
+  }
+  return s + '</svg>';
+}
+
+function icon_obs(glyph, h, id, size) {
+  const paint = {
+    a: `fill="url(#${id}a)"`, b: `fill="url(#${id}b)"`,
+    l: `fill="none" stroke="#efd9a7" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"`,
+    k: `fill="none" stroke="#3b2a0f" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"`,
+  };
+  const body = glyph.map(([r, tag, o]) => el(tag, o, paint[r])).join('');
+  return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><defs>
+<linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2c31"/><stop offset="1" stop-color="#121215"/></linearGradient>
+<linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".4" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient>
+<linearGradient id="${id}a" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="hsl(${h} 38% 62%)"/><stop offset=".55" stop-color="hsl(${h} 36% 40%)"/><stop offset="1" stop-color="hsl(${h} 42% 24%)"/></linearGradient>
+<linearGradient id="${id}b" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="#fbedc8"/><stop offset=".5" stop-color="#d6b06a"/><stop offset="1" stop-color="#94702f"/></linearGradient>
+<filter id="${id}f" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.1" flood-color="#000" flood-opacity=".65"/></filter></defs>
+<rect width="48" height="48" rx="14" fill="url(#${id}t)"/><rect x=".5" y=".5" width="47" height="47" rx="13.5" fill="none" stroke="url(#${id}r)"/>
+<g transform="translate(8.4 8.4) scale(.65)" filter="url(#${id}f)">${body}</g></svg>`;
+}
+
+
+
+const PAPER_ivo = {
+  mari: ['#EBD3C5', '#3A2219'], dbs: ['#1F2A3A', '#F2EBDD'], nets: ['#DAD6CD', '#22201C'], ez: ['#B8C6AE', '#1E2A1C'],
+  cash: ['#F2E9D3', '#2D2516'], cc: ['#262523', '#EDE3CF'], spl: ['#C8C3D8', '#24203A'], gpl: ['#D9B86C', '#2E230B'],
+};
+const SEED_ivo = { mari: 1, dbs: 2.2, nets: 3.1, ez: 4.4, cash: 5.3, cc: 6.1, spl: 7.7, gpl: 8.5 };
+
+function card_ivo(a, id, mini) {
+  const [bg, ink] = PAPER_ivo[a.id];
+  const cx = 250 + (SEED_ivo[a.id] * 13 % 40), cy = 70 + (SEED_ivo[a.id] * 29 % 50);
+  let s = `<svg viewBox="0 0 320 200" ${mini ? '' : `role="img" aria-label="${a.name} card"`}><defs>
+<filter id="${id}n" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="${Math.round(SEED_ivo[a.id] * 3)}"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 -.1"/></filter>
+<linearGradient id="${id}f" x1="0" y1="0" x2="1" y2="1">${['dbs','cc'].includes(a.id)?'<stop offset="0" stop-color="#E9D29A"/><stop offset=".5" stop-color="#B28A3E"/><stop offset="1" stop-color="#E4C885"/>':'<stop offset="0" stop-color="#8A6A2E"/><stop offset=".5" stop-color="#5E4515"/><stop offset="1" stop-color="#9A7a3a"/>'}</linearGradient>
+<clipPath id="${id}c"><rect width="320" height="200" rx="14"/></clipPath></defs>
+<g clip-path="url(#${id}c)"><rect width="320" height="200" fill="${bg}"/>
+<path d="${contours(cx, cy, 16, 9.5, 5, SEED_ivo[a.id])}" fill="none" stroke="${ink}" stroke-opacity=".16" stroke-width=".7"/>
+<rect width="320" height="200" filter="url(#${id}n)" opacity=".35"/>
+${a.id === 'cash' ? `<rect x="7" y="7" width="306" height="186" rx="9" fill="none" stroke="${ink}" stroke-opacity=".35" stroke-dasharray="1 3" stroke-linecap="round"/>` : ''}
+</g>
+<rect x=".5" y=".5" width="319" height="199" rx="13.5" fill="none" stroke="#000" stroke-opacity=".08"/>
+<g transform="translate(26 ${mini ? 80 : 74})" fill="none" stroke="url(#${id}f)" stroke-width="1.8"><rect width="40" height="30" rx="6"/><path d="M0 10h12v10H0M40 10H28v10h12M12 0v30M28 0v30"/></g>`;
+  if (!mini) {
+    const t = (x, y, size, txt, extra = '') => `<text x="${x}" y="${y}" font-size="${size}" fill="${ink}" ${extra}>${txt}</text>`;
+    s += t(26, 48, a.name.length > 12 ? 24 : 28, a.name, `font-family="Fraunces, serif" font-style="italic" font-weight="400"`);
+    s += t(294, 42, 9.5, a.kind.toUpperCase(), `text-anchor="end" font-family="Manrope, sans-serif" font-weight="700" letter-spacing="1.8" opacity=".7"`);
+    if (a.owed) {
+      s += t(26, 150, 10, `Owed · ${a.due}`, `font-family="Manrope, sans-serif" font-weight="600" opacity=".7"`);
+      s += t(26, 176, 24, `S$${a.owed}`, `font-family="Fraunces, serif" font-weight="400"`);
+      s += t(294, 176, 12, `limit S$${a.limit}`, `text-anchor="end" font-family="Manrope, sans-serif" font-weight="600" opacity=".7"`);
+      s += `<line x1="26" x2="294" y1="186" y2="186" stroke="${ink}" stroke-opacity=".22"/><line x1="26" x2="${(26 + 268 * a.pct / 100).toFixed(1)}" y1="186" y2="186" stroke="${ink}" stroke-width="2.5"/>`;
+    } else {
+      s += t(26, 156, 10, 'Balance', `font-family="Manrope, sans-serif" font-weight="600" opacity=".7"`);
+      s += t(26, 182, 24, `S$${a.bal}`, `font-family="Fraunces, serif" font-weight="400"`);
+      s += `<g transform="translate(280 172)" fill="none" stroke="${ink}" stroke-opacity=".55"><circle r="10"/><circle r="6"/><path d="M-10 0h20"/></g>`;
+    }
+  }
+  return s + '</svg>';
+}
+
+function icon_ivo(glyph, h, id, size) {
+  const fills = { a: `hsl(${h} 58% 79%)`, b: `hsl(${h} 58% 58%)` };
+  const line = `fill="none" stroke="#1C1A17" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"`;
+  let back = '', front = '';
+  for (const [r, tag, o] of glyph) {
+    if (r === 'a' || r === 'b') {
+      back += el(tag, o, `fill="${fills[r]}" stroke="${fills[r]}" stroke-width="0" transform="translate(2.2 2.2)"`);
+      front += el(tag, o, line);
+    } else front += el(tag, o, line);
+  }
+  // fill shapes are offset (misregistered print), ink outlines sit on top
+  return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><rect width="48" height="48" rx="13" fill="hsl(${h} 45% 92%)" stroke="#e3dccd"/><g transform="translate(7.6 7.2) scale(.66)">${back}<g>${front}</g></g></svg>`;
+}
+
+
+
+const MESH_aur = {
+  mari: ['#FF8FB1', '#A974FF', '#4B2FC4'], dbs: ['#43D9FF', '#3A7BFF', '#16277F'], nets: ['#C2B4FF', '#6E5BFF', '#251C70'],
+  ez: ['#9CF2C8', '#22BFC0', '#0F5A7A'], cash: ['#FFD29A', '#FF8A7A', '#A63E73'], cc: ['#FF5FA2', '#5B2BD9', '#100A33'],
+  spl: ['#FFE48A', '#6FDDB0', '#14687E'], gpl: ['#F7A3DA', '#C04BD6', '#3A176A'],
+};
+
+function card_aur(a, id, mini) {
+  const [c0, c1, c2] = MESH_aur[a.id];
+  const k = a.id.length;
+  let s = `<svg viewBox="0 0 320 200" ${mini ? '' : `role="img" aria-label="${a.name} card"`}><defs>
+<filter id="${id}bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+<linearGradient id="${id}gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".38" stop-color="#fff" stop-opacity=".06"/><stop offset=".39" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".04"/></linearGradient>
+<linearGradient id="${id}bd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset=".5" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity=".35"/></linearGradient>
+<filter id="${id}ts" x="-10%" y="-40%" width="120%" height="180%"><feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-color="#1a0a40" flood-opacity=".45"/></filter><clipPath id="${id}c"><rect width="320" height="200" rx="22"/></clipPath></defs>
+<g clip-path="url(#${id}c)"><rect width="320" height="200" fill="${c2}"/>
+<g filter="url(#${id}bl)"><circle cx="${40 + k * 9}" cy="20" r="95" fill="${c0}"/><circle cx="300" cy="${150 - k * 5}" r="110" fill="${c1}"/><circle cx="120" cy="230" r="70" fill="${c2}"/></g>
+<path d="${guilloche(250 - k * 4, 170, 26, 18, 7, 18, 4.4, 0.16, 160)}" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width=".6"/>
+<rect width="320" height="200" fill="url(#${id}gl)"/></g>
+<rect x=".75" y=".75" width="318.5" height="198.5" rx="21.3" fill="none" stroke="url(#${id}bd)" stroke-width="1.5"/>
+<g transform="translate(24 ${mini ? 78 : 70})"><rect width="40" height="30" rx="8" fill="#fff" fill-opacity=".28" stroke="#fff" stroke-opacity=".7"/><path d="M0 10h12v10H0M40 10H28v10h12M12 0v30M28 0v30" fill="none" stroke="#fff" stroke-opacity=".75"/></g>`;
+  if (!mini) {
+    const t = (x, y, size, txt, extra = '') => `<text x="${x}" y="${y}" font-size="${size}" fill="#fff" filter="url(#${id}ts)" ${extra}>${txt}</text>`;
+    s += t(24, 44, a.name.length > 12 ? 19 : 22, a.name, `font-family="Sora, sans-serif" font-weight="600" letter-spacing="-.3"`);
+    s += `<g transform="translate(296 36)"><rect x="${-(a.kind.length * 6.2 + 16)}" y="-13" width="${a.kind.length * 6.2 + 16}" height="20" rx="10" fill="#fff" fill-opacity=".18" stroke="#fff" stroke-opacity=".35"/>${t(-(a.kind.length * 3.1 + 8), 1.5, 10, a.kind, 'text-anchor="middle" font-family="Inter, sans-serif" font-weight="600"')}</g>`;
+    if (a.owed) {
+      s += t(24, 146, 11, `Owed · ${a.due}`, `font-family="Inter, sans-serif" font-weight="500" opacity=".8"`);
+      s += t(24, 174, 25, `S$${a.owed}`, `font-family="Sora, sans-serif" font-weight="600" letter-spacing="-.5"`);
+      s += t(296, 174, 12, `/ S$${a.limit}`, `text-anchor="end" font-family="Inter, sans-serif" font-weight="600" opacity=".8"`);
+      s += `<rect x="24" y="184" width="272" height="4" rx="2" fill="#fff" fill-opacity=".22"/><rect x="24" y="184" width="${(272 * a.pct / 100).toFixed(1)}" height="4" rx="2" fill="#fff"/>`;
+    } else {
+      s += t(24, 152, 11, 'Available', `font-family="Inter, sans-serif" font-weight="500" opacity=".8"`);
+      s += t(24, 180, 25, `S$${a.bal}`, `font-family="Sora, sans-serif" font-weight="600" letter-spacing="-.5"`);
+      s += `<path transform="translate(282 170)" d="M0-12C1 -4 4 -1 12 0 4 1 1 4 0 12-1 4-4 1-12 0-4-1-1-4 0-12z" fill="#fff" fill-opacity=".75"/>`;
+    }
+  }
+  return s + '</svg>';
+}
+
+function icon_aur(glyph, h, id, size) {
+  const paint = {
+    a: `fill="url(#${id}w)"`, b: `fill="hsl(${h} 72% 34%)"`,
+    l: `fill="none" stroke="hsl(${h} 75% 24%)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"`,
+    k: `fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"`,
+  };
+  return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><defs>
+<linearGradient id="${id}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h} 92% 72%)"/><stop offset="1" stop-color="hsl(${h + 34} 78% 52%)"/></linearGradient>
+<linearGradient id="${id}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="hsl(${h} 70% 90%)"/></linearGradient>
+<linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<filter id="${id}f" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="hsl(${h} 80% 22%)" flood-opacity=".45"/></filter></defs>
+<rect width="48" height="48" rx="15" fill="url(#${id}t)"/><path d="M15 0h18a15 15 0 0 1 15 15v3C36 24 12 24 0 18v-3A15 15 0 0 1 15 0z" fill="url(#${id}h)"/>
+<rect x=".5" y=".5" width="47" height="47" rx="14.5" fill="none" stroke="#fff" stroke-opacity=".35"/>
+<g transform="translate(8.2 8.2) scale(.66)" filter="url(#${id}f)">${glyph.map(([r, tag, o]) => el(tag, o, paint[r])).join('')}</g></svg>`;
+}
+
+const C = 2 * Math.PI * 38;
+
+const KEY={mari:'mari',nets:'nets',ezlink:'ez',dbs:'dbs',maricc:'cc',shopee:'spl',grab:'gpl',cash:'cash'};
+const POOL=['mari','dbs','nets','ez','cash','cc','spl','gpl'];
+const GLY={food:'food',travel:'travel',temple:'temple',entertainment:'fun',medical:'medical',laundry:'laundry',salon:'salon',shopping:'shopping',rent:'rent',ac:'ac',subs:'subs',home:'home',misc:'misc',refund:'refund',emi:'emi',lent:'misc',repaid:'refund',borrowed:'refund',payback:'misc',xfer:'emi'};
+const HUE=Object.fromEntries(CATS.map(c=>[c[0],c[2]]));
+const cache={};
+const uri=s=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));
+function keyOf(f){ if(KEY[f.id]) return KEY[f.id]; let h=0; for(const ch of String(f.id||f.name||'x')) h=(h*31+ch.charCodeAt(0))>>>0; return POOL[h%POOL.length]; }
+function card(skin,f){ const k=keyOf(f), ck='c'+skin+k; if(!cache[ck]){ const fn={obsidian:card_obs,ivory:card_ivo,aurora:card_aur}[skin]||card_obs; cache[ck]=uri(fn({id:k,name:'',kind:''},'k'+k,true)); } return cache[ck]; }
+function icon(skin,cat){ const g=GLY[cat]||'misc', ik='i'+skin+g; if(!cache[ik]){ const fn={obsidian:icon_obs,ivory:icon_ivo,aurora:icon_aur}[skin]||icon_obs; cache[ik]=uri(fn(G[g],HUE[g],'g'+g,96)); } return cache[ik]; }
+const INK={obsidian:{mari:'#2a140f',dbs:'#efe2c4',nets:'#17191d',ez:'#eef3f8',cash:'#271d0c',cc:'#e6cd98',spl:'#fff2e8',gpl:'#f4f0fb'},ivory:{mari:'#3A2219',dbs:'#F2EBDD',nets:'#22201C',ez:'#1E2A1C',cash:'#2D2516',cc:'#EDE3CF',spl:'#24203A',gpl:'#2E230B'},aurora:{}};
+function ink(skin,f){ return (INK[skin]||{})[keyOf(f)]||'#ffffff'; }
+return {card,icon,ink,keyOf};
+})();
+
+const SKINKEY='dailyExpenseTracker.skin';
+function skin(){ try{ const v=localStorage.getItem(SKINKEY); return ['obsidian','ivory','aurora'].includes(v)? v : 'obsidian'; }catch(e){ return 'obsidian'; } }
+function setSkin(v){ try{ localStorage.setItem(SKINKEY,v); }catch(e){} applyTheme(); render(); }
+const catImg = id => `<img class="cimg" alt="" src="${ART.icon(skin(), id)}">`;
+const fIcon = f => `<img class="fimg" alt="" src="${ART.card(skin(), f||{id:'x'})}">`;
+function cardFace(f, cls){ const c=isCredit(f), ef=!c && isEF(f), v=c? bal(Math.max(0,owedOf(f))) : bal(liveBal(f));
+  return `<div class="cc ${cls||''}" data-cid="${esc(f.id)}" style="color:${ART.ink(skin(),f)}"><img alt="" src="${ART.card(skin(),f)}"><span class="cn">${esc(shortName(f))}</span><span class="ck">${c?'CREDIT':ef?'EMERGENCY':'SPENDING'}</span><span class="cl">${c?'OWED':ef?'KEPT ASIDE':'BALANCE'}</span><span class="cv num">${v}</span><span class="cs">${c&&+f.limit>0?'of '+sgd0(+f.limit):''}</span></div>`; }
+let CAR_I=0;
+function carouselHTML(list){ if(!list.length) return ''; CAR_I=((CAR_I%list.length)+list.length)%list.length;
+  return `<div class="ccar" id="ccar">${list.map(f=>cardFace(f)).join('')}</div><div class="cnav"><button class="cb" id="cPrev" aria-label="Previous card">‹</button><div class="cdots">${list.map((f,i)=>`<button data-cdot="${i}" aria-label="${esc(f.name)}"></button>`).join('')}</div><button class="cb" id="cNext" aria-label="Next card">›</button></div>`; }
+function bindCarousel(list){ const box=$('#ccar'); if(!box) return; const els=[...box.querySelectorAll('.cc')], N=els.length; let x0=null, dx=0, moved=false;
+  const draw=(anim)=>{ els.forEach((el,j)=>{ let off=((j-CAR_I)%N+N)%N; if(off>N/2) off-=N; const x=off*312+dx; el.style.transition=anim?'':'none'; el.style.transform=`translateX(${x}px) scale(${off?0.9:1})`; el.style.opacity=Math.abs(off)>1?'0':(off?'.55':'1'); el.style.zIndex=String(10-Math.abs(off)); el.style.pointerEvents=off?'none':'auto'; });
+    document.querySelectorAll('[data-cdot]').forEach(d=>d.classList.toggle('on',+d.dataset.cdot===CAR_I)); };
+  const go=i=>{ CAR_I=((i%N)+N)%N; dx=0; draw(true); };
+  box.addEventListener('pointerdown',e=>{ x0=e.clientX; dx=0; moved=false; });
+  box.addEventListener('pointermove',e=>{ if(x0===null) return; dx=e.clientX-x0; if(Math.abs(dx)>6) moved=true; if(moved) draw(false); });
+  const end=e=>{ if(x0===null) return; const d=dx; x0=null; if(d<-45) go(CAR_I+1); else if(d>45) go(CAR_I-1); else { dx=0; draw(true); } };
+  box.addEventListener('pointerup',end); box.addEventListener('pointercancel',end); box.addEventListener('pointerleave',end);
+  els.forEach((el,j)=>el.addEventListener('click',()=>{ if(!moved && j===CAR_I) accountSheet(list[j].id); }));
+  $('#cPrev').onclick=()=>go(CAR_I-1); $('#cNext').onclick=()=>go(CAR_I+1);
+  document.querySelectorAll('[data-cdot]').forEach(d=>d.onclick=()=>go(+d.dataset.cdot));
+  draw(false); }
+
 /* ============ Constants ============ */
 const CATS = [
   {id:'food', name:'Food', icon:'🍽️', subs:[
@@ -411,6 +865,7 @@ const CATS = [
   {id:'xfer', name:'Transfer / top-up', icon:'🔁', track:true},   // moves money between accounts: never spending
   {id:'refund', name:'Refunds', icon:'↩️', income:true, reason:true},   // standalone: not linked to any category
 ];
+CATS.forEach(c=>{ Object.defineProperty(c,'icon',{get:()=>catImg(c.id),configurable:true}); (c.subs||[]).forEach(s=>Object.defineProperty(s,'icon',{get:()=>catImg('food'),configurable:true})); });
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income && !c.track);
 const BUDGET_CATS = EXP_CATS.filter(c=>!c.friend);   // money lent to friends has no budget row
@@ -567,9 +1022,9 @@ function liveBal(f){ return r2((+f.amt||0) + acctTx(f.id).filter(x=>x.after).red
 function setBalance(id,v){ saveFunds(allFunds().map(f=>f.id===id?{...f,amt:r2(+v||0),at:Date.now()}:f)); }
 function payGrid(sel, attr, list, extra){ list=list||funds();
   return `<div class="pgrid">${extra||''}${list.map(f=>{ const av=isCredit(f)? availOf(f) : null;
-    return `<button class="pt ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}" title="${esc(f.name)}"><span class="pi">${esc(f.icon||'💰')}</span><span class="pn">${esc(shortName(f))}</span>${av!==null?`<span class="ps num">${sgd0(av)} left</span>`:''}</button>`; }).join('')}</div>`; }
+    return `<button class="pt ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}" title="${esc(f.name)}"><span class="pi">${fIcon(f)}</span><span class="pn">${esc(shortName(f))}</span>${av!==null?`<span class="ps num">${sgd0(av)} left</span>`:''}</button>`; }).join('')}</div>`; }
 function payChips(sel, attr, label){ return `<label class="f">${label}</label>`+payGrid(sel, attr); }
-function payChipsOld(sel, attr, label){ return `<label class="f">${label}</label><div class="chips">${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${esc(f.icon||'💰')} ${esc(f.name)}</button>`).join('')}</div>`; }
+function payChipsOld(sel, attr, label){ return `<label class="f">${label}</label><div class="chips">${funds().map(f=>`<button class="chip ${f.id===sel?'on':''}" ${attr}="${esc(f.id)}">${fIcon(f)} ${esc(f.name)}</button>`).join('')}</div>`; }
 /* Balances are hidden until the eye is tapped (remembered on this device only) */
 const EYEKEY='dailyExpenseTracker.showBal';
 function showBal(){ try{ return localStorage.getItem(EYEKEY)==='1'; }catch(e){ return false; } }
@@ -587,12 +1042,12 @@ function balancesCard(){
     <div class="row" style="gap:8px"><div class="num" style="font-weight:700;font-size:18px">${bal(tot)}</div>${eyeBtn('hEye')}</div></div></div>`;
 }
 function accountsStrip(){
-  const all=funds(), fs=all.filter(f=>isSpend(f)), efs=all.filter(f=>isEF(f)), used=fs.filter(f=>(+f.amt||0)||f.at||acctTx(f.id).length), tot=used.reduce((a,f)=>a+liveBal(f),0), efTot=efs.reduce((a,f)=>a+liveBal(f),0);
-  return `<div class="card" data-bal="1"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Spending accounts <span class="muted num" style="font-weight:600;font-size:14px">${used.length? bal(tot):''}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet({})">Manage</button></span></h2>
-    <div class="acc">${(used.length?used:fs).map(f=>`<button class="ac" data-acct="${esc(f.id)}" onclick="accountSheet('${esc(f.id)}')"><div class="ai">${esc(f.icon||'💰')}</div><div class="an">${esc(shortName(f))}</div><div class="av2 num">${(+f.amt||0)||f.at||acctTx(f.id).length? bal(liveBal(f)) : '<span class="muted" style="font-size:13px;font-weight:600">Set balance</span>'}</div></button>`).join('')}
-${funds().some(isCredit)?`<button class="ac" onclick="balancesSheet({})"><div class="ai">💳</div><div class="an">Owed</div><div class="av2 num">${bal(funds().filter(isCredit).reduce((a,f)=>a+Math.max(0,owedOf(f)),0))}</div></button>`:''}${efs.length?`<button class="ac" onclick="balancesSheet({})"><div class="ai">🛟</div><div class="an">Emergency</div><div class="av2 num">${bal(efTot)}</div></button>`:''}
-    <button class="ac add" onclick="xferForm()" aria-label="Add money or transfer">⇄ Transfer</button></div></div>`;
+  const all=funds(), used=all.filter(f=>isSpend(f)), tot=used.reduce((a,f)=>a+liveBal(f),0);
+  const order=[...all.filter(f=>isSpend(f)), ...all.filter(isCredit), ...all.filter(f=>isEF(f))];
+  return `<div class="card" data-bal="1" style="background:none;border:0;box-shadow:none;padding:4px 0 0"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Cards &amp; wallets <span class="muted num" style="font-family:var(--font-ui);font-weight:600;font-size:14px">${bal(tot)}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet({})">Manage</button></span></h2>
+    <div class="crail">${order.map(f=>cardFace(f,'st')).join('')}</div></div>`;
 }
+document.addEventListener('click',e=>{ const c=e.target.closest && e.target.closest('.crail .cc'); if(c) accountSheet(c.dataset.cid); });
 /* ============ Credit accounts (PayLater, credit card) and EMI ============
    A credit account's balance is negative: what you owe. Spending on it raises what you owe; a transfer into it is a bill payment.
    Shopping on credit can be split into an EMI: each month's instalment counts as spending in that month (the purchase itself counts 0). */
@@ -659,7 +1114,7 @@ function upcomingCard(){ const t=todayStr(), rows=[];
   if(!rows.length) return '';
   const tot=r2(rows.reduce((a,r)=>a+r.amt,0));
   return `<div class="card" style="border:1.5px solid ${rows.some(r=>r.bad)?'var(--bad)':'var(--warn)'}"><h2>🔔 Upcoming payments<span class="num" style="float:right">${sgd(tot)}</span></h2>
-    ${rows.map(r=>`<div class="efrow"><div style="min-width:0"><div class="nm">${esc(r.f.icon||'💳')} ${esc(r.f.name)} <span class="num">${sgd(r.amt)}</span></div><div class="small ${r.bad?'neg':'muted'}">${r.when}${r.emi&&r.emi.length?' · incl. '+r.emi.map(x=>'EMI '+x.p.k+'/'+x.p.n+' '+sgd(x.p.amt)).join(', '):''}</div></div>
+    ${rows.map(r=>`<div class="efrow"><div style="min-width:0"><div class="nm">${fIcon(r.f)} ${esc(r.f.name)} <span class="num">${sgd(r.amt)}</span></div><div class="small ${r.bad?'neg':'muted'}">${r.when}${r.emi&&r.emi.length?' · incl. '+r.emi.map(x=>'EMI '+x.p.k+'/'+x.p.n+' '+sgd(x.p.amt)).join(', '):''}</div></div>
       <div class="row" style="gap:6px;flex:none"><button class="btn sm" onclick="calReminder('${esc(r.f.id)}')" aria-label="Add reminder to calendar">📅</button><button class="btn sm primary" onclick="payBill('${esc(r.f.id)}',${r.amt})">Pay</button></div></div>`).join('')}
     <div class="small muted" style="margin-top:8px">Pay the full amount by the due day to avoid late fees. “Pay” records a transfer from your bank, so nothing is counted twice.</div></div>`; }
 /* Ask how a credit shopping purchase is paid back */
@@ -716,13 +1171,14 @@ function balancesSheet(opt){
       : del? `<button class="btn sm danger" data-adel="${esc(f.id)}">Delete</button>`
       : c? `<button class="btn sm ${dueAt(f)>0.004?'primary':''}" data-pb="${esc(f.id)}">Pay</button>`
       : `<input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${on?'checked':''} aria-label="${esc(f.name)}: ${on?'spending account (turn off to keep as emergency fund)':'emergency fund (turn on to use for spending)'}">`;
-    return `<div class="ar"><button class="srcb" data-acct="${esc(f.id)}"><span class="ic">${esc(f.icon||'💰')}</span><span class="t" style="min-width:0"><span style="display:block;font-weight:650">${esc(f.name)}</span><span class="small muted" style="display:block">${sub}</span>${c&&+f.limit>0?`<span class="cbar"><i style="width:${Math.min(100,Math.max(0,owedOf(f))/(+f.limit)*100)}%"></i></span>`:''}</span></button>
+    return `<div class="ar"><button class="srcb" data-acct="${esc(f.id)}"><span class="ic">${fIcon(f)}</span><span class="t" style="min-width:0"><span style="display:block;font-weight:650">${esc(f.name)}</span><span class="small muted" style="display:block">${sub}</span>${c&&+f.limit>0?`<span class="cbar"><i style="width:${Math.min(100,Math.max(0,owedOf(f))/(+f.limit)*100)}%"></i></span>`:''}</span></button>
       ${ord||del? '' : `<span class="ab num">${amt}</span>`}${ctl}</div>
       ${del && Math.abs(liveBal(f))>0.004? `<div class="hidden small" data-awarn="${esc(f.id)}" style="padding:8px 14px 12px;color:var(--warn)">${esc(f.name)} ${c?'still has '+sgd(owedOf(f))+' owed':'has '+sgd(liveBal(f))}. ${c?'Pay it off first':'Move it to another account first'}, or it leaves your totals.<div class="btns" style="margin-top:8px">${c?'':`<button class="btn sm" data-amove="${esc(f.id)}">⇄ Move money</button>`}<button class="btn sm danger" data-adel2="${esc(f.id)}">Delete anyway</button></div></div>` : ''}`; };
   const sec=(title,total,arr,extra)=> arr.length||extra? `<div class="acsec"><div class="ah"><span>${title}</span><span class="num">${total}</span></div>${arr.map((f,k)=>row(f,k,arr)).join('')}${extra||''}</div>` : '';
   const op=openingOf(ym), used=fundsIncluded(ym), calc=r2(st.saved), diff=r2(totE+creditNet()-calc), ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
   openSheet(`<div class="sheettop"><h3>Accounts</h3><div class="row" style="gap:8px">${eyeBtn('bEye')}<button class="btn sm" onclick="closeSheet()">Close</button></div></div>
     <div class="kp3"><div class="kpi"><div class="l">Money left</div><div class="v num">${bal(r2(totE-crDue))}</div></div><div class="kpi"><div class="l">💳 Bills due</div><div class="v num ${crDue>0.004?'neg':''}">${bal(crDue)}</div></div><div class="kpi"><div class="l">🛟 Kept aside</div><div class="v num">${bal(totF)}</div></div></div>
+    ${ord||del? '' : carouselHTML(funds())}
     ${ord? `<div class="stdiff" style="margin-top:10px"><span>Reorder with ▲ ▼ — this order is used in “Paid with”, Transfer and on Home.</span></div><div class="btns" style="margin-top:8px"><button class="btn primary" id="bOrdDone" style="flex:1">Done</button></div>`
       : del? `<div class="stdiff bad" style="margin-top:10px"><span>Tap Delete twice to remove an account. Past entries stay in your history.</span></div><div class="btns" style="margin-top:8px"><button class="btn primary" id="bDelDone" style="flex:1">Done</button></div>`
       : `<div class="iconbar"><button class="btn" id="bXfer">⇄ Transfer</button><button class="btn" id="bAddT">＋ Add</button>${fromSet?'<button class="btn" id="bOrdM" aria-label="Reorder accounts">↕ Order</button><button class="btn danger" id="bDelM" aria-label="Remove accounts">🗑</button>':''}</div>
@@ -747,6 +1203,7 @@ function balancesSheet(opt){
       ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your Spending accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Spending accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">A payment or refund without “Paid with”, or a balance that needs updating. <button class="lnk" style="float:none" onclick="statementSheet('${ym}')">See statement</button></div>`}</div></details>`}`);
   const delAcct=id=>{ const f=funds().find(x=>x.id===id); if(!f) return; saveFunds(allFunds().map(x=>x.id===id?{...x,hidden:true}:x)); const u=useSet(ym); if(u.has(id)){ u.delete(id); setMonthFlag(ym,{useIn:[...u]}); }
     cleanFundsIn(); reOpening(); render(); toast(f.name+' deleted'); balancesSheet(); };
+  bindCarousel(funds());
   if($('#bSal')) $('#bSal').onclick=()=>salarySheet(ym);
   if($('#bSalA')) $('#bSalA').onclick=()=>salaryAutoSheet();
   if(ord){ $('#bOrdDone').onclick=()=>{ ACC_ORD=false; balancesSheet(); };
@@ -787,7 +1244,7 @@ function salarySheet(ym){
     <div class="small muted" style="margin-top:6px">Enter how much of your salary went into each account. Each part is added to that account's balance. It is income, not spending.</div>
     ${prev.length?`<div class="stdiff ok" style="margin-top:10px"><span>Already added ${sgd(got)} (${prev.map(e=>esc(fundName(e.to))+' '+sgd(e.amt)).join(', ')})</span></div>`:''}
     <label class="f" for="sTot">Salary received (${curCode()})</label><input class="in num" id="sTot" type="number" inputmode="decimal" step="0.01" value="${r2(Math.max(0,sal-got))||''}" placeholder="0.00" style="font-size:18px;font-weight:700">
-    <div class="list" style="margin-top:10px">${fs.map(f=>`<div class="ent"><div class="ic">${esc(f.icon||'💰')}</div><div class="t"><div>${esc(f.name)}</div><div>${us.has(f.id)?'Spending':'Emergency fund'}</div></div><input class="in num" style="width:110px;text-align:right" type="number" inputmode="decimal" step="0.01" min="0" data-sal="${esc(f.id)}" placeholder="0"></div>`).join('')}</div>
+    <div class="list" style="margin-top:10px">${fs.map(f=>`<div class="ent"><div class="ic">${fIcon(f)}</div><div class="t"><div>${esc(f.name)}</div><div>${us.has(f.id)?'Spending':'Emergency fund'}</div></div><input class="in num" style="width:110px;text-align:right" type="number" inputmode="decimal" step="0.01" min="0" data-sal="${esc(f.id)}" placeholder="0"></div>`).join('')}</div>
     <div class="stdiff" id="sLeft" style="margin-top:10px"></div>
     <label class="f">Date</label><input class="in" type="date" id="sDate" value="${ym===curYM()?todayStr():ym+'-01'}">
     <div style="margin-top:14px"><button class="btn primary bigsave" id="sSave">Add salary</button></div>`);
@@ -815,7 +1272,7 @@ function accountSheet(id, back){
     <div class="t"><div>${txTitle(x.e,id)}${x.e.note?' · '+esc(x.e.note):''}</div><div>${dayLabel(x.e.date)}${x.after?'':' · already in the balance you entered'}</div></div>
     <div class="num ${x.d>0?'pos':''}" style="font-weight:600">${x.d>0?'+':'−'}${sgd(Math.abs(x.d))}</div></div>`;
   const cr=isCredit(f);
-  openSheet(`<div class="sheettop"><h3>${esc(f.icon||'💰')} ${esc(f.name)}</h3><button class="btn sm" id="aBack">${back==='ef'||back==='budget'?'Back':'All accounts'}</button></div>
+  openSheet(`<div class="sheettop"><h3>${fIcon(f)} ${esc(f.name)}</h3><button class="btn sm" id="aBack">${back==='ef'||back==='budget'?'Back':'All accounts'}</button></div>
     ${cr? `<div class="kpis" style="margin-top:8px"><div class="kpi"><div class="l">You owe</div><div class="v num">${sgd(Math.max(0,owedOf(f)))}</div><div class="s">${emiAfter(f.id,nextDue(f))>0.004?'incl. '+sgd(emiAfter(f.id,nextDue(f)))+' future EMIs':'all due '+niceDate(nextDue(f))}</div></div>
       <div class="kpi"><div class="l">Due ${niceDate(nextDue(f))}</div><div class="v num">${sgd(dueAt(f))}</div><div class="s">${availOf(f)!==null? sgd(availOf(f))+' of '+sgd0(+f.limit)+' available' : 'set a limit below'}${overdueOf(f)>0.004?' · <b class="neg">'+sgd(overdueOf(f))+' overdue</b>':''}</div></div></div>
     <div class="grid2"><div><label class="f" for="aName">Name</label><input class="in" id="aName" value="${esc(f.name)}" autocomplete="off"></div>
@@ -1197,7 +1654,7 @@ function entRow(e){
 
 /* ============ HISTORY ============ */
 function monthXfers(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.cat==='xfer' && e.date.startsWith(ym)); }
-function xferRow(e){ const fi=id=>{ const f=allFunds().find(x=>x.id===id); return f? esc(f.icon||'💰')+' '+esc(shortName(f)) : ''; };
+function xferRow(e){ const fi=id=>{ const f=allFunds().find(x=>x.id===id); return f? fIcon(f)+' '+esc(shortName(f)) : ''; };
   const from=e.from? fi(e.from) : '💼 Salary', kind=e.salaryFor&&!e.from? 'Salary in' : isCredit(allFunds().find(f=>f.id===e.to))? 'Bill / EMI paid' : 'Transfer';
   return `<div class="ent xf" onclick="openEntry('${esc(e.id)}')"><div class="ic">🔁</div><div class="t"><div>${from} → ${fi(e.to)}</div><div>${[kind, e.note?esc(e.note):'', 'not spending'].filter(Boolean).join(' · ')}</div></div><div class="num xfv">${sgd(e.amt)}</div></div>`; }
 function renderHistory(){
@@ -1206,7 +1663,7 @@ function renderHistory(){
   const signed = e => CAT[e.cat]?.income ? -e.amt : e.amt;
   const days = {};
   es.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
-  let opts = `<option value="all">All categories</option><option value="xfer">🔁 Transfers (not spending)</option>` + CATS.filter(c=>!c.track).map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
+  let opts = `<option value="all">All categories</option><option value="xfer">🔁 Transfers (not spending)</option>` + CATS.filter(c=>!c.track).map(c=>`<option value="${c.id}">${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
   const total = es.reduce((s,e)=>s+signed(e),0);
   const cal = S.histView!=='list';
   let h = `<div class="card"><div class="row" style="gap:8px;flex-wrap:wrap">
@@ -1237,7 +1694,7 @@ function renderXferHistory(){
   const xs=monthXfers(S.ym), sum=r2(xs.reduce((a,e)=>a+e.amt,0)), isC=id=>isCredit(allFunds().find(f=>f.id===id));
   const sal=r2(xs.filter(e=>!e.from).reduce((a,e)=>a+e.amt,0)), bills=r2(xs.filter(e=>e.from&&isC(e.to)).reduce((a,e)=>a+e.amt,0)), moves=r2(sum-sal-bills);
   const by={}; xs.forEach(e=>(by[e.date]=by[e.date]||[]).push(e));
-  let opts = `<option value="all">All categories</option><option value="xfer">🔁 Transfers (not spending)</option>` + CATS.filter(c=>!c.track).map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
+  let opts = `<option value="all">All categories</option><option value="xfer">🔁 Transfers (not spending)</option>` + CATS.filter(c=>!c.track).map(c=>`<option value="${c.id}">${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
   let h=`<div class="card"><div class="row" style="gap:8px;flex-wrap:wrap"><select class="in" id="histCat" style="flex:1;min-width:160px">${opts}</select></div>
     <div class="xfsum"><div><small>Moved this month</small><b class="num">${sgd(sum)}</b></div><div><small>💼 Salary in</small><b class="num">${sgd(sal)}</b></div><div><small>💳 Bills &amp; EMIs paid</small><b class="num">${sgd(bills)}</b></div><div><small>🔁 Between accounts</small><b class="num">${sgd(moves)}</b></div></div>
     <div class="small muted" style="margin-top:6px">${xs.length} transfer${xs.length===1?'':'s'} · money moving between your accounts, never counted as spending</div></div>`;
@@ -1412,7 +1869,7 @@ function renderAnalysis(){
   try{ ensureOpening(); }catch(e){}
   let h = statementCard(S.ym, true);
   if(S.ym===curYM() && funds().some(f=>isCredit(f)&&owedOf(f)>0.004)){ const cs=funds().filter(f=>isCredit(f)&&owedOf(f)>0.004), tot=cs.reduce((a,f)=>a+owedOf(f),0), fut=cs.reduce((a,f)=>a+emiAfter(f.id,nextDue(f)),0);
-    h += `<div class="card" style="cursor:pointer" onclick="balancesSheet({})"><h2>💳 Credit owed<span class="num" style="float:right">${sgd(tot)}</span></h2>${cs.map(f=>`<div class="stl"><span>${esc(f.icon||'💳')} ${esc(f.name)}</span><span class="num">${sgd(owedOf(f))}</span></div>`).join('')}
+    h += `<div class="card" style="cursor:pointer" onclick="balancesSheet({})"><h2>💳 Credit owed<span class="num" style="float:right">${sgd(tot)}</span></h2>${cs.map(f=>`<div class="stl"><span>${fIcon(f)} ${esc(f.name)}</span><span class="num">${sgd(owedOf(f))}</span></div>`).join('')}
       <div class="small muted" style="margin-top:6px">${sgd(r2(tot-fut))} due on the next due days${fut>0.004?' · '+sgd(fut)+' in later EMI payments':''}.</div></div>`; }
   h += monthSummaryCard(S.ym,'Where the money went');
   h += `<div class="card"><h2>Spending pace · daily living</h2>${paceChart(st)}</div>`;
@@ -1535,7 +1992,7 @@ function moneySheet(){
   const B=st.cfg.budgets||{}, budgeted=EXP_CATS.filter(k=>(+B[k.id]||0)>0).reduce((a,k)=>a+(st.by[k.id]||0),0), unb=r2(st.gross-budgeted);
   const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc);
   let h=`<div class="sheettop"><h3>Money left to spend</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
-    <div class="card" style="margin-top:10px"><h2>In the ${mon} budget</h2>${inB.map(f=>ln(esc(f.icon||'💰')+' '+esc(f.name),sgd(liveBal(f)))).join('')||'<div class="small muted">No accounts in the budget.</div>'}
+    <div class="card" style="margin-top:10px"><h2>In the ${mon} budget</h2>${inB.map(f=>ln(fIcon(f)+' '+esc(f.name),sgd(liveBal(f)))).join('')||'<div class="small muted">No accounts in the budget.</div>'}
       ${funds().filter(isCredit).filter(f=>dueAt(f)>0.004).map(f=>ln('− '+esc(f.name)+' bill '+niceDate(nextDue(f)), '('+sgd(dueAt(f))+')','sub2')).join('')}
       ${ln('Money left to spend',sgd(have),'tot')}
       <div class="small muted" style="margin-top:8px">Emergency fund kept aside: ${efs.map(f=>esc(f.name)+' '+sgd(liveBal(f))).join(', ')||'none'} = <b class="num">${sgd(efKept(ym))}</b>. Change which accounts count on the Budget tab.</div></div>
@@ -1578,7 +2035,7 @@ function sourcesCard(){
   const b=f=>cur? liveBal(f) : balOn(f,end);
   const inB=all.filter(f=>us.has(f.id)).reduce((a,f)=>a+b(f),0), ef=efKept(ym), op=openingOf(ym), used=fundsIncluded(ym), st=stats(ym);
   let h=`<div class="card"><h2>Accounts · ${ymLabel(ym)}</h2><div class="small muted" style="margin:-4px 0 6px">Turn on the accounts you're spending from in ${mon}. The rest stay as your emergency fund.</div>`;
-  for(const f of all) h+=`<div class="efrow"><button class="srcb" data-fsrc="${esc(f.id)}"><span style="font-size:20px">${esc(f.icon||'💰')}</span><span style="min-width:0"><span class="nm" style="display:block">${esc(f.name)}</span><span class="small num muted">${sgd(b(f))}${f.at?'':' · balance not set'}</span></span></button>
+  for(const f of all) h+=`<div class="efrow"><button class="srcb" data-fsrc="${esc(f.id)}"><span style="font-size:20px">${fIcon(f)}</span><span style="min-width:0"><span class="nm" style="display:block">${esc(f.name)}</span><span class="small num muted">${sgd(b(f))}${f.at?'':' · balance not set'}</span></span></button>
       <label class="row" style="gap:8px;font-size:12px;color:var(--text-2);cursor:pointer;margin:0"><span>${us.has(f.id)?'In budget':'Emergency'}</span><input type="checkbox" class="tgl" data-use="${esc(f.id)}" ${us.has(f.id)?'checked':''} aria-label="Use ${esc(f.name)} in the ${mon} budget"></label></div>`;
   h+=`<div class="kpis" style="margin-top:12px"><div class="kpi"><div class="l">In the budget</div><div class="v num">${sgd(inB)}</div><div class="s">money to spend</div></div><div class="kpi"><div class="l">Emergency fund</div><div class="v num">${sgd(ef)}</div><div class="s">kept aside</div></div></div>`;
   if(op===null) return h+`<div class="small muted" style="margin-top:10px">Set your account balances to see how last month's savings fit into this budget.</div></div>`;
@@ -1604,7 +2061,7 @@ function fundCard(){
   let h=`<div class="card"><div class="fhead"><div><h2 style="margin:0">Emergency fund</h2><div class="small muted">Accounts turned off above · kept aside, not in the budget</div></div><button class="btn sm" id="fToggle">${S.fundOpen?'Hide':'Show'}</button></div>`;
   if(!S.fundOpen) return h+`<div class="small muted" style="margin-top:8px">${fs.map(f=>esc(f.name)).join(', ')||'No accounts'} · ${sgd(kept)} kept aside.</div></div>`;
   h+=`<div class="kpi" style="margin-top:10px"><div class="l">Kept aside</div><div class="v num">${sgd(kept)}</div></div>`;
-  for(const f of fs) h+=`<div class="efrow"><div class="nm">${esc(f.icon||'💰')} ${esc(f.name)}</div><button class="lnk num" data-fedit="${esc(f.id)}" style="float:none;font-size:15px;font-weight:800;color:var(--text)">${sgd(cur?liveBal(f):balOn(f,end))} ›</button></div>`;
+  for(const f of fs) h+=`<div class="efrow"><div class="nm">${fIcon(f)} ${esc(f.name)}</div><button class="lnk num" data-fedit="${esc(f.id)}" style="float:none;font-size:15px;font-weight:800;color:var(--text)">${sgd(cur?liveBal(f):balOn(f,end))} ›</button></div>`;
   if(!fs.length) h+=`<div class="empty">Every account is in the budget. Turn one off above to keep it aside.</div>`;
   h+=`<div class="btns" style="margin-top:12px"><button class="btn primary" id="fMove" style="flex:1">+ Move to savings</button><button class="btn" id="fManage" style="flex:1">Add / rename / delete</button></div></div>`;
   return h;
@@ -1622,7 +2079,7 @@ function efSheet(){
   const fs=funds().filter(isEF);
   openSheet(`<div class="sheettop"><h3>Emergency fund</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="small muted" style="margin-top:6px">Money kept aside. Tap an account to rename it, change its balance or delete it.</div>
-    <div class="list" style="margin-top:10px">${fs.map(f=>`<div class="ent" data-efa="${esc(f.id)}"><div class="ic">${esc(f.icon||'💰')}</div><div class="t"><div>${esc(f.name)}</div><div>${f.at?'Balance set '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'Balance not set yet'}</div></div><div class="num" style="font-weight:700">${sgd(liveBal(f))}</div></div>`).join('')||'<div class="empty">No accounts yet.</div>'}</div>
+    <div class="list" style="margin-top:10px">${fs.map(f=>`<div class="ent" data-efa="${esc(f.id)}"><div class="ic">${fIcon(f)}</div><div class="t"><div>${esc(f.name)}</div><div>${f.at?'Balance set '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'Balance not set yet'}</div></div><div class="num" style="font-weight:700">${sgd(liveBal(f))}</div></div>`).join('')||'<div class="empty">No accounts yet.</div>'}</div>
     <div class="card" style="margin-top:14px;box-shadow:none;border:1px solid var(--border)"><h2>Add an account</h2>
       <label class="f" for="efName">Name</label><input class="in" id="efName" placeholder="e.g. POSB savings" autocomplete="off">
       <label class="f" for="efAmt">Current balance (${curCode()})</label><input class="in num" id="efAmt" type="number" inputmode="decimal" step="0.01" placeholder="0.00">
@@ -1672,7 +2129,8 @@ function hideOnOpen(){ try{ return localStorage.getItem(HIDEKEY)!=='0'; }catch(e
 function renderSettings(){
   const th=DB.settings.theme||'auto', p=curProfile();
   const item=(l,r,id,cls='')=>`<button class="sit ${cls}" ${id?`id="${id}"`:''}><span>${l}</span><span class="muted">${r}</span></button>`;
-  let h=`<div class="sgrp">Appearance</div><div class="card scard">
+  const SKN=[['obsidian','Obsidian','Dark luxury · metal'],['ivory','Ivory','Light · editorial'],['aurora','Aurora','Gradient glass']];
+  let h=`<div class="sgrp">Appearance</div><div class="card scard"><div class="skins">${SKN.map(([id,n,t])=>`<button class="skin ${skin()===id?'on':''}" data-skin="${id}" style="background:${id==='ivory'?'#F6F2EA':id==='aurora'?'#151240':'#0e0e10'};color:${id==='ivory'?'#1C1A17':'#F4EFE6'}"><span class="sp"><img alt="" src="${ART.card(id,{id:'mari'})}"><img class="si" alt="" src="${ART.icon(id,'food')}"></span><span class="sn">${n}<small>${t}</small></span></button>`).join('')}</div>
       <div class="sit nob"><span>Theme</span><div class="seg">${['light','dark','auto'].map(t=>`<button data-th="${t}" class="${th===t?'on':''}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
       <label class="sit"><span>Hide balances when the app opens</span><input type="checkbox" class="tgl" id="sHide" ${hideOnOpen()?'checked':''}></label>
     </div>
@@ -1692,6 +2150,7 @@ function renderSettings(){
     </div>
     <div class="small muted" style="text-align:center;margin:14px 0 6px">Daily Expenses ${APP_VERSION} · ${Object.values(DB.entries).filter(e=>!e.del).length} entries · your data stays on your devices and your own Google Drive</div>`;
   $('#tab-settings').innerHTML = h;
+  document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{ setSkin(b.dataset.skin); renderSettings(); });
   document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{ DB.settings.theme=b.dataset.th; DB.settings.upd=Date.now(); applyTheme(); save(); renderSettings(); });
   $('#sHide').onchange=ev=>{ try{ localStorage.setItem(HIDEKEY, ev.target.checked?'1':'0'); }catch(e){} toast(ev.target.checked?'Balances will be hidden each time the app opens':'Balances stay as you last left them'); };
   $('#sProf').onclick=profileSheet; $('#sCur').onclick=()=>editProfile(PROFILES.current); $('#sAcc').onclick=()=>balancesSheet({settings:true});
@@ -1701,16 +2160,20 @@ function renderSettings(){
   confirmBtn($('#dClear'),'Tap again to erase '+p.name+"'s data",()=>{ DB=blankDB(); persist(); toast(p.name+"'s data on this device erased"); render(); });
   renderCloudStatus();
 }
-function applyTheme(){ const t=DB.settings.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
+function applyTheme(){ const t=DB.settings.theme, r=document.documentElement; if(t==='light'||t==='dark') r.dataset.theme=t; else delete r.dataset.theme;
+  const dark = t==='dark' || (t!=='light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  r.dataset.skin=skin(); r.dataset.mode=dark?'dark':'light';
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=getComputedStyle(r).getPropertyValue('--bg').trim()||'#0A0A0C'; }
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>applyTheme()); }catch(e){}
 
 /* ============ Friends: money lent / borrowed and paid back (stored as entries so it syncs) ============ */
 const FTX = {
-  lend:{A:'lent', B:'repaid', icon:'🤝', title:'Friends owe you', owes:'owes you', times:'lent', empty:'Lent money to a friend? Tap to keep track',
+  lend:{A:'lent', B:'repaid', get icon(){ return catImg('lent'); }, title:'Friends owe you', owes:'owes you', times:'lent', empty:'Lent money to a friend? Tap to keep track',
     none:'Nobody owes you anything right now.', add:'+ Lent money', addB:'+ Got money back', more:'+ Lend more', backBtn:'Got money back',
     kA:'Owes you', kT:'Total lent', note:'Lending counts as spending until it’s paid back.',
     fA:'🤝 Money lent', fB:'💵 Money paid back', amtA:'Amount given', amtB:'Amount received', iA:'Lent', iB:'Paid back',
     tA:(n,a)=>`Lent ${a} to ${n}`, tB:(n,a)=>`${n} paid back ${a}`},
-  owe:{A:'borrowed', B:'payback', icon:'🙏', title:'You owe friends', owes:'you owe', times:'borrowed', empty:'Borrowed from a friend? Tap to keep track',
+  owe:{A:'borrowed', B:'payback', get icon(){ return catImg('borrowed'); }, title:'You owe friends', owes:'you owe', times:'borrowed', empty:'Borrowed from a friend? Tap to keep track',
     none:'You don’t owe anyone right now.', add:'+ Borrowed money', addB:'+ Paid back', more:'+ Borrow more', backBtn:'Pay back',
     kA:'You owe', kT:'Total borrowed', note:'Borrowing isn’t counted as spending. Paying it back is.',
     fA:'🙏 Money borrowed', fB:'📤 Paid back to friend', amtA:'Amount borrowed', amtB:'Amount paid', iA:'Borrowed', iB:'Paid back',
@@ -1877,10 +2340,10 @@ function drawSheet(){
   let h = `<div class="sheettop"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
   ${E.id?'':'<div class="seg" style="margin-top:6px"><button class="on">Expense</button><button id="eXfer">🔁 Transfer</button></div>'}
   <div class="amtbox"><span class="cur">${esc(curInfo(curCode()).sym.trim())}</span><input class="num" id="eAmt" type="text" inputmode="decimal" autocomplete="off" value="${E.amt}" placeholder="0.00" aria-label="${k.income?'Refund received':'Amount'} (${curCode()})" style="width:${Math.max(4,String(E.amt||'').length+1)}ch"></div>
-  <div class="cgrid">${CATS.filter(c=>!c.friend && !c.track).map(c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`).join('')}${!E.id && (emis.length||E.cat==='emi')? `<button class="ct ${E.cat==='emi'?'on':''}" data-c="emi"><span class="ci">💳</span><span class="cn">EMI</span></button>`:''}</div>
+  <div class="cgrid">${CATS.filter(c=>!c.friend && !c.track).map(c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`).join('')}${!E.id && (emis.length||E.cat==='emi')? `<button class="ct ${E.cat==='emi'?'on':''}" data-c="emi"><span class="ci">${catImg('emi')}</span><span class="cn">EMI</span></button>`:''}</div>
   ${E.cat?'':'<div class="small muted" style="margin-top:6px;text-align:center">Choose a category</div>'}`;
   if(E.cat==='emi'){ drawEmiPay(h, emis); return; }
-  if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.icon} ${s.name}</button>`;
+  if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.name}</button>`;
     h += `<label class="f">Food type</label><div class="fgrid">${k.subs.map(chip).join('')}</div>`; }
   h += `<label class="f">Date</label><div class="datechips"><button class="chip ${E.date===todayStr()?'on':''}" data-d="${todayStr()}">Today</button><button class="chip ${E.date===yest?'on':''}" data-d="${yest}">Yesterday</button><input class="in" type="date" id="eDate" value="${E.date}" aria-label="Pick a date"></div>`;
   if(E.cat==='home' && curCode()!==homeCode()) h += `<div class="grid2"><div><label class="f">Amount in ${homeCode()} (${curInfo(homeCode()).sym.trim()})</label><input class="in num" type="number" inputmode="decimal" id="eInr" value="${E.inr?Math.round(E.inr):''}" placeholder="0"></div>
@@ -1941,7 +2404,7 @@ function drawEmiPay(h, emis){
   if(!emis.length) h += '<div class="empty">No EMI left to pay 🎉</div>';
   else {
     h += `<label class="f">Which EMI</label><div class="emilist">${emis.map(x=>{ const op=emiOpen(x), left=r2(op.reduce((a,p)=>a+p.amt,0)), done=x.emi.n-new Set(op.map(p=>p.k)).size;
-      return `<button class="chip emic ${x.id===E.sub?'on':''}" data-s="${esc(x.id)}"><b>${esc(funds().find(f=>f.id===x.pay)?.icon||'💳')} ${esc(x.note||'Shopping')}</b><span class="small">${esc(shortName(funds().find(f=>f.id===x.pay)||{name:''}))} · ${done} of ${x.emi.n} paid · ${sgd(left)} left</span></button>`; }).join('')}</div>`;
+      return `<button class="chip emic ${x.id===E.sub?'on':''}" data-s="${esc(x.id)}"><b>${fIcon(funds().find(f=>f.id===x.pay)||{id:x.pay})} ${esc(x.note||'Shopping')}</b><span class="small">${esc(shortName(funds().find(f=>f.id===x.pay)||{name:''}))} · ${done} of ${x.emi.n} paid · ${sgd(left)} left</span></button>`; }).join('')}</div>`;
     if(nx) h += `<div class="chips" style="margin-top:8px"><button class="chip" data-ea="${nx.amt}">Next EMI ${nx.k}/${nx.n} · ${sgd(nx.amt)}</button>${left-nx.amt>0.004?`<button class="chip" data-ea="${left}">Pay all remaining · ${sgd(left)}</button>`:''}</div>`;
     h += `<div class="small muted" style="margin-top:6px">Counts as Shopping on the day you pay, and is taken out of the later month${nx?' (next due '+niceDate(nx.date)+')':''}.</div>`;
     const yest=(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toLocaleDateString('en-CA'); })();
@@ -2100,7 +2563,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v51';
+const APP_VERSION='v52';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2199,7 +2662,7 @@ function exportCSV(ym){
 
 /* ============ Profiles ============ */
 const AV_COLORS = ['#2a78d6','#1baf7a','#eb6834','#4a3aa7','#e34948','#008300','#c98500','#d55181'];
-const avatar = (p,lg) => `<span class="av${lg?' lg':''}" style="background:${AV_COLORS[(p.color||0)%AV_COLORS.length]}">${esc((p.name||'?').trim().charAt(0).toUpperCase()||'?')}</span>`;
+const avatar = (p,lg) => `<span class="av${lg?' lg':''}">${esc((p.name||'?').trim().charAt(0).toUpperCase()||'?')}</span>`;
 async function hashPin(pin, salt){
   const data = new TextEncoder().encode(salt+':'+pin);
   try{ const d = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
@@ -2283,7 +2746,7 @@ function askPin(p, blocking){
   return new Promise(resolve=>{
     const el = document.createElement('div'); el.className='lock';
     let val='';
-    const draw = (msg)=>{ el.innerHTML = `<div class="box">${avatar(p,true).replace('class="av lg"','class="av lg" style="margin:0 auto;width:56px;height:56px;font-size:24px;background:'+AV_COLORS[(p.color||0)%AV_COLORS.length]+'"')}
+    const draw = (msg)=>{ el.innerHTML = `<div class="box">${avatar(p,true).replace('class="av lg"','class="av lg" style="margin:0 auto;width:56px;height:56px;font-size:30px"')}
       <h3 style="margin:12px 0 2px">${esc(p.name)}</h3><div class="small ${msg?'neg':'muted'}">${msg||'Enter PIN'}</div>
       <div class="pindots">${[0,1,2,3].map(i=>`<i class="${i<val.length?'on':''}"></i>`).join('')}</div>
       <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="x" style="font-size:14px">${blocking?(PROFILES.list.length>1?'Switch':''):'Cancel'}</button><button data-k="0">0</button><button data-k="b" aria-label="Delete">⌫</button></div></div>`;
