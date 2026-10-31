@@ -2151,8 +2151,8 @@ function renderBudget(){
   const L=sum(living), Bi=sum(bills);
   let h = `<div class="card"><h2>Budget · ${ymLabel(S.ym)}<button class="lnk" id="bCopyNext">Copy to ${ymLabel(next,true).split(' ')[0]}</button></h2>
     ${c.inherited?`<div class="small muted" style="margin-bottom:6px">Using the budget from ${ymLabel(c.inherited)}. Change anything to set ${ymLabel(S.ym,true)}'s own budget.</div>`:''}
-    <label class="f" for="bSalary">Monthly salary (${curCode()})</label>
-    ${ed? `<input class="in num" type="number" inputmode="decimal" min="0" id="bSalary" value="${c.salary||''}" placeholder="0" style="font-size:17px;font-weight:700">` : `<div class="bsal num">${c.salary? sgd(c.salary) : '<span class="muted" style="font-size:15px;font-weight:500">Not set</span>'}</div>`}
+    ${ed? `<label class="f" for="bSalary">Monthly salary (${curCode()})</label>
+    <input class="in num" type="number" inputmode="decimal" min="0" id="bSalary" value="${c.salary||''}" placeholder="0" style="font-size:17px;font-weight:700">` : ''}
     <div id="bSum"></div></div>`;
   h += `<div class="card"><h2>Daily living<span class="small muted num" style="float:right;font-weight:600">${sgd(L.s)} of ${sgd0(L.b)}</span></h2>${living.map(row).join('')}</div>`;
   h += `<div class="card"><h2>Bills &amp; one-offs<span class="small muted num" style="float:right;font-weight:600">${sgd(Bi.s)} of ${sgd0(Bi.b)}</span></h2>${bills.map(row).join('')}</div>`;
@@ -2616,7 +2616,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v63';
+const APP_VERSION='v64';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
