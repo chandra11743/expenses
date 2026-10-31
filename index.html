@@ -2041,6 +2041,7 @@ function moneySheet(){
     <div class="card"><h2>Why “Budget left” is different</h2>
       ${ln('Budget left <span class="small muted">budgets − spending in those categories</span>',sgd(st.budgetLeft))}
       ${ln(plan<0?'Budgets are more than salary + money carried over':'Salary + money carried over is more than budgets',sg(plan),'sub2')}
+      <div class="small muted" style="margin:-2px 0 6px 16px">Salary ${sgd(st.salary)} + carried over ${sgd(st.extra)} − all budgets ${sgd(st.budgetTotal)} = ${sg(plan)}</div>
       ${st.refund?ln('Refunds (not taken off any budget)',sg(st.refund),'sub2'):''}
       ${repOut?ln('Friends paid back',sg(repOut),'sub2'):''}
       ${Math.abs(unb)>0.004?ln('Spending in categories with no budget',sg(-unb),'sub2'):''}
