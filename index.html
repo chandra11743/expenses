@@ -1081,7 +1081,7 @@ function balancesCard(){
 }
 function accountsStrip(){
   const all=funds(), used=all.filter(f=>isSpend(f)), tot=used.reduce((a,f)=>a+liveBal(f),0);
-  const order=[...all.filter(f=>isSpend(f)), ...all.filter(isCredit), ...all.filter(f=>isEF(f))];
+  const order=[...all.filter(f=>isSpend(f)), ...all.filter(isCredit)];   // emergency-fund accounts aren't in the budget, so they're left out here
   return `<div class="card" data-bal="1" style="background:none;border:0;box-shadow:none;padding:4px 0 0"><h2 class="row" style="justify-content:space-between;margin-bottom:10px"><span>Cards &amp; wallets <span class="muted num" style="font-family:var(--font-ui);font-weight:600;font-size:14px">${bal(tot)}</span></span><span class="row" style="gap:6px">${eyeBtn('hEye')}<button class="lnk" style="float:none" onclick="balancesSheet({})">Manage</button></span></h2>
     <div class="crail">${order.map(f=>cardFace(f,'st')).join('')}</div></div>`;
 }
@@ -2624,7 +2624,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v65';
+const APP_VERSION='v66';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
