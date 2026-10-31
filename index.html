@@ -1444,7 +1444,7 @@ function statementCard(ym, compact){
     <div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div>
     <div class="small muted" style="margin-top:2px">Salary + refunds + friends repaid − spending</div>${d.needSalary? '<div class="stdiff"><span>Salary isn’t in an account yet</span><span class="lnk">Add ›</span></div>' : diffBox}</div>`;
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
-  const groups=groupTotals(c).map(g=>g.id==='lent'? {...g, v:(c.by.lent||0)+(c.by.payback||0)} : g).filter(g=>g.v>0.004).sort((a,b)=>b.v-a.v);   // gross, so the lines add up to Spending
+  const groups=groupTotals(c).map(g=>g.id==='misc'? {...g, v:g.v+(c.by.repaid||0)} : g).filter(g=>g.v>0.004).sort((a,b)=>b.v-a.v);   // gross, so the lines add up to Spending
   let h=`<div class="card"><h2>Statement · ${ymLabel(ym)}</h2>`+
     ln(`Opening balance <span class="small muted">1 ${ymLabel(ym,true).split(' ')[0]}${(DB.months[ym]||{}).openingAuto?' · worked out from your balances':''}</span>`, sgd(d.opening))+
     ln('+ Salary', sgd(d.salary))+ (d.refunds? ln('+ Refunds', sgd(d.refunds)):'') + (d.repaid? ln('+ Friends paid back', sgd(d.repaid)):'') + (d.borrowed? ln('+ Borrowed from friends', sgd(d.borrowed)):'')+
@@ -1521,6 +1521,8 @@ function stats(ym, lite){
   const refundFor = {};
   const net = {...by}; delete net.refund; delete net.repaid;
   net.lent = (by.lent||0) - (by.repaid||0);
+  // Money given to friends (lent − paid back to you, plus paying back what you borrowed) counts in Miscellaneous
+  net.misc = (net.misc||0) + net.lent + (by.payback||0); net.lent = 0; net.payback = 0;
   const gross = EXP_CATS.reduce((s,c)=>s+by[c.id],0);
   const total = gross - refund - (by.repaid||0);
   const living = total - [...LIVING_EXCL].reduce((s,k)=>s+(CAT[k]?.income ? -(by[k]||0) : (by[k]||0)),0);
@@ -2029,8 +2031,8 @@ function moneyIn(){ return r2(spendTotal() - creditDueTotal() - earlySalary(true
 function moneySheet(){
   const ym=curYM(), st=stats(ym), mon=ymLabel(ym,true).split(' ')[0], inB=funds().filter(f=>isSpend(f)), efs=funds().filter(f=>isEF(f));
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`, sg=v=>(v<0?'−':'+')+sgd(Math.abs(v));
-  const B=st.cfg.budgets||{}, budgeted=EXP_CATS.filter(k=>(+B[k.id]||0)>0).reduce((a,k)=>a+(st.by[k.id]||0),0), unb=r2(st.gross-budgeted);
-  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc);
+  const B=st.cfg.budgets||{}, repOut=(+B.misc||0)>0? 0 : (st.by.repaid||0);
+  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), unb=r2(st.budgetLeft+plan+st.refund+repOut-calc), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc);
   let h=`<div class="sheettop"><h3>Money left to spend</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="card" style="margin-top:10px"><h2>In the ${mon} budget</h2>${inB.map(f=>ln(fIcon(f)+' '+esc(f.name),sgd(liveBal(f)))).join('')||'<div class="small muted">No accounts in the budget.</div>'}
       ${funds().filter(isCredit).filter(f=>dueAt(f)>0.004).map(f=>ln('− '+esc(f.name)+' bill '+niceDate(nextDue(f)), '('+sgd(dueAt(f))+')','sub2')).join('')}
@@ -2038,14 +2040,14 @@ function moneySheet(){
       <div class="small muted" style="margin-top:8px">Emergency fund kept aside: ${efs.map(f=>esc(f.name)+' '+sgd(liveBal(f))).join(', ')||'none'} = <b class="num">${sgd(efKept(ym))}</b>. Change which accounts count on the Budget tab.</div></div>
     <div class="card"><h2>Why “Budget left” is different</h2>
       ${ln('Budget left <span class="small muted">budgets − spending in those categories</span>',sgd(st.budgetLeft))}
-      ${ln(plan<0?'Budgets are more than salary + savings used':'Salary + savings used is more than budgets',sg(plan),'sub2')}
+      ${ln(plan<0?'Budgets are more than salary + money carried over':'Salary + money carried over is more than budgets',sg(plan),'sub2')}
       ${st.refund?ln('Refunds (not taken off any budget)',sg(st.refund),'sub2'):''}
-      ${st.by.repaid?ln('Friends paid back',sg(st.by.repaid),'sub2'):''}
-      ${unb?ln('Spending with no budget (subscriptions, friends…)',sg(-unb),'sub2'):''}
+      ${repOut?ln('Friends paid back',sg(repOut),'sub2'):''}
+      ${Math.abs(unb)>0.004?ln('Spending in categories with no budget',sg(-unb),'sub2'):''}
       ${ln('Money left (worked out)',sgd(calc),'tot')}
       ${Math.abs(creditNet())>0.004? ln('Spending accounts '+sgd(spendTotal())+' − credit owed (not yet counted as spending)', sgd(r2(spendTotal()+creditNet())),'sub2') : ''}
       ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">Usually a payment or refund logged without “Paid with”, or a balance that needs updating.</div>`}
-      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + savings used ${sgd(st.extra)} + refunds ${sgd(st.refund)} + friends paid back ${sgd(st.by.repaid||0)} − spending ${sgd(st.gross)} = ${sgd(calc)}.</div></div>`;
+      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + money carried over ${sgd(st.extra)} + refunds ${sgd(st.refund)} + friends paid back ${sgd(st.by.repaid||0)} − spending ${sgd(st.gross)} = ${sgd(calc)}.</div></div>`;
   openSheet(h);
 }
 /* How the two living-pace figures are worked out */
@@ -2211,12 +2213,12 @@ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>ap
 const FTX = {
   lend:{A:'lent', B:'repaid', get icon(){ return catImg('lent'); }, title:'Friends owe you', owes:'owes you', times:'lent', empty:'Lent money to a friend? Tap to keep track',
     none:'Nobody owes you anything right now.', add:'+ Lent money', addB:'+ Got money back', more:'+ Lend more', backBtn:'Got money back',
-    kA:'Owes you', kT:'Total lent', note:'Lending counts as spending until it’s paid back.',
+    kA:'Owes you', kT:'Total lent', note:'Lending counts as spending (in Miscellaneous) until it’s paid back.',
     fA:'🤝 Money lent', fB:'💵 Money paid back', amtA:'Amount given', amtB:'Amount received', iA:'Lent', iB:'Paid back',
     tA:(n,a)=>`Lent ${a} to ${n}`, tB:(n,a)=>`${n} paid back ${a}`},
   owe:{A:'borrowed', B:'payback', get icon(){ return catImg('borrowed'); }, title:'You owe friends', owes:'you owe', times:'borrowed', empty:'Borrowed from a friend? Tap to keep track',
     none:'You don’t owe anyone right now.', add:'+ Borrowed money', addB:'+ Paid back', more:'+ Borrow more', backBtn:'Pay back',
-    kA:'You owe', kT:'Total borrowed', note:'Borrowing isn’t counted as spending. Paying it back is.',
+    kA:'You owe', kT:'Total borrowed', note:'Borrowing isn’t counted as spending. Paying it back is (in Miscellaneous).',
     fA:'🙏 Money borrowed', fB:'📤 Paid back to friend', amtA:'Amount borrowed', amtB:'Amount paid', iA:'Borrowed', iB:'Paid back',
     tA:(n,a)=>`Borrowed ${a} from ${n}`, tB:(n,a)=>`Paid ${a} back to ${n}`}};
 const fdir = cat => CAT[cat]?.owe ? 'owe' : 'lend';
