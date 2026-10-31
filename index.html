@@ -126,17 +126,15 @@ nav.tabs button.on svg{background:color-mix(in srgb,var(--accent) 14%,transparen
 .fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:31;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 6px 20px -4px color-mix(in srgb,var(--accent) 55%,transparent)}
 @media (min-width:800px){.fab{right:calc(50% - 370px)}.fabcalc{right:calc(50% - 300px)}}
 .fabcalc{position:fixed;right:88px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:31;width:46px;height:46px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
-.calcpad{margin:10px 0 12px;padding:4px 2px 0;--cgreen:#3E9E4F;--cred:#E0533D}
-.calcpad .expr{font-size:34px;font-weight:500;color:var(--text);text-align:right;min-height:46px;word-break:break-all;line-height:1.25;padding:8px 6px 0}
-.calcpad .res{font-size:22px;font-weight:500;color:var(--muted);text-align:right;margin:2px 0 6px;min-height:30px;padding:0 6px}
-.calcpad .crow{display:flex;justify-content:flex-end;border-bottom:1px solid var(--border);padding:0 6px 6px;margin-bottom:14px}
-.calcpad .crow button{width:44px;height:44px;border:0;background:none;color:var(--cgreen);cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.calcpad .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;justify-items:center}
-.calcpad .keys button{width:100%;max-width:76px;aspect-ratio:1;border-radius:50%;border:0;background:var(--surface-2);color:var(--text);font-size:26px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
-.calcpad .keys button:active{filter:brightness(.88)}
-.calcpad .keys .op{color:var(--cgreen);font-size:30px}
-.calcpad .keys .eq{background:var(--cgreen);color:#fff;font-size:30px}
-.calcpad .keys .c{color:var(--cred)}
+.calcpad{margin:6px 0 12px;padding:0 2px}
+.calcpad .expr{font-size:32px;font-weight:400;color:var(--text);text-align:right;min-height:44px;word-break:break-all;line-height:1.25;padding:14px 8px 0}
+.calcpad .res{font-size:20px;font-weight:400;color:var(--muted);text-align:right;margin:2px 0 14px;min-height:28px;padding:0 8px}
+.calcpad .keys{display:grid;grid-template-columns:repeat(4,64px);gap:10px 14px;justify-content:center}
+.calcpad .keys button{width:64px;height:64px;border-radius:50%;border:0;background:var(--surface-2);color:var(--text);font-size:24px;font-weight:400;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;padding:0}
+.calcpad .keys button:active{filter:brightness(.85)}
+.calcpad .keys .op{background:color-mix(in srgb,var(--text) 10%,var(--surface-2));font-size:28px}
+.calcpad .keys .eq{background:var(--accent);color:var(--accent-ink,#fff);font-size:28px}
+.calcpad .keys .c{color:var(--bad,#E0533D)}
 .btn{border:1px solid var(--border);background:var(--surface);padding:10px 16px;border-radius:12px;cursor:pointer;font-weight:600}
 .btn:hover{background:var(--surface-2)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -2340,11 +2338,11 @@ function calcEval(src){
 }
 function calcFmt(v){ const r=Math.round(v*100)/100; return r.toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function calcSheet(){
-  const keys=['C','( )','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','+/−','0','.','='];
+  const keys=['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','( )','0','.','='];
+  const DEL='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M16.5 9.5l-5 5M11.5 9.5l5 5"/></svg>';
   openSheet(`<div class="sheettop"><h3>🧮 Calculator</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="calcpad"><div class="expr num" id="cExpr"></div><div class="res num" id="cRes"></div>
-    <div class="crow"><button data-k="⌫" aria-label="Delete"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M17 9l-6 6M11 9l6 6"/></svg></button></div>
-    <div class="keys">${keys.map(k=>`<button data-k="${k}" class="${'÷×−+%'.includes(k)&&k.length===1||k==='( )'?'op':k==='='?'eq':k==='C'?'c':''}" aria-label="${k==='( )'?'Brackets':k==='+/−'?'Plus or minus':k}">${k}</button>`).join('')}</div></div>
+    <div class="keys">${keys.map(k=>`<button data-k="${k}" class="${'÷×−+'.includes(k)&&k.length===1?'op':k==='='?'eq':k==='C'||k==='⌫'?'c':''}" aria-label="${k==='( )'?'Brackets':k==='⌫'?'Delete':k}">${k==='⌫'?DEL:k}</button>`).join('')}</div></div>
     <div class="btns"><button class="btn" id="cCopy" style="flex:1">Copy result</button><button class="btn primary" id="cAdd" style="flex:1">+ Add as expense</button></div>`);
   const res=()=>{ const open=(CALC.match(/\(/g)||[]).length-(CALC.match(/\)/g)||[]).length; try{ return calcEval(CALC+')'.repeat(Math.max(0,open))); }catch(e){ return null; } };
   const draw=()=>{ $('#cExpr').textContent=CALC||'0'; const v=res(); $('#cRes').textContent = v===null || !/[+−×÷%(]/.test(CALC.replace(/^\(−/,''))? '' : calcFmt(v); };
