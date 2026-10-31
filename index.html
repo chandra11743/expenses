@@ -2154,6 +2154,14 @@ function renderBudget(){
     ${ed? `<label class="f" for="bSalary">Monthly salary (${curCode()})</label>
     <input class="in num" type="number" inputmode="decimal" min="0" id="bSalary" value="${c.salary||''}" placeholder="0" style="font-size:17px;font-weight:700">` : ''}
     <div id="bSum"></div></div>`;
+  if(!ed){ const rows=BUDGET_CATS.map(k=>({k, b:+B[k.id]||0, sp:r2(st.net[k.id]||0)})).filter(r=>r.b>0||r.sp>0.004);
+    const tb=r2(rows.reduce((a,r)=>a+r.b,0)), ts=r2(rows.reduce((a,r)=>a+r.sp,0)), need=r2(rows.reduce((a,r)=>a+Math.max(0,r.b-r.sp),0)), have=moneyIn(), cur=S.ym===curYM();
+    h += `<div class="card"><h2>By category</h2><div class="tablewrap"><table class="tbl" style="width:100%"><thead><tr><th style="text-align:left">Category</th><th>Budget</th><th>Spent</th><th>Left</th></tr></thead><tbody>
+      ${rows.map(r=>{ const l=r2(r.b-r.sp); return `<tr><td>${esc(r.k.name)}</td><td class="num">${r.b?sgd0(r.b):'—'}</td><td class="num">${sgd(r.sp)}</td><td class="num ${l<0?'neg':''}">${r.b? (l<0?'−':'')+sgd(Math.abs(l)) : '<span class="muted">no budget</span>'}</td></tr>`; }).join('')}
+      <tr style="font-weight:800"><td>Total</td><td class="num">${sgd0(tb)}</td><td class="num">${sgd(ts)}</td><td class="num">${sgd(r2(tb-ts))}</td></tr></tbody></table></div>
+      ${cur? `<div class="stl" style="margin-top:10px"><span>Still needed for budgets <span class="small muted">(over-budget categories count as 0)</span></span><span class="num">${sgd(need)}</span></div>
+      <div class="stl"><span>Money left to spend</span><span class="num">${sgd(have)}</span></div>
+      <div class="stdiff ${have-need>=0?'ok':'bad'}"><span>${have-need>=0?'Spare after all budgets':'Short for budgets'}</span><span class="num">${have-need>=0?'+':'−'}${sgd(Math.abs(r2(have-need)))}</span></div>` : ''}</div>`; }
   h += `<div class="card"><h2>Daily living<span class="small muted num" style="float:right;font-weight:600">${sgd(L.s)} of ${sgd0(L.b)}</span></h2>${living.map(row).join('')}</div>`;
   h += `<div class="card"><h2>Bills &amp; one-offs<span class="small muted num" style="float:right;font-weight:600">${sgd(Bi.s)} of ${sgd0(Bi.b)}</span></h2>${bills.map(row).join('')}</div>`;
   h += ed? `<div class="bedit"><button class="btn" id="bCancel">Cancel</button><button class="btn primary" id="bSave">Save budget</button></div><div class="small muted" style="margin:-4px 4px 14px">Later months reuse this budget until you change them.</div>`
@@ -2616,7 +2624,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v64';
+const APP_VERSION='v65';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
