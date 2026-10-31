@@ -2191,7 +2191,7 @@ function renderSettings(){
     </div>
     <div class="small muted" style="text-align:center;margin:14px 0 6px">Daily Expenses ${APP_VERSION} · ${Object.values(DB.entries).filter(e=>!e.del).length} entries · your data stays on your devices and your own Google Drive</div>`;
   $('#tab-settings').innerHTML = h;
-  document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{ setSkin(b.dataset.skin); renderSettings(); });
+  document.querySelectorAll('.skin[data-skin]').forEach(b=>b.onclick=()=>{ setSkin(b.dataset.skin); renderSettings(); });
   document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{ DB.settings.theme=b.dataset.th; DB.settings.upd=Date.now(); applyTheme(); save(); renderSettings(); });
   $('#sHide').onchange=ev=>{ try{ localStorage.setItem(HIDEKEY, ev.target.checked?'1':'0'); }catch(e){} toast(ev.target.checked?'Balances will be hidden each time the app opens':'Balances stay as you last left them'); };
   $('#sProf').onclick=profileSheet; $('#sCur').onclick=()=>editProfile(PROFILES.current); $('#sAcc').onclick=()=>balancesSheet({settings:true}); $('#sSal').onclick=()=>salaryAutoSheet(()=>{ closeSheet(); renderSettings(); });
