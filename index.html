@@ -1178,13 +1178,15 @@ function autoSalary(){ try{
 function earlySalary(onlySpend){ const t=todayStr(), cur=curYM(); let s=0;
   for(const e of Object.values(DB.entries)) if(!e.del && e.cat==='xfer' && !e.from && e.salaryFor && e.salaryFor>cur && e.date<=t){ const f=funds().find(x=>x.id===e.to); if(f && (!onlySpend || isSpend(f))) s+=e.amt; }
   return r2(s); }
-function salaryAutoSheet(){ const a=salAuto(), fs=funds().filter(f=>!isCredit(f));
-  openSheet(`<div class="sheettop"><h3>💼 Salary on payday</h3><button class="btn sm" onclick="balancesSheet()">Back</button></div>
+let SAL_BACK=null;
+function salaryAutoSheet(back){ if(back!==undefined) SAL_BACK=back; const a=salAuto(), fs=funds().filter(f=>!isCredit(f));
+  openSheet(`<div class="sheettop"><h3>Salary on payday</h3><button class="btn sm" id="saBack">Back</button></div>
     <div class="small muted" style="margin-top:6px">On the last working day of each month (Mon–Fri), your next month’s salary (from Budget) is added to this account. It’s money in, never spending, and counts for the next month.</div>
     <div class="row" style="justify-content:space-between;margin-top:14px"><b>Add salary automatically</b><input type="checkbox" class="tgl" id="saOn" ${a.on?'checked':''} aria-label="Add salary automatically"></div>
     <label class="f">Salary goes into</label>${payGrid(a.to,'data-sat',fs)}
     <div class="small muted" style="margin-top:10px">Next payday: <b>${niceDate(payday(todayStr()>=payday(curYM())? addMonths(curYM(),1) : curYM()))}</b> · ${sgd(+cfg(todayStr()>=payday(curYM())? addMonths(curYM(),2) : addMonths(curYM(),1)).salary||0)}</div>
     <div class="small muted" style="margin-top:6px">Different amount or date (bonus, holiday)? Tap the salary entry in the account or in History → 🔁 Transfers and edit it.</div>`);
+  $('#saBack').onclick=()=>{ const b=SAL_BACK; SAL_BACK=null; b? b() : balancesSheet(); };
   const put=o=>{ DB.settings={...DB.settings, salaryAuto:{...salAuto(), ...o}, upd:Date.now()}; save(); };
   $('#saOn').onchange=()=>{ put({on:$('#saOn').checked}); salaryAutoSheet(); if($('#saOn').checked) autoSalary(); };
   document.querySelectorAll('[data-sat]').forEach(b=>b.onclick=()=>{ put({to:b.dataset.sat}); salaryAutoSheet(); autoSalary(); }); }
@@ -1240,7 +1242,7 @@ function balancesSheet(opt){
     cleanFundsIn(); reOpening(); render(); toast(f.name+' deleted'); balancesSheet(); };
   bindCarousel(funds());
   if($('#bSal')) $('#bSal').onclick=()=>salarySheet(ym);
-  if($('#bSalA')) $('#bSalA').onclick=()=>salaryAutoSheet();
+  if($('#bSalA')) $('#bSalA').onclick=()=>salaryAutoSheet(null);
   if(ord){ $('#bOrdDone').onclick=()=>{ ACC_ORD=false; balancesSheet(); };
     const mv=(id,dir)=>{ const vis=funds().map(f=>f.id), i=vis.indexOf(id), j=i+dir; if(i<0||j<0||j>=vis.length) return;
       const all=allFunds(), a=all.findIndex(f=>f.id===id), b=all.findIndex(f=>f.id===vis[j]); [all[a],all[b]]=[all[b],all[a]]; saveFunds(all); render(); balancesSheet(); };
@@ -1342,18 +1344,19 @@ function xferForm(src, back, origin, preset){
   const e = src || {id:null, from:p.from??(back||''), to:p.to??'', amt:p.amt??'', date:todayStr(), note:p.note||''};
   if(!src && back && !p.from && p.to===undefined){ e.from=back; }
   let from=e.from||'', to=e.to||'';
+  if(!src && !e.from && p.from===undefined) from=null;   // nothing picked yet (salary is added automatically)
   const fromAdd = origin==='add';
   const yest=(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); })();
-  const opts=(sel,attr,outside)=>payGrid(sel, attr, outside? funds().filter(f=>!isCredit(f)) : funds(), outside?`<button class="pt ${!sel?'on':''}" ${attr}="" title="Money from outside, e.g. salary"><span class="pi">💼</span><span class="pn">Salary</span></button>`:'');
+  const opts=(sel,attr,outside)=>payGrid(sel, attr, outside? funds().filter(f=>!isCredit(f)) : funds(), outside?`<button class="pt ${sel===''?'on':''}" ${attr}="" title="Money from outside: bonus, gift, refund to bank"><span class="pi"><svg class="fimg" viewBox="0 0 160 100" aria-hidden="true" style="color:var(--accent)"><rect x="3" y="3" width="154" height="94" rx="14" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="7 6"/><path d="M80 24v40M64 50l16 16 16-16M58 76h44" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pn">Income</span></button>`:'');
   openSheet(`<div class="sheettop"><h3>${e.id?'Edit transfer':fromAdd?'Add':p.title||'Transfer'}</h3><button class="btn sm" id="xBack">${fromAdd||!back&&!p.back?'Close':'Back'}</button></div>
     ${fromAdd?'<div class="seg" style="margin-top:6px"><button id="xToExp">Expense</button><button class="on">🔁 Transfer</button></div>':''}
-    <div class="small muted" style="margin-top:6px">Recharge NETS or EZ-Link, bank to bank, ATM, salary in, or move savings. Never counted as spending.</div>
+    <div class="small muted" style="margin-top:6px">Recharge NETS or EZ-Link, bank to bank, ATM, or move savings. Never counted as spending.${salAuto().on&&salAuto().to?` Salary goes into ${esc(fundName(salAuto().to))} by itself on payday.`:''}</div>
     <div class="amtbox"><span class="cur">${esc(curInfo(curCode()).sym.trim())}</span><input class="num" id="xAmt" type="text" inputmode="decimal" autocomplete="off" value="${e.amt}" placeholder="0.00" aria-label="Amount (${curCode()})" style="width:${Math.max(4,String(e.amt||'').length+1)}ch"></div>
     <label class="f">From</label>${opts(from,'data-xf',true)}
     <label class="f">To</label>${opts(to,'data-xt',false)}
     <div id="xPrev" class="kpi" style="margin-top:12px;display:none"></div>
     <label class="f">Date</label><div class="datechips"><button class="chip" data-xd="${todayStr()}">Today</button><button class="chip" data-xd="${yest}">Yesterday</button><input class="in" type="date" id="xDate" value="${e.date}" aria-label="Pick a date"></div>
-    <label class="f" for="xNote">Note (optional)</label><input class="in" id="xNote" value="${esc(e.note)}" placeholder="e.g. Oct salary, ATM, NETS top-up">
+    <label class="f" for="xNote">Note (optional)</label><input class="in" id="xNote" value="${esc(e.note)}" placeholder="e.g. ATM, NETS top-up, bonus">
     ${e.id? '<div class="actrow"><button class="btn danger" id="xDel">Delete</button><button class="btn primary" id="xSave">Save changes</button></div>' : '<div style="margin-top:16px"><button class="btn primary bigsave" id="xSave">Save</button></div>'}`);
   const amt=$('#xAmt');
   const upd=()=>{ const a=r2(parseFloat(amt.value)||0), box=$('#xPrev'), lines=[];
@@ -1374,6 +1377,7 @@ function xferForm(src, back, origin, preset){
   $('#xSave').onclick=()=>{
     const a=r2(parseFloat(amt.value));
     if(!(a>0)){ toast('Enter an amount'); amt.focus(); return; }
+    if(from===null){ toast('Choose where the money comes from (From)'); return; }
     if(!to){ toast('Choose where the money goes (To)'); return; }
     if(from===to){ toast('From and To must be different'); return; }
     const now=Date.now(), rec={id:e.id||uid(), date:$('#xDate').value||todayStr(), cat:'xfer', from, to, amt:a, note:($('#xNote').value||'').trim(), upd:now, cr:e.cr||now, cur:curCode()};
@@ -2174,6 +2178,7 @@ function renderSettings(){
       ${item('Profile', esc(p.name)+(p.pin?' · PIN on':' · PIN off')+' ›','sProf')}
       ${item('Currency', curCode()+' · home '+homeCode()+' ›','sCur')}
       ${item('Accounts', funds().filter(f=>isSpend(f)).length+' spending · '+funds().filter(f=>isEF(f)).length+' emergency ›','sAcc')}
+      ${item('Salary account', (salAuto().on&&salAuto().to? 'Auto → '+esc(fundName(salAuto().to)) : 'Off')+' ›','sSal')}
     </div>
     <div class="sgrp">Data</div><div class="card scard">
       ${item('Export '+ymLabel(S.ym,true)+' as CSV','›','dCsv')}
@@ -2188,7 +2193,7 @@ function renderSettings(){
   document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{ setSkin(b.dataset.skin); renderSettings(); });
   document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{ DB.settings.theme=b.dataset.th; DB.settings.upd=Date.now(); applyTheme(); save(); renderSettings(); });
   $('#sHide').onchange=ev=>{ try{ localStorage.setItem(HIDEKEY, ev.target.checked?'1':'0'); }catch(e){} toast(ev.target.checked?'Balances will be hidden each time the app opens':'Balances stay as you last left them'); };
-  $('#sProf').onclick=profileSheet; $('#sCur').onclick=()=>editProfile(PROFILES.current); $('#sAcc').onclick=()=>balancesSheet({settings:true});
+  $('#sProf').onclick=profileSheet; $('#sCur').onclick=()=>editProfile(PROFILES.current); $('#sAcc').onclick=()=>balancesSheet({settings:true}); $('#sSal').onclick=()=>salaryAutoSheet(()=>{ closeSheet(); renderSettings(); });
   $('#dCsv').onclick=()=>exportCSV(S.ym); $('#dCsvAll').onclick=()=>exportCSV(null);
   $('#sExport').onclick=exportSyncFile; $('#sImport').onclick=()=>$('#fileIn').click();
   if($('#dSampleOff')) $('#dSampleOff').onclick=()=>{ removeSample(); toast('Sample data removed'); render(); };
@@ -2598,7 +2603,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v53';
+const APP_VERSION='v54';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
