@@ -243,6 +243,9 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .card h2 + .bgr{border-top:0}
 .bgr .nm{font-weight:600} .bgr .meta{font-size:12px;color:var(--text-2)} .bgr .bar{margin-top:6px}
 .bgr .bin{text-align:right}
+.bgr .bval{text-align:right;font-weight:700;font-size:16px;padding-right:4px}.bgr .bval.none{color:var(--muted);font-weight:500;font-size:14px}
+.bsal{font-size:22px;font-weight:800;margin-top:2px}
+.bedit{display:flex;gap:10px;margin:4px 0 14px}.bedit .btn{flex:1}
 .bsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;text-align:center}
 .bsum span{display:block;font-size:12px;color:var(--text-2)} .bsum b{font-size:17px}
 .warnbox{margin-top:10px;background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600}
@@ -2135,33 +2138,37 @@ function efSheet(){
     reOpening(); render(); toast('Added '+n); efSheet(); };
 }
 function renderBudget(){
+  const ed = S.budEdit===S.ym;
+  const draft={}; if(ed) document.querySelectorAll('#tab-budget [data-b], #tab-budget #bSalary').forEach(i=>draft[i.dataset.b||'salary']=i.value);   // keep what's typed if the page redraws (e.g. sync)
   const c = cfg(S.ym), st = stats(S.ym), B = c.budgets||{}, next = addMonths(S.ym,1);
   const living = LIVING_CATS(), bills = BUDGET_CATS.filter(k=>LIVING_EXCL.has(k.id));
   const row = k => { const sp=st.net[k.id]||0, b=+B[k.id]||0, rem=b-sp, stt=status(sp,b,k.id);
     const info = b? (rem>=0? (FIXED.has(k.id)&&rem<0.005? 'paid in full' : sgd(rem)+' left') : '<span class="neg">'+sgd(-rem)+' over</span>') : (sp>0? '<span style="color:var(--warn)">no budget set</span>' : 'no budget');
     return `<div class="bgr"><div class="bgm"><div class="nm ${stt==='bad'?'neg':''}">${k.icon} ${k.name}</div><div class="meta">${k.id==='home'?'Sent':'Spent'} ${sgd(sp)}${k.id==='home'&&st.inrHome?' · '+inr(st.inrHome):''} · ${info}</div>
       ${b?`<div class="bar"><i class="${stt||''}" style="width:${Math.min(100,sp/b*100)}%"></i></div>`:''}</div>
-      <input class="in num bin" type="number" inputmode="decimal" min="0" step="1" data-b="${k.id}" value="${b||''}" placeholder="Set" aria-label="${k.name} budget"></div>`; };
+      ${ed? `<input class="in num bin" type="number" inputmode="decimal" min="0" step="1" data-b="${k.id}" value="${b||''}" placeholder="Set" aria-label="${k.name} budget">` : `<div class="bval num ${b?'':'none'}">${b? sgd0(b) : 'Not set'}</div>`}</div>`; };
   const sum = cats => ({b:cats.reduce((a,k)=>a+(+B[k.id]||0),0), s:cats.reduce((a,k)=>a+(st.net[k.id]||0),0)});
   const L=sum(living), Bi=sum(bills);
   let h = `<div class="card"><h2>Budget · ${ymLabel(S.ym)}<button class="lnk" id="bCopyNext">Copy to ${ymLabel(next,true).split(' ')[0]}</button></h2>
     ${c.inherited?`<div class="small muted" style="margin-bottom:6px">Using the budget from ${ymLabel(c.inherited)}. Change anything to set ${ymLabel(S.ym,true)}'s own budget.</div>`:''}
     <label class="f" for="bSalary">Monthly salary (${curCode()})</label>
-    <input class="in num" type="number" inputmode="decimal" min="0" id="bSalary" value="${c.salary||''}" placeholder="0" style="font-size:17px;font-weight:700">
+    ${ed? `<input class="in num" type="number" inputmode="decimal" min="0" id="bSalary" value="${c.salary||''}" placeholder="0" style="font-size:17px;font-weight:700">` : `<div class="bsal num">${c.salary? sgd(c.salary) : '<span class="muted" style="font-size:15px;font-weight:500">Not set</span>'}</div>`}
     <div id="bSum"></div></div>`;
   h += `<div class="card"><h2>Daily living<span class="small muted num" style="float:right;font-weight:600">${sgd(L.s)} of ${sgd0(L.b)}</span></h2>${living.map(row).join('')}</div>`;
   h += `<div class="card"><h2>Bills &amp; one-offs<span class="small muted num" style="float:right;font-weight:600">${sgd(Bi.s)} of ${sgd0(Bi.b)}</span></h2>${bills.map(row).join('')}</div>`;
-  h += `<div class="small muted" style="margin:-4px 4px 14px">Changes save automatically. Later months reuse this budget until you change them.</div>`;
+  h += ed? `<div class="bedit"><button class="btn" id="bCancel">Cancel</button><button class="btn primary" id="bSave">Save budget</button></div><div class="small muted" style="margin:-4px 4px 14px">Later months reuse this budget until you change them.</div>`
+          : `<div class="bedit"><button class="btn primary" id="bEdit">✎ Edit budget</button></div><div class="small muted" style="margin:-4px 4px 14px">Later months reuse this budget until you change them.</div>`;
   $('#tab-budget').innerHTML = h;
   const root=$('#tab-budget');
-  const read=()=>{ const v={}; root.querySelectorAll('[data-b]').forEach(i=>{ const x=+i.value||0; if(x>0) v[i.dataset.b]=r2(x); }); return {budgets:v, salary:r2(+$('#bSalary').value||0)}; };
+  const read=()=>{ if(!ed) return {budgets:{...B}, salary:+c.salary||0}; const v={}; root.querySelectorAll('[data-b]').forEach(i=>{ const x=+i.value||0; if(x>0) v[i.dataset.b]=r2(x); }); return {budgets:v, salary:r2(+$('#bSalary').value||0)}; };
   const summary=()=>{ const {budgets,salary}=read(), total=BUDGET_CATS.reduce((a,k)=>a+(budgets[k.id]||0),0), extra=fundsIncluded(S.ym), saving=salary+extra-total;
     $('#bSum').innerHTML=`<div class="bsum"><div><span>Salary</span><b class="num">${sgd0(salary)}</b></div><div><span>Budgeted</span><b class="num">${sgd0(total)}</b></div><div><span>Planned saving</span><b class="num ${saving<0?'neg':'pos'}">${saving<0?'−':''}${sgd0(Math.abs(saving))}</b></div></div>
       ${extra>0.004?`<div class="small muted" style="margin-top:6px">Includes ${sgd(extra)} of last month's savings in your Spending accounts.</div>`:extra<-0.004?`<div class="small muted" style="margin-top:6px">${sgd(-extra)} of this month's money is put aside in the emergency fund.</div>`:''}
       ${saving<0&&salary?`<div class="warnbox">Budgets are ${sgd(-saving)} more than your salary${extra>0.004?' and the savings you included':''}. Lower a budget${funds().some(f=>isEF(f,S.ym))?', or switch an emergency account to Spending in Settings → Accounts':''}.</div>`:''}`; };
-  const persistB=()=>{ const {budgets,salary}=read(); setMonthFlag(S.ym,{salary, budgets}); toast('Saved'); summary();
-    setTimeout(()=>{ const a=document.activeElement; if(S.tab==='budget' && !(a && a.tagName==='INPUT' && root.contains(a))) renderBudget(); },400); };
-  root.querySelectorAll('[data-b], #bSalary').forEach(i=>{ i.oninput=summary; i.onchange=persistB; });
+  root.querySelectorAll('[data-b], #bSalary').forEach(i=>{ const k=i.dataset.b||'salary'; if(k in draft) i.value=draft[k]; i.oninput=summary; });
+  if($('#bEdit')) $('#bEdit').onclick=()=>{ S.budEdit=S.ym; renderBudget(); const f=$('#bSalary'); if(f) f.focus(); };
+  if($('#bCancel')) $('#bCancel').onclick=()=>{ S.budEdit=null; renderBudget(); toast('No changes made'); };
+  if($('#bSave')) $('#bSave').onclick=()=>{ const {budgets,salary}=read(); setMonthFlag(S.ym,{salary, budgets}); S.budEdit=null; toast('Budget saved'); render(); };
   summary();
   confirmBtn($('#bCopyNext'),'Tap again to copy',()=>{ const {budgets,salary}=read(); setMonthFlag(next,{salary, budgets}); toast('Copied to '+ymLabel(next)); renderBudget(); });
 }
@@ -2609,7 +2616,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v62';
+const APP_VERSION='v63';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
