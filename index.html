@@ -1347,12 +1347,12 @@ function xferForm(src, back, origin, preset){
   if(!src && !e.from && p.from===undefined) from=null;   // nothing picked yet (salary is added automatically)
   const fromAdd = origin==='add';
   const yest=(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); })();
-  const opts=(sel,attr,outside)=>payGrid(sel, attr, outside? funds().filter(f=>!isCredit(f)) : funds(), outside?`<button class="pt ${sel===''?'on':''}" ${attr}="" title="Money from outside: bonus, gift, refund to bank"><span class="pi"><svg class="fimg" viewBox="0 0 160 100" aria-hidden="true" style="color:var(--accent)"><rect x="3" y="3" width="154" height="94" rx="14" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="7 6"/><path d="M80 24v40M64 50l16 16 16-16M58 76h44" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pn">Income</span></button>`:'');
+  const opts=(sel,attr,outside)=>payGrid(sel, attr, outside? funds().filter(f=>!isCredit(f)) : funds(), outside?`<button class="pt ${sel===''?'on':''}" ${attr}="" id="xIncT" title="Money from outside: bonus, gift, refund to bank"${sel===''?'':' style="display:none"'}><span class="pi"><svg class="fimg" viewBox="0 0 160 100" aria-hidden="true" style="color:var(--accent)"><rect x="3" y="3" width="154" height="94" rx="14" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="7 6"/><path d="M80 24v40M64 50l16 16 16-16M58 76h44" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pn">Income</span></button>`:'');
   openSheet(`<div class="sheettop"><h3>${e.id?'Edit transfer':fromAdd?'Add':p.title||'Transfer'}</h3><button class="btn sm" id="xBack">${fromAdd||!back&&!p.back?'Close':'Back'}</button></div>
     ${fromAdd?'<div class="seg" style="margin-top:6px"><button id="xToExp">Expense</button><button class="on">🔁 Transfer</button></div>':''}
     <div class="small muted" style="margin-top:6px">Recharge NETS or EZ-Link, bank to bank, ATM, or move savings. Never counted as spending.${salAuto().on&&salAuto().to?` Salary goes into ${esc(fundName(salAuto().to))} by itself on payday.`:''}</div>
     <div class="amtbox"><span class="cur">${esc(curInfo(curCode()).sym.trim())}</span><input class="num" id="xAmt" type="text" inputmode="decimal" autocomplete="off" value="${e.amt}" placeholder="0.00" aria-label="Amount (${curCode()})" style="width:${Math.max(4,String(e.amt||'').length+1)}ch"></div>
-    <label class="f">From</label>${opts(from,'data-xf',true)}
+    <label class="f">From</label>${opts(from,'data-xf',true)}${from===''?'':'<button type="button" class="btn sm" id="xInc" style="margin-top:8px">+ Money from outside (bonus, gift, refund)</button>'}
     <label class="f">To</label>${opts(to,'data-xt',false)}
     <div id="xPrev" class="kpi" style="margin-top:12px;display:none"></div>
     <label class="f">Date</label><div class="datechips"><button class="chip" data-xd="${todayStr()}">Today</button><button class="chip" data-xd="${yest}">Yesterday</button><input class="in" type="date" id="xDate" value="${e.date}" aria-label="Pick a date"></div>
@@ -1367,6 +1367,7 @@ function xferForm(src, back, origin, preset){
     document.querySelectorAll('[data-xd]').forEach(b=>b.classList.toggle('on',b.dataset.xd===$('#xDate').value)); };
   const pick=(attr,set)=>document.querySelectorAll(`[${attr}]`).forEach(b=>b.onclick=()=>{ set(b.getAttribute(attr)); document.querySelectorAll(`[${attr}]`).forEach(x=>x.classList.toggle('on',x===b)); upd(); });
   pick('data-xf',v=>from=v); pick('data-xt',v=>to=v);
+  if($('#xInc')) $('#xInc').onclick=()=>{ const t=$('#xIncT'); t.style.display=''; t.click(); $('#xInc').remove(); };
   document.querySelectorAll('[data-xd]').forEach(b=>b.onclick=()=>{ $('#xDate').value=b.dataset.xd; upd(); });
   $('#xDate').onchange=upd;
   amt.addEventListener('input',()=>{ const v=amt.value.replace(/,/g,'.').replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1'); if(v!==amt.value) amt.value=v; amt.style.width=Math.max(4,v.length+1)+'ch'; upd(); });
