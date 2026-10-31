@@ -311,6 +311,7 @@ svg.chart text{fill:var(--muted);font-size:11px}
 .ent.xf .ic,.ent.xf .xfv,.xfv{color:var(--good)}.ent.xf{box-shadow:inset 3px 0 0 var(--good)}.ent.xf .xfv{font-weight:650}
 .xfsum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px}.xfsum div{background:color-mix(in srgb,var(--good) 10%,var(--surface));border-radius:12px;padding:7px 10px}.xfsum small{display:block;font-size:11.5px;color:var(--text-2)}.xfsum b{color:var(--good);font-size:15px}
 .xfcard{border:1.5px solid var(--good)}
+.delbox{margin-top:10px;padding:10px 12px;border:1px solid var(--warn);border-radius:12px;background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
 .fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.fgrid .chip{padding:6px 4px;font-size:12px;text-align:center;overflow:hidden;text-overflow:ellipsis}
 .pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .pt{border:1.5px solid var(--border);background:var(--surface);border-radius:12px;padding:6px 2px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--text);min-width:0;font:inherit}
@@ -510,6 +511,10 @@ const isCredit = f => !!(f && f.credit);
 const SHORT_NAMES={nets:'NETS',mari:'Mari',ezlink:'EZLink',dbs:'DBS',maricc:'Credit',shopee:'Shopee',grab:'Grab',cash:'Cash'};
 const shortName = f => (f && (f.short || SHORT_NAMES[f.id] || f.name)) || '';
 /* One-time (synced): payment order NETS · Mari · EZLink · DBS / Credit · Shopee · Grab · Cash, short names, Grab PayLater limit 500 */
+/* One-time fix (user-confirmed, 1 Nov 2026): Mari's balance typed at 00:23 on 1 Nov (S$66.66) was off and the 28 Oct Pradeep loan got counted twice.
+   The user read S$1,572.46 in the bank app, so Mari restarts from that. Only touches that exact typed balance. */
+function fixMariNov(){ const f=(DB.settings.funds||[]).find(x=>x.id==='mari'); if(!f || f.at!==1793463829791 || DB.settings.fixMari1) return false;
+  DB.settings={...DB.settings, funds:DB.settings.funds.map(x=>x.id==='mari'? {...x, amt:1572.46, at:Date.now()} : x), fixMari1:1, upd:Date.now()}; return true; }
 function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
   const order=['nets','mari','ezlink','dbs','maricc','shopee','grab','cash'], all=allFunds();
   const sorted=[...order.map(id=>all.find(f=>f.id===id)).filter(Boolean), ...all.filter(f=>!order.includes(f.id))]
@@ -544,12 +549,18 @@ const PAYKEY='dailyExpenseTracker.lastPay';
 function fundName(id){ const f=allFunds().find(x=>x.id===id); return f? f.name : ''; }
 function lastPay(){ try{ const v=localStorage.getItem(PAYKEY)||''; return funds().some(f=>f.id===v)? v : ''; }catch(e){ return ''; } }
 function setLastPay(v){ try{ if(v) localStorage.setItem(PAYKEY,v); }catch(e){} }
+/* Does an entry change an account's balance on top of the balance you typed in?
+   Entries dated BEFORE the day you typed it are already inside it (even if you record them later);
+   entries dated that day count if added after you typed it; later dates always count. */
+function afterAnchor(e, at){ if(!at) return true; const ad=dstr(new Date(at)); return e.date>ad || (e.date===ad && (e.cr||e.upd||0)>at); }
+function entryEffect(e, id){ if(!e || e.del) return 0; let d=0;
+  if(e.cat==='xfer'){ if(e.to===id) d+=e.amt; if(e.from===id) d-=e.amt; }
+  else if(e.pay===id) d = MONEY_IN.has(e.cat)? e.amt : -(e.amt + (e.emi? emiFee(e) : 0));
+  return r2(d); }
 function acctTx(id){
   const f=funds().find(x=>x.id===id), at=f?.at||0, out=[];
-  for(const e of Object.values(DB.entries)){ if(e.del) continue; let d=0;
-    if(e.cat==='xfer'){ if(e.to===id) d+=e.amt; if(e.from===id) d-=e.amt; }
-    else if(e.pay===id) d = MONEY_IN.has(e.cat)? e.amt : -(e.amt + (e.emi? emiFee(e) : 0));
-    if(d) out.push({e, d, after:(e.cr||e.upd||0)>at}); }
+  for(const e of Object.values(DB.entries)){ if(e.del) continue; const d=entryEffect(e,id);
+    if(d) out.push({e, d, after:afterAnchor(e,at)}); }
   return out.sort((a,b)=>b.e.date.localeCompare(a.e.date)||(b.e.cr||0)-(a.e.cr||0));
 }
 function liveBal(f){ return r2((+f.amt||0) + acctTx(f.id).filter(x=>x.after).reduce((a,x)=>a+x.d,0)); }
@@ -881,7 +892,7 @@ function xferForm(src, back, origin, preset){
     if(p.onSaved) p.onSaved(rec);
     save(); render(); toast(from? `Moved ${sgd(a)} from ${fundName(from)} to ${fundName(to)}` : `Added ${sgd(a)} to ${fundName(to)}`);
     if(fromAdd||(!back&&!p.back)) closeSheet(); else leave(); };
-  if($('#xDel')) confirmBtn($('#xDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id],del:true,upd:Date.now()}; save(); render(); toast('Deleted'); leave(); });
+  if($('#xDel')) deleteBtn($('#xDel'), e.id, leave);
 }
 /* Move savings into the emergency fund (a transfer, so nothing is counted twice) */
 function moveSavings(amt, forYm){
@@ -1786,7 +1797,7 @@ function friendForm(kind, name, src, amt){
     toast(first? T.tA(n,sgd(a)) : T.tB(n,sgd(a)));
     friendDetail(n, dir);
   };
-  if($('#ffDel')) confirmBtn($('#ffDel'),'Tap again to delete',()=>{ DB.entries[e.id]={...DB.entries[e.id], del:true, upd:Date.now()}; save(); render(); toast('Deleted'); friendDetail(e.friend, dir); });
+  if($('#ffDel')) deleteBtn($('#ffDel'), e.id, ()=>friendDetail(e.friend, dir));
 }
 
 /* ============ Add / edit entry sheet ============ */
@@ -1903,7 +1914,7 @@ function drawSheet(){
   if($('#emiChg')) $('#emiChg').onclick=()=>{ readSheet(); emiAsk(false); };
   $('#eSave').onclick=()=>commitEntry(false);
   if($('#eSaveMore')) $('#eSaveMore').onclick=()=>commitEntry(true);
-  if($('#eDel')) confirmBtn($('#eDel'),'Tap again to delete',()=>{ if(DB.entries[E.id].photo) idb.del('photo:'+E.id); DB.entries[E.id]={...DB.entries[E.id],del:true,upd:Date.now()}; save(); closeSheet(); toast('Deleted'); render(); });
+  if($('#eDel')) deleteBtn($('#eDel'), E.id, ()=>closeSheet());
   if(!E.id && !E._focused){ E._focused=true; amt.focus(); }
 }
 /* ---- Bill photo: shrunk to ~1280px JPEG and kept on this phone only (IndexedDB), never synced ---- */
@@ -2089,7 +2100,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v50';
+const APP_VERSION='v51';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2124,7 +2135,7 @@ async function cloudSync(manual, poll){
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
     if(j.same){ setTimeout(autoSalary, 50); if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
-    if(n){ try{ if(layoutMigrate()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
+    if(n){ try{ if(layoutMigrate()|fixMariNov()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
     persist(); setTimeout(autoSalary, 50);
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
@@ -2300,6 +2311,23 @@ async function startupLock(){
 }
 
 /* ============ Two-tap confirm (no browser dialogs) ============ */
+/* Accounts where this entry is already inside the balance you typed (so deleting it changes nothing there) */
+function anchoredIn(e){ if(!e) return []; const ids=e.cat==='xfer'? [e.from,e.to] : [e.pay];
+  return ids.filter(Boolean).map(id=>({f:funds().find(x=>x.id===id), d:entryEffect(e,id)})).filter(x=>x.f && x.f.at && Math.abs(x.d)>0.004 && !afterAnchor(e,x.f.at)); }
+function deleteBtn(btn, id, after){
+  const go=back=>{ const e=DB.entries[id]; if(!e) return;
+    if(back){ const adj=Object.fromEntries(anchoredIn(e).map(x=>[x.f.id,x.d])); saveFunds(allFunds().map(f=>f.id in adj? {...f, amt:r2((+f.amt||0)-adj[f.id])} : f)); }
+    if(e.photo) idb.del('photo:'+id); DB.entries[id]={...e,del:true,upd:Date.now()}; save(); render();
+    toast(back? 'Deleted · money put back in '+anchoredIn({...e,del:false}).map(x=>x.f.name).join(' & ') : 'Deleted'); after(); };
+  const list=anchoredIn(DB.entries[id]);
+  if(!list.length){ confirmBtn(btn,'Tap again to delete',()=>go(false)); return; }
+  btn.onclick=()=>{ const box=document.createElement('div'); box.className='delbox';
+    const txt=list.map(x=>`${esc(x.f.name)}: balance you typed on ${niceDate(dstr(new Date(x.f.at)))} already includes this (${x.d<0?'−':'+'}${sgd(Math.abs(x.d))})`).join('<br>');
+    box.innerHTML=`<div class="small">${txt}.</div><div class="small muted" style="margin-top:4px">Did this money really move? If you're only re-entering it another way, keep the balances. If it never happened, put it back.</div>
+      <div class="btns" style="margin-top:8px"><button class="btn sm" data-dk="0">Delete only</button><button class="btn sm danger" data-dk="1">Delete &amp; ${list.map(x=>(x.d<0?'put back ':'take out ')+sgd(Math.abs(x.d))+(x.d<0?' to ':' of ')+esc(shortName(x.f))).join(', ')}</button></div>`;
+    (btn.closest('.actrow')||btn).after(box); btn.disabled=true; box.scrollIntoView({block:'nearest',behavior:'smooth'});
+    box.querySelectorAll('[data-dk]').forEach(b=>b.onclick=()=>go(b.dataset.dk==='1')); };
+}
 function confirmBtn(btn,msg,fn){
   const orig=btn.textContent;
   btn.onclick=()=>{
@@ -2366,7 +2394,7 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 try{ if(localStorage.getItem('dailyExpenseTracker.hideOnOpen')!=='0') localStorage.setItem('dailyExpenseTracker.showBal','0'); }catch(e){}
 applyTheme();
 renderProfileBtn();
-try{ if(layoutMigrate()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
+try{ if(layoutMigrate()|fixMariNov()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
 render();
 /* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
 /* A setup link never connects by itself: it only fills in the code on the Sync screen, and you tap Connect. */
