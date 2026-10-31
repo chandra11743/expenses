@@ -798,6 +798,41 @@ function icon_aur(glyph, h, id, size) {
 <g transform="translate(8.2 8.2) scale(.66)" filter="url(#${id}f)">${glyph.map(([r, tag, o]) => el(tag, o, paint[r])).join('')}</g></svg>`;
 }
 
+// Cash: an original banknote-style face (polymer note feel; no official marks, portraits or emblems)
+const NOTE={obsidian:['#eef4e9','#cfe2cf','#7fae93','#1f5a3e','#14271d'],ivory:['#f8ebe6','#ecc9c0','#c98576','#8e3326','#3a1b16'],aurora:['#eeeafc','#d3cbf6','#9a8de0','#4b3aa8','#1c1640']};
+function note(skin,id){ const [p0,p1,p2,dk]=NOTE[skin]||NOTE.obsidian;
+  const ros=guilloche(168,100,40,14,11,22,2.2,0.12,260), ros2=guilloche(168,100,10,6,8,7,2.2,0.35,140);
+  const cA=guilloche(30,100,8,4,6,4,2,0.4,90), wv=waves(-10,330,182,5,3,4,22), wt=waves(-10,330,8,4,3,3,26);
+  const petal=a=>`<ellipse cx="0" cy="-15" rx="7.5" ry="15" transform="rotate(${a})"/>`;
+  const flower=`<g transform="translate(273 96)" fill="#fff" fill-opacity=".55" stroke="${dk}" stroke-opacity=".45" stroke-width=".8">${[0,72,144,216,288].map(petal).join('')}<circle r="5" fill="${dk}" fill-opacity=".35"/></g>`;
+  const micro=Array.from({length:12},()=> 'CASH · SGD · ').join('');
+  return `<svg viewBox="0 0 320 200"><defs>
+<linearGradient id="${id}p" x1="0" y1="0" x2="1" y2=".6"><stop offset="0" stop-color="${p0}"/><stop offset=".55" stop-color="${p1}"/><stop offset="1" stop-color="${p2}"/></linearGradient>
+<radialGradient id="${id}r" cx=".52" cy=".5" r=".4"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="${id}w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity=".6"/></linearGradient>
+<linearGradient id="${id}h" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e7b0"/><stop offset=".3" stop-color="#b9e3d8"/><stop offset=".55" stop-color="#d8c2f2"/><stop offset=".8" stop-color="#f2c6c6"/><stop offset="1" stop-color="#f7e7b0"/></linearGradient>
+<filter id="${id}n" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .2 0 0 0 0 .2 0 0 0 0 .2 0 0 0 .09 0"/></filter>
+<clipPath id="${id}c"><rect width="320" height="200" rx="14"/></clipPath></defs>
+<g clip-path="url(#${id}c)">
+<rect width="320" height="200" fill="url(#${id}p)"/>
+<rect width="320" height="200" fill="url(#${id}r)"/>
+<rect width="320" height="200" filter="url(#${id}n)"/>
+<path d="${wt}" fill="none" stroke="${dk}" stroke-opacity=".22" stroke-width=".5"/>
+<path d="${wv}" fill="none" stroke="${dk}" stroke-opacity=".25" stroke-width=".5"/>
+<path d="${ros}" fill="none" stroke="${dk}" stroke-opacity=".28" stroke-width=".55"/>
+<path d="${ros2}" fill="none" stroke="${dk}" stroke-opacity=".4" stroke-width=".5"/>
+<text x="168" y="113" text-anchor="middle" font-family="Georgia, serif" font-size="40" font-weight="700" fill="none" stroke="${dk}" stroke-opacity=".35" stroke-width=".9">S$</text>
+<text x="-4" y="140" font-family="Arial, sans-serif" font-size="4.2" letter-spacing=".6" fill="${dk}" fill-opacity=".45">${micro}</text>
+<path d="${cA}" fill="none" stroke="${dk}" stroke-opacity=".25" stroke-width=".5"/>
+<rect x="242" y="40" width="62" height="114" rx="12" fill="url(#${id}w)" stroke="#fff" stroke-opacity=".9"/>
+${flower}
+<rect x="226" y="0" width="7" height="200" fill="url(#${id}h)" opacity=".8"/>
+<rect x="226" y="0" width="7" height="200" fill="none" stroke="${dk}" stroke-opacity=".12"/>
+</g>
+<rect x="6" y="6" width="308" height="188" rx="10" fill="none" stroke="${dk}" stroke-opacity=".3" stroke-dasharray="2 2"/>
+<rect x=".5" y=".5" width="319" height="199" rx="13.5" fill="none" stroke="${dk}" stroke-opacity=".25"/>
+</svg>`; }
+
 const C = 2 * Math.PI * 38;
 
 const KEY={mari:'mari',nets:'nets',ezlink:'ez',dbs:'dbs',maricc:'cc',shopee:'spl',grab:'gpl',cash:'cash'};
@@ -807,10 +842,10 @@ const HUE=Object.fromEntries(CATS.map(c=>[c[0],c[2]]));
 const cache={};
 const uri=s=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));
 function keyOf(f){ if(KEY[f.id]) return KEY[f.id]; let h=0; for(const ch of String(f.id||f.name||'x')) h=(h*31+ch.charCodeAt(0))>>>0; return POOL[h%POOL.length]; }
-function card(skin,f){ const k=keyOf(f), ck='c'+skin+k; if(!cache[ck]){ const fn={obsidian:card_obs,ivory:card_ivo,aurora:card_aur}[skin]||card_obs; cache[ck]=uri(fn({id:k,name:'',kind:''},'k'+k,true)); } return cache[ck]; }
+function card(skin,f){ if(f&&f.id==='cash'){ const nk='n'+skin; if(!cache[nk]) cache[nk]=uri(note(skin,'nt')); return cache[nk]; } const k=keyOf(f), ck='c'+skin+k; if(!cache[ck]){ const fn={obsidian:card_obs,ivory:card_ivo,aurora:card_aur}[skin]||card_obs; cache[ck]=uri(fn({id:k,name:'',kind:''},'k'+k,true)); } return cache[ck]; }
 function icon(skin,cat){ const g=GLY[cat]||'misc', ik='i'+skin+g; if(!cache[ik]){ const fn={obsidian:icon_obs,ivory:icon_ivo,aurora:icon_aur}[skin]||icon_obs; cache[ik]=uri(fn(G[g],HUE[g],'g'+g,96)); } return cache[ik]; }
 const INK={obsidian:{mari:'#2a140f',dbs:'#efe2c4',nets:'#17191d',ez:'#eef3f8',cash:'#271d0c',cc:'#e6cd98',spl:'#fff2e8',gpl:'#f4f0fb'},ivory:{mari:'#3A2219',dbs:'#F2EBDD',nets:'#22201C',ez:'#1E2A1C',cash:'#2D2516',cc:'#EDE3CF',spl:'#24203A',gpl:'#2E230B'},aurora:{}};
-function ink(skin,f){ return (INK[skin]||{})[keyOf(f)]||'#ffffff'; }
+function ink(skin,f){ if(f&&f.id==='cash') return (NOTE[skin]||NOTE.obsidian)[4]; return (INK[skin]||{})[keyOf(f)]||'#ffffff'; }
 return {card,icon,ink,keyOf};
 })();
 
@@ -2563,7 +2598,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v52';
+const APP_VERSION='v53';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
