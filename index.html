@@ -385,9 +385,9 @@ svg.chart text{fill:var(--muted);font-size:11px}
 nav.tabs .navgap{flex:0 0 72px}
 .fab,:root[data-skin] .fab{left:50%;right:auto;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));width:62px;height:62px;font-size:32px;z-index:32}
 .fab:active{transform:translateX(-50%) scale(.95)}
-.fabcalc,:root[data-skin] .fabcalc{right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:46px;height:46px;display:flex;align-items:center;justify-content:center;padding:0}
-.fabset,:root[data-skin] .fabset{right:74px;color:var(--text)}
-@media (min-width:800px){.fabcalc,:root[data-skin] .fabcalc{right:calc(50% - 370px)}.fabset,:root[data-skin] .fabset{right:calc(50% - 314px)}}
+.fabcalc,:root[data-skin] .fabcalc{right:74px;bottom:calc(96px + env(safe-area-inset-bottom));width:46px;height:46px;display:flex;align-items:center;justify-content:center;padding:0}
+.fabset,:root[data-skin] .fabset{right:18px;color:var(--text)}
+@media (min-width:800px){.fabcalc,:root[data-skin] .fabcalc{right:calc(50% - 314px)}.fabset,:root[data-skin] .fabset{right:calc(50% - 370px)}}
 /* artwork */
 .cimg{width:1.5em;height:1.5em;vertical-align:-.38em;display:inline-block}
 .fimg{width:2.05em;height:1.28em;border-radius:.2em;vertical-align:-.3em;display:inline-block;box-shadow:0 1px 2px rgba(0,0,0,.25)}
@@ -2634,7 +2634,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v69';
+const APP_VERSION='v70';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
