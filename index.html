@@ -1608,9 +1608,9 @@ async function fetchRate(date){
     `https://api.frankfurter.app/${tag}?from=${base}&to=${to}`
   ];
   for(const u of urls){
-    try{ const r = await fetch(u,{cache:'no-store'}); if(r.ok){ const j = await r.json(); const v = j?.rates?.[to]; if(v){ if(date<today){ DB.rates[key]=v; persist(); } DB.meta.lastRate=v; DB.meta.lastRatePair=base+to; return v; } } }catch(e){}
+    try{ const r = await fetch(u,{cache:'no-store'}); if(r.ok){ const j = await r.json(); const v = j?.rates?.[to]; if(typeof v==='number' && isFinite(v) && v>0){ if(date<today){ DB.rates[key]=v; persist(); } DB.meta.lastRate=v; DB.meta.lastRatePair=base+to; return v; } } }catch(e){}
   }
-  try{ const r = await fetch('https://open.er-api.com/v6/latest/'+base); if(r.ok){ const j=await r.json(); const v=j?.rates?.[to]; if(v){ DB.meta.lastRate=v; DB.meta.lastRatePair=base+to; return v; } } }catch(e){}
+  try{ const r = await fetch('https://open.er-api.com/v6/latest/'+base); if(r.ok){ const j=await r.json(); const v=j?.rates?.[to]; if(typeof v==='number' && isFinite(v) && v>0){ DB.meta.lastRate=v; DB.meta.lastRatePair=base+to; return v; } } }catch(e){}
   return null;
 }
 
@@ -1627,8 +1627,10 @@ function render(){
   $('#mLabel').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${ymLabel(S.ym,true)}`;
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));
   ['home','history','analysis','budget','settings'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==S.tab));
-  ({home:renderHome,history:renderHistory,analysis:renderAnalysis,budget:renderBudget,settings:renderSettings})[S.tab]();
-  renderSyncDot();
+  try{ ({home:renderHome,history:renderHistory,analysis:renderAnalysis,budget:renderBudget,settings:renderSettings})[S.tab](); }
+  catch(err){ if(S.tab!=='settings'){ S.tab='settings'; toast('Some saved data couldn’t be shown. Settings opened so you can save a backup.'); return render(); }
+    $('#tab-settings').innerHTML='<div class="card"><b>Something in the saved data couldn’t be shown.</b><div class="small muted">'+esc(err&&err.message)+'</div></div>'; }
+  try{ renderSyncDot(); }catch(e){}
 }
 
 /* ============ HOME ============ */
@@ -1730,8 +1732,8 @@ function entRow(e){
   if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
   if(e.photo) extra.push('📷');
-  if(e.inst) extra.unshift('EMI '+e.inst.k+'/'+e.inst.n+(e.inst.early?' · paid early':''));
-  if(e.emiOrig){ const pl=emiPlan({...e, amt:e.emiOrig}, true); extra.unshift('On EMI · '+e.emi.n+' × '+sgd(pl[0].amt)+' from '+ymLabel(pl[0].ym,true)); }
+  if(e.inst) extra.unshift('EMI '+(parseInt(e.inst.k)||0)+'/'+(parseInt(e.inst.n)||0)+(e.inst.early?' · paid early':''));
+  if(e.emiOrig){ const pl=emiPlan({...e, amt:e.emiOrig}, true); extra.unshift('On EMI · '+(parseInt(e.emi.n)||1)+' × '+sgd(pl[0].amt)+' from '+ymLabel(pl[0].ym,true)); }
   if(e.pay && fundName(e.pay)) extra.push(esc(fundName(e.pay)));
   if(!extra.length) extra.push(s? k.name : dayLabel(e.date));
   return `<div class="ent" onclick="openEntry(${jsa(e.src||e.id)})"><div class="ic">${s?s.icon:k.icon}</div><div class="t"><div>${title}</div><div>${extra.join(' · ')}</div></div>
@@ -2675,11 +2677,14 @@ function cleanPlain(o, maxStr=500){ const out={}; if(!isO(o)) return out;
 function cleanEntry(id, e){
   if(!sId(id) || !isO(e) || typeof e.date!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.date) || typeof e.amt!=='number' || !isFinite(e.amt)) return null;
   const o=cleanPlain(e); o.id=id; o.upd=capT(e.upd); o.cr=capT(e.cr)||o.upd;
+  for(const k of ['note','friend','sub','pay','from','to','cur','homeCur','for','salaryFor','savingsFor','emiFor','src','name','target','cat']) if(typeof o[k]==='number') o[k]=String(o[k]); else if(typeof o[k]==='boolean') delete o[k];
+  for(const k of ['inr','rate','emiOrig']) if(k in o && o[k]!==null && typeof o[k]!=='number'){ const v=parseFloat(o[k]); if(isFinite(v)) o[k]=v; else delete o[k]; }
   if(!CAT[o.cat]) o.cat='misc';
   for(const k of ['pay','from','to','for','sub','emiFor','src']) if(k in o && !(o[k]==='' || sId(o[k]))) delete o[k];
   for(const k of ['cur','homeCur']) if(k in o && !CURRENCIES[o[k]]) delete o[k];
   for(const k of ['salaryFor','savingsFor']) if(k in o && !/^\d{4}-\d{2}$/.test(o[k])) delete o[k];
-  for(const k of ['emi','inst']) if(isO(e[k])) o[k]=cleanPlain(e[k],20);
+  if(isO(e.emi)){ o.emi={n:Math.max(1,Math.min(36,parseInt(e.emi.n)||1)), fee:Math.max(0,+e.emi.fee||0)}; if(typeof e.emi.start==='string' && /^\d{4}-\d{2}$/.test(e.emi.start)) o.emi.start=e.emi.start; }
+  if(isO(e.inst)){ o.inst={k:parseInt(e.inst.k)||1, n:parseInt(e.inst.n)||1}; if(e.inst.early) o.inst.early=true; }
   return o; }
 function cleanMonth(c){ if(!isO(c)) return null; const o=cleanPlain(c,40); o.upd=capT(c.upd);
   if(isO(c.budgets)){ o.budgets={}; for(const [k,v] of Object.entries(c.budgets)) if(!BADK(k) && /^[a-z0-9_]{1,30}(:[a-z0-9_]{1,30})?$/.test(k) && typeof v==='number' && isFinite(v) && v>=0) o.budgets[k]=v; }
@@ -2688,11 +2693,13 @@ function cleanMonth(c){ if(!isO(c)) return null; const o=cleanPlain(c,40); o.upd
   return o; }
 function cleanSettings(x){ if(!isO(x)) return null; const o=cleanPlain(x,40); o.upd=capT(x.upd);
   if(!['light','dark','auto'].includes(o.theme)) o.theme='auto';
+  delete o.funds; delete o.salaryAuto;
   if(Array.isArray(x.funds)) o.funds=x.funds.filter(f=>isO(f) && sId(f.id) && typeof f.name==='string').slice(0,100).map(f=>{ const g=cleanPlain(f,40); g.icon=String(f.icon||'💰').slice(0,8); return g; });
   if(isO(x.salaryAuto)) o.salaryAuto={on:x.salaryAuto.on!==false, to: sId(x.salaryAuto.to)? x.salaryAuto.to : ''};
   return o; }
 function merge(r){
   if(!r || typeof r!=='object' || !isO(r.entries)) throw new Error('Not an expense sync file');
+  if(Object.keys(r.entries).length>50000) throw new Error('that file is too large');
   if(r.profileName && r.profileName.trim().toLowerCase()!==curProfile().name.trim().toLowerCase())
     throw new Error(`this file belongs to "${r.profileName}". Switch to that profile first (or rename this profile to "${r.profileName}")`);
   if(r.currency && r.currency!==curCode())
@@ -2770,7 +2777,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v76';
+const APP_VERSION='v77';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2836,7 +2843,10 @@ function renderCloudStatus(){
   } else {
     box.innerHTML = `<div class="small" style="margin-bottom:10px">Sync your phone and Mac automatically through your own Google Drive, with no files to pick and no permission pop-ups. Paste the connection code to turn it on.</div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><input class="in" id="cCode" placeholder="EXP1-…" style="flex:1;min-width:200px" autocomplete="off"><button class="btn primary" id="cConnect">Connect</button></div>`;
+    $('#cCode').oninput=()=>{ const b=$('#cConnect'); delete b.dataset.ok; b.textContent='Connect'; };
     $('#cConnect').onclick=async()=>{ const o=parseCode($('#cCode').value); if(!o){ toast('That code doesn’t look right — it starts with EXP1-'); return; }
+      const b=$('#cConnect'), sid=o.u.split('/s/')[1].split('/')[0];
+      if(b.dataset.ok!==o.u){ b.dataset.ok=o.u; b.textContent='Tap again to connect'; toast('This sends your expenses to the Apps Script ending …'+sid.slice(-8)+'. Only connect a code you made yourself.'); return; }
       saveCloudCfg(o); cloudRev=null; cloudDirty=true;
       if(await cloudSync(false)){ SH=null; syncState='none'; toast('Connected — syncing automatically'); render(); }
       else if(/wrong sync key/i.test(cloudErr)){ clearCloudCfg(); cloudState='off'; toast('That code has the wrong key. Copy it again from your phone (Settings → Sync → Copy setup link).'); renderCloudStatus(); }
