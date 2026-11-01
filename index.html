@@ -399,6 +399,8 @@ nav.tabs .navgap{flex:0 0 72px}
 .ar .ic .fimg,.srcb .fimg{width:40px;height:25px}
 /* card art: rail + carousel */
 .crail{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 8px;scroll-snap-type:x mandatory}.crail::-webkit-scrollbar{display:none}
+.cgrid.cmore{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.ct.on2{border-color:var(--accent)}
 .cc{position:absolute;left:50%;top:6px;width:300px;height:188px;margin-left:-150px;border-radius:18px;overflow:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .32s;box-shadow:0 18px 26px -12px rgba(0,0,0,.55);cursor:pointer;border:0;padding:0;background:none;text-align:left;font:inherit}
 .cc.st{position:relative;left:auto;top:auto;margin:0;flex:none;width:236px;height:148px;scroll-snap-align:start;transition:none}
 .cc img{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -569,6 +571,17 @@ const G = {
     ['b', 'circle', { cx: 33, cy: 31, r: 9.5 }],
     ['k', 'path', { d: 'M37.5 31h-8.5M32.6 27.2 28.8 31l3.8 3.8' }],
   ],
+  more: [
+    ['b', 'path', { d: 'M5.5 13a4 4 0 0 1 4-4h9.5l4 4.5h15.5a4 4 0 0 1 4 4V37a4 4 0 0 1-4 4h-29a4 4 0 0 1-4-4z' }],
+    ['a', 'rect', { x: 5.5, y: 18, width: 37, height: 23, rx: 4 }],
+    ['l', 'path', { d: 'M15.5 29.5h.2M24 29.5h.2M32.5 29.5h.2' }],
+  ],
+  debt: [
+    ['a', 'circle', { cx: 17.5, cy: 24, r: 12 }],
+    ['l', 'path', { d: 'M21 19.6h-4.6a2.6 2.6 0 0 0 0 5.2h2.2a2.6 2.6 0 0 1 0 5.2H14M17.5 17v2.6M17.5 30v2.6' }],
+    ['b', 'rect', { x: 29, y: 8, width: 14.5, height: 32, rx: 7.25 }],
+    ['k', 'path', { d: 'M32.5 16.5h7.5M37.4 13.6l2.8 2.9-2.8 2.9M40 31.5h-7.5M35.1 28.6l-2.8 2.9 2.8 2.9' }],
+  ],
   emi: [
     ['a', 'rect', { x: 5.5, y: 9.5, width: 30, height: 28, rx: 5 }],
     ['l', 'path', { d: 'M13.5 6.5v6M27.5 6.5v6M5.5 18h30M11.5 24.5h4M19 24.5h4M11.5 30.5h4' }],
@@ -581,7 +594,7 @@ const CATS = [
   ['food', 'Food', 28], ['travel', 'Travel', 205], ['temple', 'Temple', 40], ['fun', 'Fun', 290],
   ['medical', 'Medical', 352], ['laundry', 'Laundry', 192], ['salon', 'Salon', 328], ['shopping', 'Shopping', 262],
   ['rent', 'Rent', 222], ['ac', 'AC bill', 178], ['subs', 'Subscriptions', 248], ['home', 'Home', 12],
-  ['misc', 'Misc', 35], ['refund', 'Refund', 150], ['emi', 'EMI', 232],
+  ['misc', 'Misc', 35], ['refund', 'Refund', 150], ['emi', 'EMI', 232], ['more', 'More', 42], ['debt', 'Debt', 338],
 ];
 const attrs = o => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(' ');
 function el(tag, o, extra = '') { return `<${tag} ${attrs(o)} ${extra}/>`; }
@@ -848,7 +861,7 @@ const C = 2 * Math.PI * 38;
 
 const KEY={mari:'mari',nets:'nets',ezlink:'ez',dbs:'dbs',maricc:'cc',shopee:'spl',grab:'gpl',cash:'cash'};
 const POOL=['mari','dbs','nets','ez','cash','cc','spl','gpl'];
-const GLY={food:'food',travel:'travel',temple:'temple',entertainment:'fun',medical:'medical',laundry:'laundry',salon:'salon',shopping:'shopping',rent:'rent',ac:'ac',subs:'subs',home:'home',misc:'misc',refund:'refund',emi:'emi',lent:'misc',repaid:'refund',borrowed:'refund',payback:'misc',xfer:'emi'};
+const GLY={food:'food',travel:'travel',temple:'temple',entertainment:'fun',medical:'medical',laundry:'laundry',salon:'salon',shopping:'shopping',rent:'rent',ac:'ac',subs:'subs',home:'home',misc:'misc',refund:'refund',emi:'emi',lent:'debt',repaid:'debt',borrowed:'debt',payback:'debt',xfer:'emi',more:'more',debt:'debt'};
 const HUE=Object.fromEntries(CATS.map(c=>[c[0],c[2]]));
 const cache={};
 const uri=s=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));
@@ -915,6 +928,9 @@ CATS.forEach(c=>{ Object.defineProperty(c,'icon',{get:()=>catImg(c.id),configura
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const EXP_CATS = CATS.filter(c=>!c.income && !c.track);
 const BUDGET_CATS = EXP_CATS.filter(c=>!c.friend);   // money lent to friends has no budget row
+const SPEND_CATS = BUDGET_CATS;   // spending = these only; friends' money is tracked as debt
+const MORE_CATS = new Set(['laundry','salon','rent','ac','subs']);   // behind "More" on the Add screen
+const spendFor = e => e && e.cat==='borrowed' && e.for && CAT[e.for] && !CAT[e.for].friend && !CAT[e.for].track && !CAT[e.for].income;   // a friend paid for this spend
 const FIXED = new Set(['rent','ac','subs','home']);    // monthly bills: excluded from "daily living" average
 const LIVING_EXCL = new Set([...FIXED, 'misc', 'medical', 'lent', 'repaid', 'payback', 'borrowed', 'refund']);   // also left out of "daily living": one-off miscellaneous and medical spends
 const FIXED_TXT = 'rent, bills, home, medical &amp; misc';
@@ -1016,6 +1032,10 @@ const shortName = f => (f && (f.short || SHORT_NAMES[f.id] || f.name)) || '';
    The user read S$1,572.46 in the bank app, so Mari restarts from that. Only touches that exact typed balance. */
 function fixMariNov(){ const f=(DB.settings.funds||[]).find(x=>x.id==='mari'); if(!f || f.at!==1793463829791 || DB.settings.fixMari1) return false;
   DB.settings={...DB.settings, funds:DB.settings.funds.map(x=>x.id==='mari'? {...x, amt:1572.46, at:Date.now()} : x), fixMari1:1, upd:Date.now()}; return true; }
+/* One-time (user asked, 1 Nov 2026): four October debt repayments logged as Miscellaneous become "Paid back to friend" (debt, not spending) */
+function moveOctDebts(){ const M={mumh4sw279s93v:'Sai Krishna', mumhcbf6wzr4kq:'Trishitha', mumhcoayqd9669:'Pradeep', mvnjd7u5ktmqve:'Sai Krishna'}; let ch=false, now=Date.now();
+  for(const [id,n] of Object.entries(M)){ const e=DB.entries[id]; if(e && !e.del && e.cat==='misc'){ DB.entries[id]={...e, cat:'payback', friend:n, upd:now++}; ch=true; } }
+  return ch; }
 function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
   const order=['nets','mari','ezlink','dbs','maricc','shopee','grab','cash'], all=allFunds();
   const sorted=[...order.map(id=>all.find(f=>f.id===id)).filter(Boolean), ...all.filter(f=>!order.includes(f.id))]
@@ -1416,10 +1436,9 @@ function setMonthFlag(ym, obj){
 }
 /* Money in and out of your accounts in a month (transfers between your own accounts don't count) */
 function flows(ym, lite){
-  const st=stats(ym, lite); let borrowed=0;
-  for(const e of Object.values(DB.entries)) if(!e.del && e.cat==='borrowed' && e.date.startsWith(ym)) borrowed+=e.amt;
-  const salary=st.salary, refunds=st.refund, repaid=st.by.repaid||0, spending=r2(st.gross);
-  return {st, salary, refunds, repaid, borrowed:r2(borrowed), spending, net:r2(salary+refunds+repaid+borrowed-spending)};
+  const st=stats(ym, lite), D=st.debt;
+  const salary=st.salary, refunds=st.refund, repaid=D.repaid, borrowed=r2(D.borrowed), paidBack=r2(D.payback), lentOut=r2(D.lent), spending=r2(st.gross);
+  return {st, salary, refunds, repaid, borrowed, paidBack, lentOut, spending, net:r2(salary+refunds+repaid+borrowed-spending-paidBack-lentOut)};
 }
 function actualTotal(){ return r2(funds().reduce((a,f)=>a+liveBal(f),0) + emiDeferred(curYM()) - earlySalary(false)); }
 function anyBalanceSet(){ return funds().some(f=>f.at); }
@@ -1453,18 +1472,19 @@ function statementCard(ym, compact){
   const diffBox = d.diff===null? '' : `<div class="stdiff ${ok?'ok':'bad'}"><span>Difference</span><span class="num">${ok? sgd(0)+' · Balanced' : (d.diff>0?'+':'−')+sgd(Math.abs(d.diff))}</span></div>`;
   if(compact) return `<div class="card" style="cursor:pointer" onclick="statementSheet('${ym}')"><h2>Monthly statement<button class="lnk">Open</button></h2>
     <div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div>
-    <div class="small muted" style="margin-top:2px">Salary + refunds + friends repaid − spending</div>${d.needSalary? '<div class="stdiff"><span>Salary isn’t in an account yet</span><span class="lnk">Add ›</span></div>' : diffBox}</div>`;
+    <div class="small muted" style="margin-top:2px">Salary + refunds − spending (friends’ money is under Debt)</div>${d.needSalary? '<div class="stdiff"><span>Salary isn’t in an account yet</span><span class="lnk">Add ›</span></div>' : diffBox}</div>`;
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
-  const groups=groupTotals(c).map(g=>g.id==='misc'? {...g, v:g.v+(c.by.repaid||0)} : g).filter(g=>g.v>0.004).sort((a,b)=>b.v-a.v);   // gross, so the lines add up to Spending
+  const groups=groupTotals(c).filter(g=>g.v>0.004).sort((a,b)=>b.v-a.v);
   let h=`<div class="card"><h2>Statement · ${ymLabel(ym)}</h2>`+
     ln(`Opening balance <span class="small muted">1 ${ymLabel(ym,true).split(' ')[0]}${(DB.months[ym]||{}).openingAuto?' · worked out from your balances':''}</span>`, sgd(d.opening))+
     ln('+ Salary', sgd(d.salary))+ (d.refunds? ln('+ Refunds', sgd(d.refunds)):'') + (d.repaid? ln('+ Friends paid back', sgd(d.repaid)):'') + (d.borrowed? ln('+ Borrowed from friends', sgd(d.borrowed)):'')+
     ln('− Spending', '('+sgd(d.spending)+')')+ groups.map(g=>ln(g.icon+' '+g.name, sgd(g.v),'sub')).join('')+
+    (d.paidBack? ln('− Paid back to friends (debt)', '('+sgd(d.paidBack)+')'):'') + (d.lentOut? ln('− Lent to friends (debt)', '('+sgd(d.lentOut)+')'):'')+
     ln(ym===curYM()?'Expected balance':'Closing balance', sgd(d.expected),'tot');
   if(d.actual!==null) h+= ln('Your account balances', sgd(d.actual),'muted') + diffBox;
   if(d.diff!==null && !ok) h+=`<div class="small muted" style="margin-top:8px">${d.diff>0?'Your accounts hold more than expected':'Your accounts hold less than expected'}: a payment or income without an account (“Paid with” / “Received in”), or a balance that needs updating.${d.noAcct?` <b>${d.noAcct} entr${d.noAcct===1?'y':'ies'}</b> this month have no account.`:''}</div>`;
   if(d.needSalary) h+=`<div class="stdiff" style="margin-top:10px"><span>Salary isn’t in an account yet</span><button class="btn sm primary" onclick="salarySheet('${ym}')">Add salary</button></div>`;
-  h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div><div class="small muted">Salary + refunds + friends repaid − spending${c.extra>0.004?' + '+sgd(c.extra)+' of savings used':c.extra<-0.004?' − '+sgd(-c.extra)+' put aside':''}</div>`;
+  h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div><div class="small muted">Salary + refunds − spending${c.extra>0.004?' + '+sgd(c.extra)+' of savings used':c.extra<-0.004?' − '+sgd(-c.extra)+' put aside':''}</div>`;
   return h+`<div class="btns" style="margin-top:12px"><button class="btn sm" onclick="editOpening('${ym}')">Edit opening balance</button></div></div>`;
 }
 function statementSheet(ym){ openSheet(`<div class="sheettop"><h3>Monthly statement</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>${statementCard(ym)}`); }
@@ -1509,7 +1529,7 @@ function cleanFundsIn(noSave){
 
 /* ============ Calculations ============ */
 function monthEntries(ym){ const out=[];
-  for(const e of Object.values(DB.entries)){ if(e.del || CAT[e.cat]?.track) continue;
+  for(const e of Object.values(DB.entries)){ if(e.del || (CAT[e.cat]?.track && e.cat!=='borrowed')) continue;
     if(isEmi(e)){ if(e.date.startsWith(ym)) out.push({...e, amt:0, emiOrig:e.amt}); for(const p of emiPlan(e)) if(p.ym===ym) out.push({...e, id:e.id+'#'+p.key, src:e.id, date:p.date, amt:p.amt, inst:{k:p.k,n:p.n,early:!!(p.early && p.date<p.orig)}, emi:null}); }
     else if(e.date.startsWith(ym)) out.push(e); }
   return out; }   // borrowed money is only a reminder, never spending
@@ -1519,7 +1539,11 @@ function stats(ym, lite){
   const sub = Object.fromEntries(CAT.food.subs.map(s=>[s.id,0]));
   const daily = {}; const dailyLiving = {};
   let inrHome = 0;
-  for(const e of es){
+  const debt = {borrowed:0, borrowCash:0, borrowFor:0, payback:0, lent:0, repaid:0};
+  for(const e0 of es){
+    let e=e0;
+    if(e.cat==='borrowed'){ debt.borrowed+=e.amt; if(spendFor(e)){ debt.borrowFor+=e.amt; e={...e, cat:e.for}; } else { debt.borrowCash+=e.amt; by.borrowed=(by.borrowed||0)+e.amt; continue; } }
+    if(e.cat==='payback'||e.cat==='lent'||e.cat==='repaid'){ debt[e.cat]+=e.amt; by[e.cat]=(by[e.cat]||0)+e.amt; continue; }   // friends: debt, never spending
     by[e.cat] = (by[e.cat]||0) + e.amt;
     if(e.cat==='food' && e.sub) sub[e.sub]=(sub[e.sub]||0)+e.amt;
     if(e.cat==='home' && (e.homeCur||'INR')===homeCode()) inrHome += e.inr||0;
@@ -1530,13 +1554,12 @@ function stats(ym, lite){
   }
   const refund = by.refund||0;
   const refundFor = {};
-  const net = {...by}; delete net.refund; delete net.repaid;
-  net.lent = (by.lent||0) - (by.repaid||0);
-  // Money given to friends (lent − paid back to you, plus paying back what you borrowed) counts in Miscellaneous
-  net.misc = (net.misc||0) + net.lent + (by.payback||0); net.lent = 0; net.payback = 0;
-  const gross = EXP_CATS.reduce((s,c)=>s+by[c.id],0);
-  const total = gross - refund - (by.repaid||0);
-  const living = total - [...LIVING_EXCL].reduce((s,k)=>s+(CAT[k]?.income ? -(by[k]||0) : (by[k]||0)),0);
+  const net = {...by}; delete net.refund; delete net.repaid; delete net.borrowed;
+  net.lent = 0; net.payback = 0;   // money lent / paid back to friends is debt (Analysis → Debt), not spending
+  const gross = SPEND_CATS.reduce((s,c)=>s+(by[c.id]||0),0);
+  const total = gross - refund;
+  const living = total - [...LIVING_EXCL].filter(k=>!CAT[k]?.friend).reduce((s,k)=>s+(CAT[k]?.income ? -(by[k]||0) : (by[k]||0)),0);
+  debt.cash = r2(debt.borrowed + debt.repaid - debt.payback - debt.lent);   // friends' money in − out this month (a friend paying for you counts in, and its spend counts out)
   const c = cfg(ym);
   const days = daysElapsed(ym);
   const budgetTotal = EXP_CATS.reduce((s,k)=>s+(+c.budgets[k.id]||0),0);
@@ -1544,14 +1567,16 @@ function stats(ym, lite){
   EXP_CATS.forEach(k=>{ const b=+c.budgets[k.id]||0; if(b>0) budgetLeft += b - net[k.id]; });
   const dailyFood = DAILY_FOOD.reduce((a,k)=>a+sub[k],0);
   const X = lite? 0 : fundsIncluded(ym);
-  return {es, by, net, sub, dailyFood, refund, refundFor, gross, total, living, inrHome, daily, dailyLiving, cfg:c, salary:+c.salary||0,
+  return {es, by, net, sub, debt, dailyFood, refund, refundFor, gross, total, living, inrHome, daily, dailyLiving, cfg:c, salary:+c.salary||0,
           days, left:daysLeft(ym), dim:dim(ym), budgetTotal, budgetLeft,
           extra:X, income:(+c.salary||0)+X,
           saved:(+c.salary||0) + X - total,
           avg: days? (total+refund)/days : 0, avgLiving: days? living/days : 0};
 }
 /* Spending (not refunds, transfers or money coming back) on one day, with the number of entries */
-function daySpend(ds){ let s=0,n=0; for(const e of monthEntries(ds.slice(0,7))){ if(e.date!==ds || e.emiOrig) continue; const k=CAT[e.cat]; if(!k||k.income||k.track) continue; s+=e.amt; n++; } return {s:r2(s),n}; }
+function daySpend(ds){ let s=0,n=0; for(const e of monthEntries(ds.slice(0,7))){ if(e.date!==ds || e.emiOrig) continue; const k=CAT[e.cat]; if(!k||k.income) continue; const v=spendAmt(e); if(!v) continue; s+=v; n++; } return {s:r2(s),n}; }
+/* How much of an entry is spending: friends' money is debt, except when a friend paid for your spend */
+function spendAmt(e){ const k=CAT[e.cat]; if(!k) return 0; if(e.cat==='borrowed') return spendFor(e)? e.amt : 0; if(k.friend||k.track) return 0; return k.income? -e.amt : e.amt; }
 /* Daily-living pace: what's left of the living budgets (food, travel, …) spread over the days left */
 const LIVING_CATS = () => BUDGET_CATS.filter(k=>!LIVING_EXCL.has(k.id));
 function livingPace(st){
@@ -1692,7 +1717,7 @@ function renderHome(){
 function entRow(e){
   const k = CAT[e.cat]||{name:e.cat,icon:'•'};
   const s = e.sub && k.subs ? k.subs.find(x=>x.id===e.sub) : null;
-  const title = s ? s.name : e.cat==='refund' ? 'Refund' : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : e.cat==='payback' ? 'Paid back to '+esc(e.friend||'friend') : e.cat==='borrowed' ? 'Borrowed from '+esc(e.friend||'friend') : k.name;
+  const title = s ? s.name : e.cat==='refund' ? 'Refund' : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : e.cat==='payback' ? 'Paid back to '+esc(e.friend||'friend') : e.cat==='borrowed' ? (spendFor(e)? esc(CAT[e.for].name)+' · paid by '+esc(e.friend||'friend') : 'Borrowed from '+esc(e.friend||'friend')) : k.name;
   const extra = [];
   if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
@@ -1713,7 +1738,7 @@ function xferRow(e){ const fi=id=>{ const f=allFunds().find(x=>x.id===id); retur
 function renderHistory(){
   if(S.histCat==='xfer') return renderXferHistory();
   const es = monthEntries(S.ym).filter(e=>S.histCat==='all'||e.cat===S.histCat||(S.histCat==='food-'+e.sub));
-  const signed = e => CAT[e.cat]?.income ? -e.amt : e.amt;
+  const signed = e => spendAmt(e);
   const days = {};
   es.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
   let opts = `<option value="all">All categories</option><option value="xfer">🔁 Transfers (not spending)</option>` + CATS.filter(c=>!c.track).map(c=>`<option value="${c.id}">${c.name}</option>`+(c.subs?c.subs.map(s=>`<option value="food-${s.id}">&nbsp;&nbsp;&nbsp;${s.name}</option>`).join(''):'')).join('');
@@ -1812,7 +1837,7 @@ function calendarView(es, days, signed, cat=S.histCat){
 function calSheet(){
   S.calOpen = true;
   const es = monthEntries(S.ym);
-  const signed = e => CAT[e.cat]?.income ? -e.amt : e.amt;
+  const signed = e => spendAmt(e);
   const days = {}; es.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
   const st = stats(S.ym);
   let h = `<div class="row" style="justify-content:space-between;margin-bottom:10px">
@@ -1834,7 +1859,6 @@ function calSheet(){
 /* ============ Analysis groups (8) — colours fixed per group, validated as a ring incl. Saved ============ */
 const GROUPS=[
   {id:'food', name:'Food', icon:'🍽️', cats:['food'], c:'var(--g1)'},
-  {id:'lent', name:'Friends', icon:'🤝', cats:['lent','payback'], c:'var(--g9)'},
   {id:'subs', name:'Subscriptions', icon:'📺', cats:['subs'], c:'var(--g8)'},
   {id:'rent', name:'Rent & Utilities', icon:'🏠', cats:['rent','ac','laundry','salon'], c:'var(--g2)'},
   {id:'home', name:'Home', icon:'💸', cats:['home'], c:'var(--g3)'},
@@ -1950,11 +1974,24 @@ function renderAnalysis(){
   h += `<tr><td><b>Total</b></td><td class="num"><b>${sgd0(st.budgetTotal)}</b></td><td class="num"><b>${sgd(st.total)}</b></td><td class="num"><b>${st.budgetTotal?sgd(st.budgetTotal-st.total):'–'}</b></td><td class="num"><b>${sgd(st.avg)}</b></td><td></td></tr>`;
   h += `</tbody></table></div><div class="small muted" style="margin-top:6px">Categories show what you spent. Refunds (${sgd(st.refund)} received) are taken off the month total only.</div></div>`;
 
+  h += debtCard(st);
   // trend
   h += `<div class="card"><h2>Last 6 months — spent vs saved</h2>${trendChart()}</div>`;
   $('#tab-analysis').innerHTML = h;
   document.querySelectorAll('[data-dm]').forEach(b=>b.onclick=()=>{S.dailyMode=b.dataset.dm; renderAnalysis();});
   bindTips($('#tab-analysis'));
+}
+function debtCard(st){
+  const D=st.debt, owe=friendLedger('owe').filter(f=>f.owed>0.004), lend=friendLedger('lend').filter(f=>f.owed>0.004);
+  const tOwe=owe.reduce((a,f)=>a+f.owed,0), tLend=lend.reduce((a,f)=>a+f.owed,0);
+  if(!(D.borrowed||D.payback||D.lent||D.repaid||tOwe||tLend)) return '';
+  const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
+  return `<div class="card"><h2>${catImg('debt')} Debt <span class="small muted" style="font-weight:500">· not spending</span></h2>
+    <div class="kp3" style="grid-template-columns:1fr 1fr"><div class="kpi" style="cursor:pointer" onclick="friendsSheet('owe')"><div class="l">You owe</div><div class="v num ${tOwe>0.004?'neg':''}">${sgd(tOwe)}</div><div class="s">${owe.map(f=>esc(f.name)).slice(0,3).join(', ')||'nobody'}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="friendsSheet('lend')"><div class="l">Friends owe you</div><div class="v num">${sgd(tLend)}</div><div class="s">${lend.map(f=>esc(f.name)).slice(0,3).join(', ')||'nobody'}</div></div></div>
+    <div style="margin-top:10px">${ln('Borrowed this month',sgd(D.borrowed))}${D.borrowFor>0.004? ln('of which a friend paid for your spending',sgd(D.borrowFor),'sub2'):''}
+    ${ln('Paid back this month',sgd(D.payback))}${ln('Lent this month',sgd(D.lent))}${ln('Got back this month',sgd(D.repaid))}</div>
+    <div class="small muted" style="margin-top:6px">Borrowing, paying back and lending move money in your accounts but aren’t spending. When a friend pays for something for you, it counts once, in that category.</div></div>`;
 }
 function deltaTxt(a,b){ if(!b) return '&nbsp;'; const d=(a-b)/b*100; return (d>=0?'▲ ':'▼ ')+Math.abs(Math.round(d))+'% vs last month'; }
 function insights(st,prev){
@@ -2042,12 +2079,13 @@ function moneyIn(){ return r2(spendTotal() - creditDueTotal() - earlySalary(true
 function moneySheet(){
   const ym=curYM(), st=stats(ym), mon=ymLabel(ym,true).split(' ')[0], inB=funds().filter(f=>isSpend(f)), efs=funds().filter(f=>isEF(f));
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`, sg=v=>(v<0?'−':'+')+sgd(Math.abs(v));
-  const B=st.cfg.budgets||{}, repOut=(+B.misc||0)>0? 0 : (st.by.repaid||0);
-  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), unb=r2(st.budgetLeft+plan+st.refund+repOut-calc), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc);
+  const repOut=0, owe=friendLedger('owe').reduce((a,f)=>a+Math.max(0,f.owed),0), dc=st.debt.cash;
+  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), unb=r2(st.budgetLeft+plan+st.refund-calc), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc-dc);
   let h=`<div class="sheettop"><h3>Money left to spend</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="card" style="margin-top:10px"><h2>In the ${mon} budget</h2>${inB.map(f=>ln(fIcon(f)+' '+esc(f.name),sgd(liveBal(f)))).join('')||'<div class="small muted">No accounts in the budget.</div>'}
       ${funds().filter(isCredit).filter(f=>dueAt(f)>0.004).map(f=>ln('− '+esc(f.name)+' bill '+niceDate(nextDue(f)), '('+sgd(dueAt(f))+')','sub2')).join('')}
       ${ln('Money left to spend',sgd(have),'tot')}
+      ${owe>0.004? `<div class="stdiff bad" style="cursor:pointer" onclick="friendsSheet('owe')"><span>You owe friends (to pay back)</span><span class="num">${sgd(owe)} ›</span></div>`:''}
       <div class="small muted" style="margin-top:8px">Emergency fund kept aside: ${efs.map(f=>esc(f.name)+' '+sgd(liveBal(f))).join(', ')||'none'} = <b class="num">${sgd(efKept(ym))}</b>. Change which accounts count on the Budget tab.</div></div>
     <div class="card"><h2>Why “Budget left” is different</h2>
       ${ln('Budget left <span class="small muted">budgets − spending in those categories</span>',sgd(st.budgetLeft))}
@@ -2057,9 +2095,10 @@ function moneySheet(){
       ${repOut?ln('Friends paid back',sg(repOut),'sub2'):''}
       ${Math.abs(unb)>0.004?ln('Spending in categories with no budget',sg(-unb),'sub2'):''}
       ${ln('Money left (worked out)',sgd(calc),'tot')}
+      ${Math.abs(dc)>0.004? ln('Friends’ money this month (borrowed − paid back, lent)',sg(dc),'sub2'):''}
       ${Math.abs(creditNet())>0.004? ln('Spending accounts '+sgd(spendTotal())+' − credit owed (not yet counted as spending)', sgd(r2(spendTotal()+creditNet())),'sub2') : ''}
       ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">Usually a payment or refund logged without “Paid with”, or a balance that needs updating.</div>`}
-      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + money carried over ${sgd(st.extra)} + refunds ${sgd(st.refund)} + friends paid back ${sgd(st.by.repaid||0)} − spending ${sgd(st.gross)} = ${sgd(calc)}.</div></div>`;
+      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + money carried over ${sgd(st.extra)} + refunds ${sgd(st.refund)} + spending ${sgd(st.gross)} = ${sgd(calc)}. Money from or to friends is debt, not spending.</div></div>`;
   openSheet(h);
 }
 /* How the two living-pace figures are worked out */
@@ -2239,13 +2278,13 @@ try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>ap
 const FTX = {
   lend:{A:'lent', B:'repaid', get icon(){ return catImg('lent'); }, title:'Friends owe you', owes:'owes you', times:'lent', empty:'Lent money to a friend? Tap to keep track',
     none:'Nobody owes you anything right now.', add:'+ Lent money', addB:'+ Got money back', more:'+ Lend more', backBtn:'Got money back',
-    kA:'Owes you', kT:'Total lent', note:'Lending counts as spending (in Miscellaneous) until it’s paid back.',
-    fA:'🤝 Money lent', fB:'💵 Money paid back', amtA:'Amount given', amtB:'Amount received', iA:'Lent', iB:'Paid back',
+    kA:'Owes you', kT:'Total lent', note:'Lending isn’t spending: it shows under Debt until it’s paid back.',
+    fA:'Money lent', fB:'Money paid back to you', amtA:'Amount given', amtB:'Amount received', iA:'Lent', iB:'Paid back',
     tA:(n,a)=>`Lent ${a} to ${n}`, tB:(n,a)=>`${n} paid back ${a}`},
   owe:{A:'borrowed', B:'payback', get icon(){ return catImg('borrowed'); }, title:'You owe friends', owes:'you owe', times:'borrowed', empty:'Borrowed from a friend? Tap to keep track',
     none:'You don’t owe anyone right now.', add:'+ Borrowed money', addB:'+ Paid back', more:'+ Borrow more', backBtn:'Pay back',
-    kA:'You owe', kT:'Total borrowed', note:'Borrowing isn’t counted as spending. Paying it back is (in Miscellaneous).',
-    fA:'🙏 Money borrowed', fB:'📤 Paid back to friend', amtA:'Amount borrowed', amtB:'Amount paid', iA:'Borrowed', iB:'Paid back',
+    kA:'You owe', kT:'Total borrowed', note:'Paying back is never spending. If a friend paid for something for you, it counts once in that category.',
+    fA:'Money taken from a friend', fB:'Paid back to a friend', amtA:'Amount borrowed', amtB:'Amount paid', iA:'Borrowed', iB:'Paid back',
     tA:(n,a)=>`Borrowed ${a} from ${n}`, tB:(n,a)=>`Paid ${a} back to ${n}`}};
 const fdir = cat => CAT[cat]?.owe ? 'owe' : 'lend';
 function friendLedger(dir='lend'){
@@ -2302,21 +2341,42 @@ function friendDetail(name, dir='lend'){
   if($('#fdBackAmt')) $('#fdBackAmt').onclick=()=>friendForm(T.B,f.name,null,f.owed);
   document.querySelectorAll('[data-fe]').forEach(r=>r.onclick=()=>friendForm(null,null,DB.entries[r.dataset.fe]));
 }
+const SHORT_NAME={food:'Food',travel:'Travel',temple:'Temple',entertainment:'Fun',medical:'Medical',laundry:'Laundry',salon:'Salon',shopping:'Shopping',rent:'Rent',ac:'AC bill',subs:'Subs',home:'Home',misc:'Misc'};
+const forTile=(id,name,icon)=>`<button class="ct" data-ffor="${id}" type="button"><span class="ci">${icon}</span><span class="cn">${name}</span></button>`;
+let FF_FROM_ADD=false;
+/* Debt from the Add screen: four plain choices */
+function debtChooser(){
+  const opt=(k,t,s)=>`<button class="salbtn" data-dk="${k}" style="margin-top:8px"><span style="flex:1;text-align:left"><b>${t}</b><span class="small muted" style="display:block">${s}</span></span><span class="muted">›</span></button>`;
+  openSheet(`<div class="sheettop"><h3>${catImg('debt')} Debt</h3><button class="btn sm" id="dcBack">Back</button></div>
+    <div class="small muted" style="margin-top:6px">Money between you and friends. Never counted as spending, except when a friend pays for something for you.</div>
+    ${opt('borrowed','I took money','Borrowed, or a friend paid for me')}${opt('payback','I paid back','Settle what you owe')}
+    ${opt('lent','I gave money','Lent to a friend')}${opt('repaid','Friend paid me back','Money returned to you')}
+    <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="friendsSheet('owe')">You owe friends ›</button><button class="btn sm" onclick="friendsSheet('lend')">Friends owe you ›</button></div>`);
+  $('#dcBack').onclick=()=>{ if(E) drawSheet(); else closeSheet(); };
+  document.querySelectorAll('[data-dk]').forEach(b=>b.onclick=()=>{ FF_FROM_ADD=true; const amt=E&&+E.amt>0? +E.amt : undefined; friendForm(b.dataset.dk, '', null, amt); });
+}
 function friendForm(kind, name, src, amt){
   const e = src || {id:null, cat:kind, friend:name||'', amt: amt? r2(amt):'', date: todayStr(), note:''};
   const dir=fdir(e.cat), T=FTX[dir], first = e.cat===T.A;
   let pay = e.id? (e.pay||'') : lastPay();
   const names=[...new Set([...friendLedger('lend'), ...friendLedger('owe')].map(f=>f.name))];
-  let h=`<div class="row" style="justify-content:space-between"><h3>${e.id?'Edit':''} ${first?T.fA:T.fB}</h3><button class="btn sm" id="ffBack">Back</button></div>
+  let h=`<div class="row" style="justify-content:space-between"><h3>${catImg('debt')} ${e.id?'Edit · ':''}${first?T.fA:T.fB}</h3><button class="btn sm" id="ffBack">Back</button></div>
     <label class="f" for="ffName">Friend’s name</label><input class="in" id="ffName" list="ffNames" value="${esc(e.friend)}" placeholder="e.g. Ravi" autocomplete="off">
     <datalist id="ffNames">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     <div class="grid2"><div><label class="f">Date</label><input class="in" type="date" id="ffDate" value="${e.date}"></div>
     <div><label class="f">${first?T.amtA:T.amtB} (${curCode()})</label><input class="in num bigamt" type="number" inputmode="decimal" step="0.01" id="ffAmt" value="${e.amt}" placeholder="0.00"></div></div>
+    ${e.cat==='borrowed'? `<label class="f">What was it for?</label><div class="cgrid" id="ffFor">${forTile('', 'To account', `<img class="cimg" alt="" style="object-fit:contain" src="${ART.card(skin(), funds().find(f=>f.id==='mari')||funds()[0]||{id:'mari'})}">`)}${[...SPEND_CATS.filter(c=>!MORE_CATS.has(c.id)), ...SPEND_CATS.filter(c=>MORE_CATS.has(c.id))].map(c=>forTile(c.id, SHORT_NAME[c.id]||c.name, c.icon)).join('')}</div>
+      <div class="small muted" id="ffForNote" style="margin-top:6px"></div>`:''}
     <label class="f" for="ffNote">${first?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${first?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
-    ${payChips(pay, 'data-ffpay', MONEY_IN.has(e.cat)? 'Received in' : 'Paid with')}
+    <div id="ffPayBox">${payChips(pay, 'data-ffpay', MONEY_IN.has(e.cat)? 'Received in' : 'Paid with')}</div>
     ${e.id? '<div class="actrow"><button class="btn danger" id="ffDel">Delete</button><button class="btn primary" id="ffSave">Save changes</button></div>' : '<div style="margin-top:16px"><button class="btn primary bigsave" id="ffSave">Save</button></div>'}`;
   openSheet(h);
-  $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend, dir) : friendsSheet(dir);
+  $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend, dir) : (FF_FROM_ADD? debtChooser() : friendsSheet(dir));
+  let forC = e.cat==='borrowed'? (e.for||'') : '', warned=false;
+  const drawFor=()=>{ if(e.cat!=='borrowed') return; document.querySelectorAll('[data-ffor]').forEach(b=>b.classList.toggle('on', b.dataset.ffor===forC));
+    $('#ffForNote').innerHTML = forC? `Counts as <b>${esc(CAT[forC].name)}</b> spending on this date, no account changes. Don’t add this ${esc(CAT[forC].name.toLowerCase())} expense again.` : 'The money came into your account: not spending. Add what you buy with it as usual.';
+    $('#ffPayBox').style.display = forC? 'none' : ''; };
+  document.querySelectorAll('[data-ffor]').forEach(b=>b.onclick=()=>{ forC=b.dataset.ffor; warned=false; drawFor(); }); drawFor();
   document.querySelectorAll('[data-ffpay]').forEach(b=>b.onclick=()=>{ pay = pay===b.dataset.ffpay? '' : b.dataset.ffpay; document.querySelectorAll('[data-ffpay]').forEach(x=>x.classList.toggle('on',x.dataset.ffpay===pay)); });
   $('#ffSave').onclick=()=>{
     const n=($('#ffName').value||'').trim(), a=r2(parseFloat($('#ffAmt').value));
@@ -2324,10 +2384,13 @@ function friendForm(kind, name, src, amt){
     if(!(a>0)){ toast('Enter an amount'); $('#ffAmt').focus(); return; }
     const now=Date.now();
     const rec={id:e.id||uid(), date:$('#ffDate').value||todayStr(), cat:e.cat, friend:n, amt:a, note:($('#ffNote').value||'').trim(), upd:now, cr:e.cr||now, cur:curCode()};
-    if(pay){ rec.pay=pay; setLastPay(pay); }
+    if(e.cat==='borrowed' && forC){ rec.for=forC;
+      const dup=Object.values(DB.entries).find(x=>!x.del && x.id!==rec.id && x.cat===forC && x.date===rec.date && Math.abs(x.amt-a)<0.005);
+      if(dup && !warned){ warned=true; toast(`A ${CAT[forC].name} expense of ${sgd(a)} is already on this day. Tap Save again only if this is a different spend.`); return; } }
+    else if(pay){ rec.pay=pay; setLastPay(pay); }
     DB.entries[rec.id]=rec; save(); render();
     toast(first? T.tA(n,sgd(a)) : T.tB(n,sgd(a)));
-    friendDetail(n, dir);
+    if(FF_FROM_ADD){ FF_FROM_ADD=false; closeSheet(); } else friendDetail(n, dir);
   };
   if($('#ffDel')) deleteBtn($('#ffDel'), e.id, ()=>friendDetail(e.friend, dir));
 }
@@ -2411,7 +2474,12 @@ function drawSheet(){
   let h = `<div class="sheettop"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
   ${E.id?'':'<div class="seg" style="margin-top:6px"><button class="on">Expense</button><button id="eXfer">🔁 Transfer</button></div>'}
   <div class="amtbox"><span class="cur">${esc(curInfo(curCode()).sym.trim())}</span><input class="num" id="eAmt" type="text" inputmode="decimal" autocomplete="off" value="${E.amt}" placeholder="0.00" aria-label="${k.income?'Refund received':'Amount'} (${curCode()})" style="width:${Math.max(4,String(E.amt||'').length+1)}ch"></div>
-  <div class="cgrid">${CATS.filter(c=>!c.friend && !c.track).map(c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`).join('')}${!E.id && (emis.length||E.cat==='emi')? `<button class="ct ${E.cat==='emi'?'on':''}" data-c="emi"><span class="ci">${catImg('emi')}</span><span class="cn">EMI</span></button>`:''}</div>
+  ${(()=>{ const tile=c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`;
+    const all=CATS.filter(c=>!c.friend && !c.track), main=all.filter(c=>!MORE_CATS.has(c.id)), more=all.filter(c=>MORE_CATS.has(c.id));
+    const emiT = !E.id && (emis.length||E.cat==='emi')? `<button class="ct ${E.cat==='emi'?'on':''}" data-c="emi"><span class="ci">${catImg('emi')}</span><span class="cn">EMI</span></button>` : '';
+    const open = E.more || MORE_CATS.has(E.cat) || E.cat==='emi';
+    return `<div class="cgrid">${main.map(tile).join('')}${E.id?'':`<button class="ct" id="eDebt"><span class="ci">${catImg('debt')}</span><span class="cn">Debt</span></button>`}<button class="ct ${open?'on2':''}" id="eMore" aria-expanded="${open}"><span class="ci">${catImg('more')}</span><span class="cn">${open?'Less':'More'}</span></button></div>
+      ${open? `<div class="cgrid cmore">${more.map(tile).join('')}${emiT}</div>`:''}`; })()}
   ${E.cat?'':'<div class="small muted" style="margin-top:6px;text-align:center">Choose a category</div>'}`;
   if(E.cat==='emi'){ drawEmiPay(h, emis); return; }
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.name}</button>`;
@@ -2430,6 +2498,8 @@ function drawSheet(){
   openSheet(h);
   const amt=$('#eAmt');
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; drawSheet(); });
+  $('#eMore').onclick=()=>{ readSheet(); const open=E.more || MORE_CATS.has(E.cat) || E.cat==='emi'; if(open && (MORE_CATS.has(E.cat)||E.cat==='emi')) E.cat=''; E.more=!open; drawSheet(); };
+  if($('#eDebt')) $('#eDebt').onclick=()=>{ readSheet(); debtChooser(); };
   bindPhoto();
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; drawSheet(); });
   document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{ readSheet(); E.pay = E.pay===b.dataset.pay? '' : b.dataset.pay; drawSheet(); });
@@ -2634,7 +2704,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v70';
+const APP_VERSION='v71';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -2669,7 +2739,7 @@ async function cloudSync(manual, poll){
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
     if(j.same){ setTimeout(autoSalary, 50); if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
-    if(n){ try{ if(layoutMigrate()|fixMariNov()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
+    if(n){ try{ if(layoutMigrate()|fixMariNov()|moveOctDebts()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
     persist(); setTimeout(autoSalary, 50);
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
@@ -2940,7 +3010,7 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 try{ if(localStorage.getItem('dailyExpenseTracker.hideOnOpen')!=='0') localStorage.setItem('dailyExpenseTracker.showBal','0'); }catch(e){}
 applyTheme();
 renderProfileBtn();
-try{ if(layoutMigrate()|fixMariNov()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
+try{ if(layoutMigrate()|fixMariNov()|moveOctDebts()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
 render();
 /* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
 /* A setup link never connects by itself: it only fills in the code on the Sync screen, and you tap Connect. */
