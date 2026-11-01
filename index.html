@@ -1244,7 +1244,7 @@ function balancesSheet(opt){
       ${ord||del? '' : `<span class="ab num">${amt}</span>`}${ctl}</div>
       ${del && Math.abs(liveBal(f))>0.004? `<div class="hidden small" data-awarn="${esc(f.id)}" style="padding:8px 14px 12px;color:var(--warn)">${esc(f.name)} ${c?'still has '+sgd(owedOf(f))+' owed':'has '+sgd(liveBal(f))}. ${c?'Pay it off first':'Move it to another account first'}, or it leaves your totals.<div class="btns" style="margin-top:8px">${c?'':`<button class="btn sm" data-amove="${esc(f.id)}">⇄ Move money</button>`}<button class="btn sm danger" data-adel2="${esc(f.id)}">Delete anyway</button></div></div>` : ''}`; };
   const sec=(title,total,arr,extra)=> arr.length||extra? `<div class="acsec"><div class="ah"><span>${title}</span><span class="num">${total}</span></div>${arr.map((f,k)=>row(f,k,arr)).join('')}${extra||''}</div>` : '';
-  const op=openingOf(ym), used=fundsIncluded(ym), calc=r2(st.saved), diff=r2(totE+creditNet()-calc), ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
+  const op=openingOf(ym), used=fundsIncluded(ym), calc=r2(st.moneyLeft), diff=r2(totE+creditNet()-calc), ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
   openSheet(`<div class="sheettop"><h3>Accounts</h3><div class="row" style="gap:8px">${eyeBtn('bEye')}<button class="btn sm" onclick="closeSheet()">Close</button></div></div>
     <div class="kp3"><div class="kpi"><div class="l">Money left</div><div class="v num">${bal(r2(totE-crDue))}</div></div><div class="kpi"><div class="l">💳 Bills due</div><div class="v num ${crDue>0.004?'neg':''}">${bal(crDue)}</div></div><div class="kpi"><div class="l">🛟 Kept aside</div><div class="v num">${bal(totF)}</div></div></div>
     ${ord||del? '' : carouselHTML(funds())}
@@ -1472,8 +1472,8 @@ function statementCard(ym, compact){
   const ok = d.diff!==null && Math.abs(d.diff)<0.005;
   const diffBox = d.diff===null? '' : `<div class="stdiff ${ok?'ok':'bad'}"><span>Difference</span><span class="num">${ok? sgd(0)+' · Balanced' : (d.diff>0?'+':'−')+sgd(Math.abs(d.diff))}</span></div>`;
   if(compact) return `<div class="card" style="cursor:pointer" onclick="statementSheet('${ym}')"><h2>Monthly statement<button class="lnk">Open</button></h2>
-    <div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div>
-    <div class="small muted" style="margin-top:2px">Salary + refunds − spending (friends’ money is under Debt)</div>${d.needSalary? '<div class="stdiff"><span>Salary isn’t in an account yet</span><span class="lnk">Add ›</span></div>' : diffBox}</div>`;
+    <div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span>Saved this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div>
+    <div class="small muted" style="margin-top:2px">Money in ${sgd(c.moneyInM)} − money out ${sgd(c.moneyOutM)} (incl. friends)</div>${d.needSalary? '<div class="stdiff"><span>Salary isn’t in an account yet</span><span class="lnk">Add ›</span></div>' : diffBox}</div>`;
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
   const groups=groupTotals(c).filter(g=>g.v>0.004).sort((a,b)=>b.v-a.v);
   let h=`<div class="card"><h2>Statement · ${ymLabel(ym)}</h2>`+
@@ -1485,7 +1485,7 @@ function statementCard(ym, compact){
   if(d.actual!==null) h+= ln('Your account balances', sgd(d.actual),'muted') + diffBox;
   if(d.diff!==null && !ok) h+=`<div class="small muted" style="margin-top:8px">${d.diff>0?'Your accounts hold more than expected':'Your accounts hold less than expected'}: a payment or income without an account (“Paid with” / “Received in”), or a balance that needs updating.${d.noAcct?` <b>${d.noAcct} entr${d.noAcct===1?'y':'ies'}</b> this month have no account.`:''}</div>`;
   if(d.needSalary) h+=`<div class="stdiff" style="margin-top:10px"><span>Salary isn’t in an account yet</span><button class="btn sm primary" onclick="salarySheet('${ym}')">Add salary</button></div>`;
-  h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div><div class="small muted">Salary + refunds − spending${c.extra>0.004?' + '+sgd(c.extra)+' of savings used':c.extra<-0.004?' − '+sgd(-c.extra)+' put aside':''}</div>`;
+  h+=`<div class="stl" style="margin-top:10px"><span>Saved this month</span><b class="num ${c.saved<0?'neg':'pos'}">${sgd(c.saved)}</b></div><div class="small muted">Money in ${sgd(c.moneyInM)} (salary, refunds, borrowed, paid back to you) − money out ${sgd(c.moneyOutM)} (spending, paid back to friends, given to friends)</div>`;
   return h+`<div class="btns" style="margin-top:12px"><button class="btn sm" onclick="editOpening('${ym}')">Edit opening balance</button></div></div>`;
 }
 function statementSheet(ym){ openSheet(`<div class="sheettop"><h3>Monthly statement</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>${statementCard(ym)}`); }
@@ -1571,7 +1571,9 @@ function stats(ym, lite){
   return {es, by, net, sub, debt, dailyFood, refund, refundFor, gross, total, living, inrHome, daily, dailyLiving, cfg:c, salary:+c.salary||0,
           days, left:daysLeft(ym), dim:dim(ym), budgetTotal, budgetLeft,
           extra:X, income:(+c.salary||0)+X,
-          saved:(+c.salary||0) + X - total,
+          moneyLeft:(+c.salary||0) + X - total,   // for checking budget accounts (includes savings carried in / put aside)
+          moneyInM: r2((+c.salary||0) + refund + debt.borrowed + debt.repaid), moneyOutM: r2(gross + debt.payback + debt.lent),
+          saved: r2((+c.salary||0) + refund + debt.borrowed + debt.repaid - gross - debt.payback - debt.lent),   // money in − money out
           avg: days? (total+refund)/days : 0, avgLiving: days? living/days : 0};
 }
 /* Spending (not refunds, transfers or money coming back) on one day, with the number of entries */
@@ -1900,7 +1902,7 @@ function monthSummaryCard(ym, heading){
   const prev=savedBefore(ym);
   let h=`<div class="card"><h2>${heading} · ${ymLabel(ym)}</h2>`;
   if(!base){ h+=`<div class="muted">No expenses recorded for ${ymLabel(ym)} yet.</div></div>`; return h; }
-  h+=`<div class="msum">${donutSvg(parts, done&&hasSal?sgd0(st.salary):sgd0(st.total), done&&hasSal?'salary':(done?'spent':'spent so far'))}<div class="plist">`+
+  h+=`<div class="msum">${donutSvg(parts, done&&hasSal?sgd0(st.moneyInM):sgd0(st.total), done&&hasSal?'money in':(done?'spent':'spent so far'))}<div class="plist">`+
      parts.map(p=>`<div data-tip="<b>${esc(p.name)}</b><br>${sgd(p.v)}"><i style="--c:${p.c}"></i><span>${esc(p.name)}</span><span class="num">${sgd(p.v)}</span><span class="pc">${Math.round(p.v/base*100)}%</span></div>`).join('')+
      (done && hasSal && saved<0?`<div><i style="--c:var(--bad)"></i><span>Overspent</span><span class="num neg">${sgd(-saved)}</span><span class="pc"></span></div>`:'')+
      `</div></div>`;
@@ -1913,9 +1915,7 @@ function monthSummaryCard(ym, heading){
     </div><div class="small muted" style="margin-top:8px">This month’s saving is added to the chart after ${ymLabel(ym)} ends.</div>`;
   } else if(hasSal){
     h+=`<div class="kpis" style="margin-top:12px">
-      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">${Math.round(saved/st.salary*100)}% of salary${(()=>{ const ef=new Set(funds().filter(f=>isEF(f,ym)).map(f=>f.id)), sp=new Set(funds().filter(f=>isSpend(f,ym)).map(f=>f.id));
-        const xs=Object.values(DB.entries).filter(e=>!e.del && e.cat==='xfer' && e.date.startsWith(ym) && ef.has(e.to) && sp.has(e.from)), mv=r2(xs.reduce((a,e)=>a+e.amt,0));
-        return mv>0.004? `<br>${sgd(mv)} moved to ${[...new Set(xs.map(e=>e.to))].map(id=>esc(SHORT_NAMES[id]||fundName(id))).join(' / ')} this month` : ''; })()}</div></div>
+      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">In ${sgd(st.moneyInM)} − out ${sgd(st.moneyOutM)}${(()=>{ const ow=r2(friendLedger('lend').reduce((a,f)=>a+f.owed,0)); return ow>0.004? `<br>+ ${sgd(ow)} friends still owe you → <b>${sgd(r2(saved+ow))}</b>` : ''; })()}</div></div>
       <div class="kpi"><div class="l">Saved in previous months</div><div class="v num ${prev.sum<0?'neg':''}">${sgd(prev.sum)}</div><div class="s">${prev.n?prev.n+' month'+(prev.n===1?'':'s'):'no earlier months'}</div></div>
       <div class="kpi"><div class="l">Total saved so far</div><div class="v num ${prev.sum+saved<0?'neg':'pos'}">${sgd(prev.sum+saved)}</div><div class="s">up to ${ymLabel(ym,true)}</div></div>
     </div>`;
@@ -2096,7 +2096,7 @@ function moneySheet(){
   const ym=curYM(), st=stats(ym), mon=ymLabel(ym,true).split(' ')[0], inB=funds().filter(f=>isSpend(f)), efs=funds().filter(f=>isEF(f));
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`, sg=v=>(v<0?'−':'+')+sgd(Math.abs(v));
   const repOut=0, owe=friendLedger('owe').reduce((a,f)=>a+Math.max(0,f.owed),0), dc=st.debt.cash;
-  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.saved), unb=r2(st.budgetLeft+plan+st.refund-calc), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc-dc);
+  const plan=r2(st.salary+st.extra-st.budgetTotal), calc=r2(st.moneyLeft), unb=r2(st.budgetLeft+plan+st.refund-calc), have=moneyIn(), diff=r2(spendTotal()+creditNet()-calc-dc);
   let h=`<div class="sheettop"><h3>Money left to spend</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="card" style="margin-top:10px"><h2>In the ${mon} budget</h2>${inB.map(f=>ln(fIcon(f)+' '+esc(f.name),sgd(liveBal(f)))).join('')||'<div class="small muted">No accounts in the budget.</div>'}
       ${funds().filter(isCredit).filter(f=>dueAt(f)>0.004).map(f=>ln('− '+esc(f.name)+' bill '+niceDate(nextDue(f)), '('+sgd(dueAt(f))+')','sub2')).join('')}
@@ -2153,8 +2153,8 @@ function sourcesCard(){
      (used>=-0.004? ln(`− Used in the ${mon} budget`, '('+sgd(Math.max(0,used))+')') : ln(`+ Put aside from ${mon}'s money`, sgd(-used)))+
      ln('Emergency fund', sgd(ef),'tot')+`</div>
     <div class="small muted" style="margin-top:8px">Last month's savings isn't a separate account. It is already inside the balances above. Turning an account on moves its money from savings into this month's budget.</div>`;
-  if(cur){ const d=r2(inB-st.saved), ok=Math.abs(d)<0.005;
-    h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${st.saved<0?'neg':'pos'}">${sgd(st.saved)}</b></div>
+  if(cur){ const d=r2(inB-st.moneyLeft-st.debt.cash), ok=Math.abs(d)<0.005;
+    h+=`<div class="stl" style="margin-top:10px"><span>Money left this month</span><b class="num ${st.moneyLeft+st.debt.cash<0?'neg':'pos'}">${sgd(r2(st.moneyLeft+st.debt.cash))}</b></div>
       <div class="stdiff ${ok?'ok':'bad'}"><span>${ok?'Matches your budget accounts':'Budget accounts hold '+(d>0?'more':'less')}</span><span class="num">${ok?'✓':(d>0?'+':'−')+sgd(Math.abs(d))}</span></div>
       ${ok?'':`<div class="small muted" style="margin-top:6px">A payment or refund logged without “Paid with”, or a balance that needs updating. <button class="lnk" style="float:none" onclick="statementSheet('${ym}')">See statement</button></div>`}`; }
   return h+`</div>`;
@@ -2736,7 +2736,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v73';
+const APP_VERSION='v74';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
