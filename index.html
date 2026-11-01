@@ -1032,8 +1032,8 @@ const shortName = f => (f && (f.short || SHORT_NAMES[f.id] || f.name)) || '';
    The user read S$1,572.46 in the bank app, so Mari restarts from that. Only touches that exact typed balance. */
 function fixMariNov(){ const f=(DB.settings.funds||[]).find(x=>x.id==='mari'); if(!f || f.at!==1793463829791 || DB.settings.fixMari1) return false;
   DB.settings={...DB.settings, funds:DB.settings.funds.map(x=>x.id==='mari'? {...x, amt:1572.46, at:Date.now()} : x), fixMari1:1, upd:Date.now()}; return true; }
-/* One-time (user asked, 1 Nov 2026): four October debt repayments logged as Miscellaneous become "Paid back to friend" (debt, not spending) */
-function moveOctDebts(){ const M={mumh4sw279s93v:'Sai Krishna', mumhcbf6wzr4kq:'Trishitha', mumhcoayqd9669:'Pradeep', mvnjd7u5ktmqve:'Sai Krishna'}; let ch=false, now=Date.now();
+/* One-time (user asked, 1 Nov 2026): October debt repayments logged as Miscellaneous become "Paid back to friend" (debt, not spending) */
+function moveOctDebts(){ const M={mumh4sw279s93v:'Sai Krishna', mumhcbf6wzr4kq:'Trishitha', mumhcoayqd9669:'Pradeep', mvnjd7u5ktmqve:'Sai Krishna', mumh8y1ckl9sv4:'Sai Krishna', mv1rcazqb9edw5:'Bhanu', mv1rcnwgwrp9qf:'Sahrudai'};   // + friends' shares of TEDx refunds passed back to them let ch=false, now=Date.now();
   for(const [id,n] of Object.entries(M)){ const e=DB.entries[id]; if(e && !e.del && e.cat==='misc'){ DB.entries[id]={...e, cat:'payback', friend:n, upd:now++}; ch=true; } }
   return ch; }
 function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
@@ -1891,6 +1891,9 @@ function monthSummaryCard(ym, heading){
   const parts=groupTotals(st).filter(g=>g.v>0.004).map(g=>({name:g.icon+' '+g.name, v:g.v, c:g.c}));
   const done = ym < ymOf(todayStr());            // savings are final only once the month is over
   const hasSal=st.salary>0, saved=st.saved;
+  const dOut=r2(st.debt.payback+st.debt.lent);
+  if(st.debt.lent>0.004) parts.push({name:'Debt · given to friends', v:r2(st.debt.lent), c:'var(--g9)', debt:1});
+  if(st.debt.payback>0.004) parts.push({name:'Debt · paid back to friends', v:r2(st.debt.payback), c:'var(--muted)', debt:1});
   if(done && hasSal && saved>0) parts.push({name:'💰 Saved', v:saved, c:'var(--series-3)'});
   const base=parts.reduce((a,p)=>a+p.v,0);
   const prev=savedBefore(ym);
@@ -1900,13 +1903,18 @@ function monthSummaryCard(ym, heading){
      parts.map(p=>`<div data-tip="<b>${esc(p.name)}</b><br>${sgd(p.v)}"><i style="--c:${p.c}"></i><span>${esc(p.name)}</span><span class="num">${sgd(p.v)}</span><span class="pc">${Math.round(p.v/base*100)}%</span></div>`).join('')+
      (done && hasSal && saved<0?`<div><i style="--c:var(--bad)"></i><span>Overspent</span><span class="num neg">${sgd(-saved)}</span><span class="pc"></span></div>`:'')+
      `</div></div>`;
+  if(dOut>0.004) h+=`<div class="small muted" style="margin-top:6px">Debt (given to friends, and paid back to friends) is shown separately here and isn’t counted as spending.</div>`;
+  { const top=st.es.filter(e=>!e.emiOrig && e.cat!=='borrowed' && spendAmt(e)>0).sort((a,b)=>b.amt-a.amt).slice(0,5);
+    if(top.length) h+=`<div class="small muted" style="margin:14px 2px 4px;font-weight:700;letter-spacing:.5px">TOP SPENDS</div><div class="list" style="border:0;margin:0 -12px">${top.map(entRow).join('')}</div>`; }
   if(hasSal && !done){
     h+=`<div class="kpis" style="margin-top:12px">
       <div class="kpi"><div class="l">Saved in previous months</div><div class="v num ${prev.sum<0?'neg':''}">${sgd(prev.sum)}</div><div class="s">${prev.n?prev.n+' month'+(prev.n===1?'':'s'):'no earlier months'}</div></div>
     </div><div class="small muted" style="margin-top:8px">This month’s saving is added to the chart after ${ymLabel(ym)} ends.</div>`;
   } else if(hasSal){
     h+=`<div class="kpis" style="margin-top:12px">
-      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">${Math.round(saved/st.salary*100)}% of salary</div></div>
+      <div class="kpi"><div class="l">Saved this month</div><div class="v num ${saved<0?'neg':'pos'}">${sgd(saved)}</div><div class="s">${Math.round(saved/st.salary*100)}% of salary${(()=>{ const ef=new Set(funds().filter(f=>isEF(f,ym)).map(f=>f.id)), sp=new Set(funds().filter(f=>isSpend(f,ym)).map(f=>f.id));
+        const xs=Object.values(DB.entries).filter(e=>!e.del && e.cat==='xfer' && e.date.startsWith(ym) && ef.has(e.to) && sp.has(e.from)), mv=r2(xs.reduce((a,e)=>a+e.amt,0));
+        return mv>0.004? `<br>${sgd(mv)} moved to ${[...new Set(xs.map(e=>e.to))].map(id=>esc(SHORT_NAMES[id]||fundName(id))).join(' / ')} this month` : ''; })()}</div></div>
       <div class="kpi"><div class="l">Saved in previous months</div><div class="v num ${prev.sum<0?'neg':''}">${sgd(prev.sum)}</div><div class="s">${prev.n?prev.n+' month'+(prev.n===1?'':'s'):'no earlier months'}</div></div>
       <div class="kpi"><div class="l">Total saved so far</div><div class="v num ${prev.sum+saved<0?'neg':'pos'}">${sgd(prev.sum+saved)}</div><div class="s">up to ${ymLabel(ym,true)}</div></div>
     </div>`;
@@ -1949,6 +1957,7 @@ function renderAnalysis(){
     h += `<div class="card" style="cursor:pointer" onclick="balancesSheet({})"><h2>💳 Credit owed<span class="num" style="float:right">${sgd(tot)}</span></h2>${cs.map(f=>`<div class="stl"><span>${fIcon(f)} ${esc(f.name)}</span><span class="num">${sgd(owedOf(f))}</span></div>`).join('')}
       <div class="small muted" style="margin-top:6px">${sgd(r2(tot-fut))} due on the next due days${fut>0.004?' · '+sgd(fut)+' in later EMI payments':''}.</div></div>`; }
   h += monthSummaryCard(S.ym,'Where the money went');
+  h += debtCard(st, S.ym);
   h += `<div class="card"><h2>Spending pace · daily living</h2>${paceChart(st)}</div>`;
   // insights
   h += `<div class="card"><h2>Insights</h2>${insights(st,prev).map(t=>`<div class="insight">${t}</div>`).join('') || '<div class="muted">Add some expenses to see insights.</div>'}</div>`;
@@ -1974,24 +1983,30 @@ function renderAnalysis(){
   h += `<tr><td><b>Total</b></td><td class="num"><b>${sgd0(st.budgetTotal)}</b></td><td class="num"><b>${sgd(st.total)}</b></td><td class="num"><b>${st.budgetTotal?sgd(st.budgetTotal-st.total):'–'}</b></td><td class="num"><b>${sgd(st.avg)}</b></td><td></td></tr>`;
   h += `</tbody></table></div><div class="small muted" style="margin-top:6px">Categories show what you spent. Refunds (${sgd(st.refund)} received) are taken off the month total only.</div></div>`;
 
-  h += debtCard(st);
   // trend
   h += `<div class="card"><h2>Last 6 months — spent vs saved</h2>${trendChart()}</div>`;
   $('#tab-analysis').innerHTML = h;
   document.querySelectorAll('[data-dm]').forEach(b=>b.onclick=()=>{S.dailyMode=b.dataset.dm; renderAnalysis();});
   bindTips($('#tab-analysis'));
 }
-function debtCard(st){
-  const D=st.debt, owe=friendLedger('owe').filter(f=>f.owed>0.004), lend=friendLedger('lend').filter(f=>f.owed>0.004);
+function debtCard(st, ym){
+  const D=st.debt, owe=friendLedger('owe'), lend=friendLedger('lend');
   const tOwe=owe.reduce((a,f)=>a+f.owed,0), tLend=lend.reduce((a,f)=>a+f.owed,0);
-  if(!(D.borrowed||D.payback||D.lent||D.repaid||tOwe||tLend)) return '';
+  const inM=e=>e.date.startsWith(ym), rows=[];
+  const add=(f,dir)=>{ const m=f.items.filter(inM); if(!m.length && f.owed<=0.004) return;
+    const A=dir==='owe'?'borrowed':'lent', B=dir==='owe'?'payback':'repaid', a=r2(m.filter(e=>e.cat===A).reduce((x,e)=>x+e.amt,0)), b=r2(m.filter(e=>e.cat===B).reduce((x,e)=>x+e.amt,0));
+    const bits=[]; if(a) bits.push((dir==='owe'?'took ':'gave ')+sgd(a)); if(b) bits.push((dir==='owe'?'paid back ':'got back ')+sgd(b));
+    const st2 = f.owed>0.004? `<span class="${dir==='owe'?'neg':''}">${dir==='owe'?'you owe':'owes you'} ${sgd(f.owed)}</span>` : '<span class="pos">Settled ✓</span>';
+    rows.push(`<div class="ent" style="cursor:pointer" onclick="friendDetail('${esc(f.name).replace(/'/g,"\\'")}','${dir}')"><div class="ic">${esc(f.name.slice(0,1).toUpperCase())}</div><div class="t"><div>${esc(f.name)}</div><div>${bits.join(' · ')||'from earlier'}</div></div><div class="num" style="font-weight:650;text-align:right;font-size:13px">${st2}</div></div>`); };
+  owe.forEach(f=>add(f,'owe')); lend.forEach(f=>add(f,'lend'));
   const ln=(l,v,cls='')=>`<div class="stl ${cls}"><span>${l}</span><span class="num">${v}</span></div>`;
   return `<div class="card"><h2>${catImg('debt')} Debt <span class="small muted" style="font-weight:500">· not spending</span></h2>
-    <div class="kp3" style="grid-template-columns:1fr 1fr"><div class="kpi" style="cursor:pointer" onclick="friendsSheet('owe')"><div class="l">You owe</div><div class="v num ${tOwe>0.004?'neg':''}">${sgd(tOwe)}</div><div class="s">${owe.map(f=>esc(f.name)).slice(0,3).join(', ')||'nobody'}</div></div>
-    <div class="kpi" style="cursor:pointer" onclick="friendsSheet('lend')"><div class="l">Friends owe you</div><div class="v num">${sgd(tLend)}</div><div class="s">${lend.map(f=>esc(f.name)).slice(0,3).join(', ')||'nobody'}</div></div></div>
+    <div class="kp3" style="grid-template-columns:1fr 1fr"><div class="kpi" style="cursor:pointer" onclick="friendsSheet('owe')"><div class="l">You owe</div><div class="v num ${tOwe>0.004?'neg':''}">${sgd(tOwe)}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="friendsSheet('lend')"><div class="l">Friends owe you</div><div class="v num">${sgd(tLend)}</div></div></div>
     <div style="margin-top:10px">${ln('Borrowed this month',sgd(D.borrowed))}${D.borrowFor>0.004? ln('of which a friend paid for your spending',sgd(D.borrowFor),'sub2'):''}
     ${ln('Paid back this month',sgd(D.payback))}${ln('Lent this month',sgd(D.lent))}${ln('Got back this month',sgd(D.repaid))}</div>
-    <div class="small muted" style="margin-top:6px">Borrowing, paying back and lending move money in your accounts but aren’t spending. When a friend pays for something for you, it counts once, in that category.</div></div>`;
+    ${rows.length? `<div class="list" style="margin-top:8px">${rows.join('')}</div>` : '<div class="small muted" style="margin-top:8px">No money with friends this month.</div>'}
+    <div class="btns" style="margin-top:10px"><button class="btn sm primary" onclick="debtChooser()">+ Add debt</button></div></div>`;
 }
 function deltaTxt(a,b){ if(!b) return '&nbsp;'; const d=(a-b)/b*100; return (d>=0?'▲ ':'▼ ')+Math.abs(Math.round(d))+'% vs last month'; }
 function insights(st,prev){
@@ -2292,7 +2307,7 @@ function friendLedger(dir='lend'){
   for(const e of Object.values(DB.entries)){ if(e.del || (e.cat!==T.A && e.cat!==T.B)) continue;
     const n=(e.friend||'Friend').trim(), k=n.toLowerCase(); const f=map[k]||(map[k]={name:n, lent:0, back:0, items:[]});
     if(e.cat===T.A) f.lent+=e.amt; else f.back+=e.amt; f.items.push(e); }
-  return Object.values(map).map(f=>({...f, owed:r2(f.lent-f.back), items:f.items.sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0))}))
+  return Object.values(map).map(f=>({...f, owed:Math.max(0,r2(f.lent-f.back)), older:Math.max(0,r2(f.back-f.lent)), items:f.items.sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0))}))
     .sort((a,b)=>b.owed-a.owed || a.name.localeCompare(b.name));
 }
 function splitCard(){
@@ -2704,7 +2719,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v71';
+const APP_VERSION='v72';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
