@@ -400,6 +400,11 @@ nav.tabs .navgap{flex:0 0 72px}
 .ar .ic .fimg,.srcb .fimg{width:40px;height:25px}
 /* card art: rail + carousel */
 .crail{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 8px;scroll-snap-type:x mandatory}.crail::-webkit-scrollbar{display:none}
+input.in.insm{padding:7px 11px;font-size:14px;min-height:0;height:38px;border-radius:10px}
+.emiinfo input.in.insm{width:84px;height:32px;padding:4px 8px}
+.emirow{display:flex;gap:8px;align-items:stretch}.emirow .phbtn{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:64px;padding:6px 0;font-size:18px;line-height:1}.emirow .phbtn span{font-size:11px;font-weight:600}
+.emirow .phthumb{width:64px;height:auto;min-height:48px;flex:none}.emiseg{display:flex;flex:1;margin:0}.emiseg button{flex:1;padding:10px 4px;font-size:13px;white-space:nowrap}
+.emiinfo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px}.emiinfo .emiph{margin-left:auto}
 .cgrid.cmore{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 .ct.on2{border-color:var(--accent)}
 .cc{position:absolute;left:50%;top:6px;width:300px;height:188px;margin-left:-150px;border-radius:18px;overflow:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .32s;box-shadow:0 18px 26px -12px rgba(0,0,0,.55);cursor:pointer;border:0;padding:0;background:none;text-align:left;font:inherit}
@@ -2504,6 +2509,16 @@ function openEntry(id, presetDate, presetAmt){
   drawSheet();
 }
 function guessMeal(){ const h=new Date().getHours(); if(h<11) return 'breakfast'; if(h<16) return 'lunch'; if(h<18) return 'coffee'; return 'dinner'; }
+/* EMI split on any credit-card / PayLater spend: Full, 3 or 6 months, chosen right on the Add screen */
+function emiAllowed(){ const k=CAT[E.cat]||{}, pf=E.pay? funds().find(x=>x.id===E.pay) : null; return !!(E.cat && isCredit(pf) && !k.income && !k.friend && !k.track && E.cat!=='emi'); }
+function emiN(){ if(!emiAllowed()) return 1; if(E.emiChoice!==undefined) return E.emiChoice? E.emiChoice.n : 1; return E.emi&&E.emi.n>1? E.emi.n : 1; }
+function emiFeeNow(){ return E.emiChoice? (+E.emiChoice.fee||0) : (E.emiChoice===undefined && E.emi? (+E.emi.fee||0) : 0); }
+function emiRow(){ const n=emiN(), opts=[1,3,6]; if(n>1 && !opts.includes(n)) opts.push(n); const a=r2(parseFloat(E.amt)||0), fee=emiFeeNow(), per=n>1&&a>0? r2((a+fee)/n) : 0, pf=funds().find(x=>x.id===E.pay);
+  const ph = photoHas()? `<button class="phthumb" id="ePhView" aria-label="View bill photo"><img id="ePhImg" alt="Bill photo" ${E.photoData?`src="${E.photoData}"`:''}><span id="ePhMiss" class="small muted" style="display:none">Other device</span></button>` : `<button class="btn phbtn" id="ePhAdd" aria-label="Add bill photo">📷<span>Photo</span></button>`;
+  const info = n>1? `${per? n+' × <b class="num">'+sgd(per)+'</b> a month' : n+' monthly payments'} from ${ymLabel(addMonths(ymOf(E.date),1),true)}` : `Paid in full on ${niceDate(nextDue(pf, E.date))}`;
+  return `<label class="f">Bill photo · Pay back</label><div class="emirow" id="ePhRow">${ph}<div class="seg emiseg">${opts.map(m=>`<button type="button" data-emin="${m}" class="${m===n?'on':''}">${m===1?'Full':m+' months'}</button>`).join('')}</div></div>
+    <div class="emiinfo small muted"><span id="eEmiPer">${info}</span>${n>1? (fee||E.feeOpen? `<input class="in num insm" id="eEmiFee" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Fee" value="${fee||''}" aria-label="EMI fee or interest">` : `<button type="button" class="lnk" id="eFeeAdd" style="float:none">+ fee</button>`) : ''}
+    ${photoHas()? `<span class="emiph"><button type="button" class="lnk" id="ePhChg" style="float:none">Change photo</button> · <button type="button" class="lnk" id="ePhDel" style="float:none;color:var(--bad)">Remove</button></span>` : ''}</div>`; }
 function drawSheet(){
   const k = CAT[E.cat] || {}, emis = E.id? [] : activeEmis();
   const SHORT={food:'Food',travel:'Travel',temple:'Temple',entertainment:'Fun',medical:'Medical',laundry:'Laundry',salon:'Salon',shopping:'Shopping',rent:'Rent',ac:'AC bill',subs:'Subs',home:'Home',misc:'Misc',refund:'Refund'};
@@ -2526,10 +2541,10 @@ function drawSheet(){
     <div><label class="f">Rate: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
     <div class="small muted" id="rateNote" style="margin-top:6px">Enter either ${curCode()} or ${homeCode()} — the other is calculated.</div>`;
   h += `<label class="f">${k.income? 'Received in' : 'Paid with'}</label>${payGrid(E.pay,'data-pay')}`;
-  { const pf=funds().find(x=>x.id===E.pay); if(isCredit(pf) && !k.income) h += `<div class="small muted" style="margin-top:6px">💳 Credit: ${E.cat==='shopping'? (E.id&&E.emi&&E.emi.n>1&&E.emiChoice===undefined? 'EMI '+E.emi.n+' months · <button class="lnk" style="float:none" id="emiChg">Change</button>' : 'after Save you choose: pay in full or EMI') : 'paid in full on '+niceDate(nextDue(pf, E.date))}</div>`; }
+  { const pf=funds().find(x=>x.id===E.pay); if(isCredit(pf) && !k.income && !emiAllowed()) h += `<div class="small muted" style="margin-top:6px">💳 Credit: ${emiN()>1? 'split into '+emiN()+' monthly payments from '+ymLabel(addMonths(ymOf(E.date),1),true) : 'paid in full on '+niceDate(nextDue(pf, E.date))}</div>`; }
   const ph = {refund:'e.g. insurance claim, shop return, cashback', subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
-  h += `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label><input class="in" id="eNote" value="${esc(E.note)}" placeholder="${ph}" ${k.reason?'required':''}>
-  <label class="f">Bill photo (optional)</label><div class="phrow" id="ePhRow">${photoHas()? `<button class="phthumb" id="ePhView" aria-label="View bill photo"><img id="ePhImg" alt="Bill photo" ${E.photoData?`src="${E.photoData}"`:''}><span id="ePhMiss" class="small muted" style="display:none">On another device</span></button><button class="btn sm" id="ePhChg">Change</button><button class="btn sm danger" id="ePhDel">Remove</button>` : `<button class="btn" id="ePhAdd">📷 Add bill photo</button>`}</div><input type="file" id="ePhFile" accept="image/*" class="hidden">
+  h += `${emiAllowed()? `<div style="margin-top:14px"></div>` : `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label>`}<input class="in${emiAllowed()?' insm':''}" id="eNote" value="${esc(E.note)}" placeholder="${emiAllowed()? (k.reason?'Reason (required)':'Note (optional)')+' · '+ph.replace(/^e\.g\. /,'') : ph}" aria-label="${k.reason?'Reason':'Note'}" ${k.reason?'required':''}>
+  ${emiAllowed()? emiRow() : `<label class="f">Bill photo (optional)</label><div class="phrow" id="ePhRow">${photoHas()? `<button class="phthumb" id="ePhView" aria-label="View bill photo"><img id="ePhImg" alt="Bill photo" ${E.photoData?`src="${E.photoData}"`:''}><span id="ePhMiss" class="small muted" style="display:none">On another device</span></button><button class="btn sm" id="ePhChg">Change</button><button class="btn sm danger" id="ePhDel">Remove</button>` : `<button class="btn" id="ePhAdd">📷 Add bill photo</button>`}</div>`}<input type="file" id="ePhFile" accept="image/*" class="hidden">
   ${E.id? '<div class="actrow"><button class="btn danger" id="eDel">Delete</button><button class="btn primary" id="eSave">Save changes</button></div>'
     : '<div style="margin-top:16px"><button class="btn primary bigsave" id="eSave">Save</button></div><div class="btns" style="margin-top:8px;justify-content:center"><button class="btn" id="eSaveMore">Save &amp; add another</button></div>'}
 `;
@@ -2553,7 +2568,9 @@ function drawSheet(){
     if(!E.rate) loadRate();
   }
   if($('#eXfer')) $('#eXfer').onclick=()=>{ E=null; xferForm(null,null,'add'); };
-  if($('#emiChg')) $('#emiChg').onclick=()=>{ readSheet(); emiAsk(false); };
+  document.querySelectorAll('[data-emin]').forEach(b=>b.onclick=()=>{ readSheet(); const n=+b.dataset.emin; E.emiChoice = n>1? {n, fee:emiFeeNow()} : null; drawSheet(); });
+  if($('#eFeeAdd')) $('#eFeeAdd').onclick=()=>{ readSheet(); E.feeOpen=true; drawSheet(); setTimeout(()=>$('#eEmiFee')&&$('#eEmiFee').focus(),0); };
+  if($('#eEmiFee')) $('#eEmiFee').addEventListener('input',()=>{ const n=emiN(); E.emiChoice={n, fee:r2(Math.max(0,+$('#eEmiFee').value||0))}; const a=r2(parseFloat($('#eAmt').value)||0); if(a>0) $('#eEmiPer').innerHTML=n+' × <b class="num">'+sgd(r2((a+E.emiChoice.fee)/n))+'</b> a month from '+ymLabel(addMonths(ymOf(E.date),1),true); });
   $('#eSave').onclick=()=>commitEntry(false);
   if($('#eSaveMore')) $('#eSaveMore').onclick=()=>commitEntry(true);
   if($('#eDel')) deleteBtn($('#eDel'), E.id, ()=>closeSheet());
@@ -2635,8 +2652,7 @@ function commitEntry(more){
   if(E.cat==='food' && !E.sub){ toast('Choose breakfast, lunch, dinner, coffee, groceries or delivery'); return; }
   if(!(amt>0)){ toast('Enter an amount'); $('#eAmt').focus(); return; }
   if(CAT[E.cat].reason && !(E.note||'').trim()){ toast(E.cat==='refund'?'Add a reason for this refund':'Add a reason for this miscellaneous expense'); $('#eNote').focus(); return; }
-  const pf=E.pay? funds().find(x=>x.id===E.pay) : null, onCredit=isCredit(pf), emiOk = onCredit && E.cat==='shopping';
-  if(emiOk && !E.id && E.emiChoice===undefined){ emiAsk(more); return; }
+  const pf=E.pay? funds().find(x=>x.id===E.pay) : null, onCredit=isCredit(pf), emiOk = emiAllowed();
   const now=Date.now();
   const rec = {id:E.id||uid(), date:E.date, cat:E.cat, amt, note:(E.note||'').trim(), upd:now, cr:E.cr||now};
   if(emiOk){ const ch = E.emiChoice!==undefined? E.emiChoice : (E.emi||null); if(ch && ch.n>1) rec.emi={n:ch.n, fee:+ch.fee||0, start:(E.emi&&E.emi.start&&E.emiChoice===undefined)? E.emi.start : addMonths(ymOf(E.date),1)}; }
@@ -2777,7 +2793,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v77';
+const APP_VERSION='v78';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
