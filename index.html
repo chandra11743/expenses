@@ -2529,9 +2529,7 @@ function drawSheet(){
   ${(()=>{ const tile=c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`;
     const all=CATS.filter(c=>!c.friend && !c.track), main=all.filter(c=>!MORE_CATS.has(c.id)), more=all.filter(c=>MORE_CATS.has(c.id));
     const emiT = !E.id && (emis.length||E.cat==='emi')? `<button class="ct ${E.cat==='emi'?'on':''}" data-c="emi"><span class="ci">${catImg('emi')}</span><span class="cn">EMI</span></button>` : '';
-    const open = E.more || MORE_CATS.has(E.cat) || E.cat==='emi';
-    return `<div class="cgrid">${main.map(tile).join('')}${E.id?'':`<button class="ct" id="eDebt"><span class="ci">${catImg('debt')}</span><span class="cn">Debt</span></button>`}<button class="ct ${open?'on2':''}" id="eMore" aria-expanded="${open}"><span class="ci">${catImg('more')}</span><span class="cn">${open?'Less':'More'}</span></button></div>
-      ${open? `<div class="cgrid cmore">${more.map(tile).join('')}${emiT}</div>`:''}`; })()}
+    return `<div class="cgrid">${all.map(tile).join('')}${emiT}${E.id?'':`<button class="ct" id="eDebt"><span class="ci">${catImg('debt')}</span><span class="cn">Debt</span></button>`}</div>`; })()}
   ${E.cat?'':'<div class="small muted" style="margin-top:6px;text-align:center">Choose a category</div>'}`;
   if(E.cat==='emi'){ drawEmiPay(h, emis); return; }
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.name}</button>`;
@@ -2551,7 +2549,7 @@ function drawSheet(){
   openSheet(h);
   const amt=$('#eAmt');
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; drawSheet(); });
-  $('#eMore').onclick=()=>{ readSheet(); const open=E.more || MORE_CATS.has(E.cat) || E.cat==='emi'; if(open && (MORE_CATS.has(E.cat)||E.cat==='emi')) E.cat=''; E.more=!open; drawSheet(); };
+  if($('#eMore')) $('#eMore').onclick=()=>{ readSheet(); const open=E.more || MORE_CATS.has(E.cat) || E.cat==='emi'; if(open && (MORE_CATS.has(E.cat)||E.cat==='emi')) E.cat=''; E.more=!open; drawSheet(); };
   if($('#eDebt')) $('#eDebt').onclick=()=>{ readSheet(); debtChooser(); };
   bindPhoto();
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; drawSheet(); });
@@ -2793,7 +2791,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v78';
+const APP_VERSION='v79';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
