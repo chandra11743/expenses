@@ -1818,7 +1818,7 @@ function calendarView(es, days, signed, cat=S.histCat){
     const dark = pct>=48;
     const style = v>0 ? `background:color-mix(in srgb, var(--series-1) ${pct}%, var(--surface));${dark?'color:#fff;':''}` : '';
     const cls = ['d', date===today?'today':'', date===S.selDay?'sel':'', date>today?'future':''].join(' ');
-    const amt = v ? (Math.abs(v)>=1000 ? (v/1000).toFixed(1)+'k' : Math.abs(v)>=100 ? Math.round(v) : v.toFixed(v%1?1:0)) : (has?'0':'');
+    const amt = v ? (Math.abs(v)>=1000 ? (v/1000).toFixed(1)+'k' : Math.abs(v)>=100 ? Math.round(v) : v.toFixed(v%1?1:0)) : (has || date<=today ? '0' : '');   // every past day shows a number, 0 when nothing was spent
     const bell = dueSet.has(date);
     h += `<div class="${cls}" data-date="${date}" style="${style}" data-tip="${esc(dayLabel(date))}: ${sgd(v)}${has?' · '+days[date].length+' entr'+(days[date].length===1?'y':'ies'):''}${bell?' · 🔔 credit payment due':''}"><span class="dn">${d}${bell?'<span style="font-size:10px"> 🔔</span>':''}</span><span class="da num">${amt}</span></div>`;
     weekTot += v;
@@ -2791,7 +2791,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v79';
+const APP_VERSION='v80';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
