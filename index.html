@@ -650,6 +650,14 @@ nav.tabs button{font-size:10.5px}
 nav.tabs .navgap{display:none}
 .fab,:root[data-skin] .fab{left:auto!important;right:16px!important;transform:none!important;bottom:calc(98px + env(safe-area-inset-bottom))!important;width:58px!important;height:58px!important}
 @media (min-width:800px){.fab,:root[data-skin] .fab{right:calc(50% - 360px)!important}}
+button.tbig{width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:root[data-skin="tiles"] button.tbig{background:var(--surface);padding:16px}
+.tbig .tsub{font-size:12.5px;color:var(--text-2);margin-top:2px}
+.tdate span+span{font-weight:500}
+.hact{display:flex;align-items:center;gap:2px}
+.hact #syncLbl{display:none}
+.hact .headbtn{width:38px;height:38px;justify-content:center;padding:0;border-radius:19px}
+.hact .hic svg{display:block}
 </style>
 </head>
 <body>
@@ -660,7 +668,11 @@ nav.tabs .navgap{display:none}
     <button id="mLabel" class="mlabel num" aria-label="Show calendar for this month"></button>
     <button id="mNext" aria-label="Next month">›</button>
   </div>
-  <button class="headbtn" id="setBtn" title="Settings" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button><button class="headbtn" id="syncBtn" title="Sync"><span class="syncdot" id="syncDot"></span><span id="syncLbl">Sync</span></button>
+  <div class="hact">
+    <button class="headbtn" id="syncBtn" title="Sync" aria-label="Sync"><span class="syncdot" id="syncDot"></span><span id="syncLbl">Sync</span></button>
+    <button class="headbtn hic" id="calcBtn" title="Calculator" aria-label="Calculator"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7.5h7"/><circle cx="9" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="15" cy="12" r=".6" fill="currentColor"/><circle cx="9" cy="15.5" r=".6" fill="currentColor"/><circle cx="12" cy="15.5" r=".6" fill="currentColor"/><circle cx="15" cy="15.5" r=".6" fill="currentColor"/></svg></button>
+    <button class="headbtn hic" id="setBtn" title="Settings" aria-label="Settings"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  </div>
 </header>
 
 <main>
@@ -2278,21 +2290,29 @@ function ring(frac, l1, big, l2){ const C=2*Math.PI*96, f=Math.max(0,Math.min(1,
   <text x="115" y="96" text-anchor="middle" font-size="13" style="fill:var(--text-2)">${esc(l1)}</text><text x="115" y="132" text-anchor="middle" font-size="32" font-weight="800" style="fill:var(--text)">${esc(big)}</text><text x="115" y="156" text-anchor="middle" font-size="12.5" style="fill:var(--text-2)">${esc(l2)}</text></svg>`; }
 const stat = (l,v,cls,go) => `<${go?'button data-go="'+go+'"':'div'} class="nstat"><small>${l}</small><b class="num ${cls||''}">${v}</b></${go?'button':'div'}>`;
 
+/* Money left to spend until payday: only SPENDING accounts (emergency funds are kept out and hidden),
+   minus card / PayLater bills that fall due before the salary arrives. */
+function leftToSpend(){ const t=todayStr(), ns=nextSalary(), sp=funds().filter(f=>isSpend(f)), ef=funds().filter(f=>isEF(f)), cr=funds().filter(isCredit);
+  const have=r2(sp.reduce((a,f)=>a+liveBal(f),0)), dueL=cr.filter(f=>dueAt(f)>0.004 && nextDue(f)<=ns.pd), due=r2(dueL.reduce((a,f)=>a+dueAt(f),0));
+  const later=r2(cr.filter(f=>dueAt(f)>0.004 && nextDue(f)>ns.pd).reduce((a,f)=>a+dueAt(f),0)), left=r2(have-due);
+  const days=Math.max(1,Math.round((new Date(ns.pd+'T00:00:00')-new Date(t+'T00:00:00'))/86400000)), lastPd=payday(addMonths(ymOf(ns.pd),-1)), cycle=Math.max(1,Math.round((new Date(ns.pd+'T00:00:00')-new Date(lastPd+'T00:00:00'))/86400000));
+  return {have, due, dueL, later, left, days, per:r2(left/days), pd:ns.pd, cycle, ef:r2(ef.reduce((a,f)=>a+liveBal(f),0)), efList:ef, sp}; }
 /* ---------- Today ---------- */
 function renderToday(){
   const t=todayStr(), ym=curYM(), tt=dayTotals(ym), m=mm(ym), ev=everyday(ym), dl=Math.max(1,daysLeft(ym));
   const today=tt[t]||0, yd=dstr(new Date(Date.now()-86400000)), ydT=(dayTotals(ymOf(yd))[yd]||0);
   const mon=monday(t), wk=[...Array(7)].map((_,i)=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return dstr(d); });
   const wkT=r2(wk.filter(d=>d<=t).reduce((a,d)=>a+(dayTotals(ymOf(d))[d]||0),0));
-  const hv=r2(funds().filter(f=>!isCredit(f)).reduce((a,f)=>a+liveBal(f),0)), ow=r2(funds().filter(isCredit).reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), free=r2(hv-ow);
-  const D=debtTotals(), per=r2(ev.left/dl), sk=DS();
-  let h=`<div class="tdate"><span>${new Date().toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'})}</span></div>`;
-  if(sk==='calm') h+=`<div class="tring">${ring(ev.tot? ev.left/ev.tot : 0,'Left for everyday',sgd(ev.left),sgd(per)+' a day · '+dl+' day'+(dl===1?'':'s'))}</div>
-    <div class="trow3">${stat('Today',sgd(today))}${stat('Saved '+ymLabel(ym,true).split(' ')[0],sgd(m.saved),m.saved<0?'nbad':'pos','statement')}${stat('Free to use',sgd(free),'','accounts')}</div>`;
-  else if(sk==='tiles') h+=`<div class="tbig"><small>Spent today</small><b class="num">${sgd(today)}</b><span>Room today ${sgd(per)} · ${dl} day${dl===1?'':'s'} left</span></div>
-    <div class="tgrid">${stat('Saved in '+ymLabel(ym,true).split(' ')[0],sgd(m.saved),m.saved<0?'nbad':'','statement')}${stat('Free to use',sgd(free),'','accounts')}${stat('You owe',sgd(D.youOwe),'nbad','people')}${stat('Owed to you',sgd(D.owedToYou),'now','people')}</div>`;
-  else h+=`<div class="tbig"><small>Spent today</small><b class="num">${sgd(today)}</b><span>You can spend <b>${sgd(per)}</b> a day for ${dl} more day${dl===1?'':'s'}</span></div>
-    <div class="trow3">${stat('Yesterday',sgd(ydT))}${stat('This week',sgd(wkT))}${stat('Free to use',sgd(free),'','accounts')}</div>`;
+  const L=leftToSpend(), D=debtTotals(), sk=DS(), pdTxt=niceDate(L.pd), dTxt=L.days+' day'+(L.days===1?'':'s');
+  const leftV=`${L.left<0?'−':''}${sgd(Math.abs(L.left))}`, perTxt=L.left>0? sgd(L.per)+' a day for '+dTxt : 'Nothing left before payday';
+  const sub=L.due>0.004? `${sgd(L.have)} in spending accounts − ${sgd(L.due)} bills before payday` : `${sgd(L.have)} in spending accounts · no bills before payday${L.later>0.004?' ('+sgd(L.later)+' due after salary)':''}`;
+  let h=`<div class="tdate"><span>${new Date().toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'})}</span><span>Payday ${pdTxt}</span></div>`;
+  if(sk==='calm') h+=`<div class="tring">${ring(1-Math.min(1,(L.cycle-L.days)/L.cycle),'Left to spend',leftV,perTxt)}</div>
+    <div class="trow3">${stat('Spent today',sgd(today))}${stat('Budget left',sgd(ev.left))}${stat('Saved '+ymLabel(ym,true).split(' ')[0],sgd(m.saved),m.saved<0?'nbad':'pos','statement')}</div>`;
+  else if(sk==='tiles') h+=`<button class="tbig" data-go="accounts"><small>Left to spend until payday · ${pdTxt}</small><b class="num ${L.left<0?'nbad':''}">${leftV}</b><span>${perTxt}</span></button>
+    <div class="tgrid">${stat('Spent today',sgd(today))}${stat('Budget left',sgd(ev.left))}${stat('You owe',sgd(D.youOwe),'nbad','people')}${stat('Owed to you',sgd(D.owedToYou),'now','people')}</div>`;
+  else h+=`<button class="tbig" data-go="accounts"><small>Left to spend until payday · ${pdTxt}</small><b class="num ${L.left<0?'nbad':''}">${leftV}</b><span>${L.left>0?'You can spend <b>'+sgd(L.per)+'</b> a day for '+dTxt:'Nothing left before payday'}</span></button>
+    <div class="trow3">${stat('Spent today',sgd(today))}${stat('Yesterday',sgd(ydT))}${stat('Budget left',sgd(ev.left))}</div>`;
   h+=`<div class="twk">${wk.map(d=>{ const v=dayTotals(ymOf(d))[d]; return `<button class="${d===t?'on':''}" ${d<=t?`data-day="${d}"`:'disabled'}><small>${wd(d).slice(0,1)}</small><b>${+d.slice(8)}</b><i class="num">${d<=t? (v? (v>=100? Math.round(v) : v.toFixed(2)) : '0') : '·'}</i></button>`; }).join('')}</div>`;
   const at=attention(); if(at.length) h+=`<div class="nlbl2">NEEDS YOU</div><div class="ncard">${at.map((a,i)=>`<button class="nchip" data-at="${i}"><span>${a.txt}</span><b>${a.act}</b></button>`).join('')}</div>`;
   if(sk!=='calm') h+=`<button class="ncard nline" data-go="statement"><span class="nt"><small>Saved from income · ${ymLabel(ym,true).split(' ')[0]}</small><b class="num ${m.saved<0?'nbad':''}" style="font-size:19px">${m.saved<0?'−':''}${sgd(Math.abs(m.saved))}</b></span><span class="nlink">In ${sgd0(m.inn)} · Out ${sgd0(m.out)} ›</span></button>`;
@@ -2341,16 +2361,19 @@ function renderDay(){
 
 /* ---------- Accounts, Account, EMIs ---------- */
 function renderAccounts3(){
-  const have=funds().filter(f=>!isCredit(f)), cr=funds().filter(isCredit), totH=r2(have.reduce((a,f)=>a+liveBal(f),0)), totO=r2(cr.reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), ns=nextSalary(), free=r2(totH-totO), D=debtTotals();
+  const L=leftToSpend(), cr=funds().filter(isCredit), totO=r2(cr.reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), D=debtTotals(), showEF=!!S.showEF;
   const row=(f,amt,sub,cls)=>`<button class="nrow" data-acct="${esc(f.id)}"><span class="nic">${fIcon(f)}</span><span class="nt"><b>${esc(f.name)}</b><small class="${cls||''}">${sub}</small></span><span class="na"><b class="num">${amt}</b></span></button>`;
   let h=`<div class="nhead"><h2>Accounts</h2><button class="btn sm" id="acMove">${svi('moved',16)} Move</button></div>
-    <div class="ncard thero"><small>Free to use${ns.got?'':' until payday · '+niceDate(ns.pd)}</small><b class="nbig2 num ${free<0?'neg':''}">${free<0?'−':''}${sgd(Math.abs(free))}</b><small>${sgd(totH)} you have − ${sgd(totO)} you owe</small></div>
-    <div class="nlbl2">YOU HAVE · ${sgd(totH)}</div><div class="ncard">${have.map(f=>row(f, sgd(liveBal(f)), ago(f.at), staleDays(f.at)>=14?'nbad':'')).join('')}</div>
-    <div class="nlbl2">YOU OWE · ${sgd(totO)}</div><div class="ncard">${cr.map(f=>row(f, sgd(Math.max(0,owedOf(f))), dueAt(f)>0.004? 'Bill '+sgd(dueAt(f))+' due '+niceDate(nextDue(f)) : (emiAfter(f.id,nextDue(f))>0.004?'EMI only':'Nothing due'))).join('')}</div>
+    <div class="ncard thero"><small>Left to spend until payday · ${niceDate(L.pd)}</small><b class="nbig2 num ${L.left<0?'neg':''}">${L.left<0?'−':''}${sgd(Math.abs(L.left))}</b><small>${L.left>0? sgd(L.per)+' a day for '+L.days+' day'+(L.days===1?'':'s') : 'nothing spare'}</small></div>
+    <div class="nlbl2">SPENDING ACCOUNTS · ${sgd(L.have)}</div><div class="ncard">${L.sp.map(f=>row(f, sgd(liveBal(f)), ago(f.at), staleDays(f.at)>=14?'nbad':'')).join('') || '<div class="small muted" style="padding:6px 0">No spending accounts. Pick them in Manage accounts.</div>'}</div>
+    <div class="nlbl2">YOU OWE · ${sgd(totO)}</div><div class="ncard">${cr.map(f=>row(f, sgd(Math.max(0,owedOf(f))), dueAt(f)>0.004? 'Bill '+sgd(dueAt(f))+' due '+niceDate(nextDue(f))+(nextDue(f)>L.pd?' · after salary':'') : (emiAfter(f.id,nextDue(f))>0.004?'EMI only':'Nothing due'))).join('')}</div>
     <button class="ncard nline" data-go="emis"><span class="nt"><b>EMIs</b><small>${D.emis.length} plan${D.emis.length===1?'':'s'} · ${sgd(D.futureEmi)} still to bill</small></span><span class="nlink">›</span></button>
+    ${L.efList.length? `<button class="ncard nline" id="acEF"><span class="nt"><b>Emergency fund</b><small>${L.efList.map(f=>esc(shortName(f))).join(', ')} · kept out of “left to spend”</small></span><span class="nlink num">${showEF? sgd(L.ef)+' · Hide' : 'S$ •••• · Show'}</span></button>
+      ${showEF? `<div class="ncard">${L.efList.map(f=>row(f, sgd(liveBal(f)), ago(f.at), staleDays(f.at)>=14?'nbad':'')).join('')}</div>`:''}`:''}
     <div class="btns ngrid2"><button class="btn" id="acChk">Check balances</button><button class="btn" id="acMan">Manage accounts</button></div>`;
   const root=$('#tab-accounts'); root.innerHTML=h; bindGo(root);
   root.querySelectorAll('[data-acct]').forEach(b=>b.onclick=()=>{ S.acct=b.dataset.acct; go('acct'); });
+  if($('#acEF')) $('#acEF').onclick=()=>{ S.showEF=!S.showEF; renderAccounts3(); };
   $('#acMove').onclick=()=>xferForm(null); $('#acChk').onclick=()=>balancesSheet({}); $('#acMan').onclick=()=>balancesSheet({settings:true});
 }
 function renderAcct(){
@@ -3159,7 +3182,7 @@ function calcFmt(v){ const r=Math.round(v*100)/100; return r.toLocaleString('en-
 function calcSheet(){
   const keys=['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','( )','0','.','='];
   const DEL='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M16.5 9.5l-5 5M11.5 9.5l5 5"/></svg>';
-  openSheet(`<div class="sheettop"><h3>🧮 Calculator</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+  openSheet(`<div class="sheettop"><h3>Calculator</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
     <div class="calcpad"><div class="expr num" id="cExpr"></div><div class="res num" id="cRes"></div>
     <div class="keys">${keys.map(k=>`<button data-k="${k}" class="${'÷×−+'.includes(k)&&k.length===1?'op':k==='='?'eq':k==='C'||k==='⌫'?'c':''}" aria-label="${k==='( )'?'Brackets':k==='⌫'?'Delete':k}">${k==='⌫'?DEL:k}</button>`).join('')}</div></div>
     <div class="btns"><button class="btn" id="cCopy" style="flex:1">Copy result</button><button class="btn primary" id="cAdd" style="flex:1">+ Add as expense</button></div>`);
@@ -3497,7 +3520,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v85';
+const APP_VERSION='v87';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -3806,6 +3829,7 @@ function go(t){ if(t==='settings' && S.tab!=='settings') S.prevTab=S.tab; S.tab=
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 $('#fab').onclick=()=>openEntry(null);
 $('#setBtn').onclick=()=>go('settings');
+$('#calcBtn').onclick=()=>calcSheet();
 /* Swipe left/right on a page to move between Home, Calendar, Analysis and Budget. Stops at the ends; ignored on cards, charts, tables and inputs. */
 (function(){ const ORDER=['home','cal','accounts','people','plan']; let sx=null, sy=0, st=0;
   const skip=t=>!!(t.closest && t.closest('.crail,.ccar,.tablewrap,svg,[data-tip],input,select,textarea,.chips,.seg,.datechips,.calgrid,.cal'));
