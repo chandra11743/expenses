@@ -525,7 +525,131 @@ button.ncard,.nhero{cursor:pointer}
 .naddg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .nadd{display:flex;flex-direction:column;gap:8px;text-align:left;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:16px 14px;min-height:140px;cursor:pointer}
 .nadd .nico{width:48px;height:48px;border-radius:14px}.nadd b{font-size:17px}.nadd small{font-size:12.5px;color:var(--text-2);line-height:1.35}
+.ntype{display:flex;margin-top:8px}.ntype button{flex:1;padding:9px 4px;font-weight:650}
 .nprior{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px;color:var(--text-2);cursor:pointer}.nprior input{margin-top:2px}
+/* ---- v84 minimal layout (all styles) ---- */
+:root[data-skin] .ncard{box-shadow:none;border-radius:16px;padding:14px 16px}
+:root[data-skin] .nhero{background:transparent;border:0;box-shadow:none;padding:4px 4px 10px;margin-bottom:4px}
+:root[data-skin] .nhero .nlbl{color:var(--muted);font-weight:600}
+:root[data-skin] .nbig{font-size:calc(46px * var(--hs,1))}
+:root[data-skin] .ninout{gap:22px;margin-top:4px}
+:root[data-skin] .nbox{background:none!important;padding:0;flex:none;border-radius:0}
+:root[data-skin] .nbox small{color:var(--muted)!important;font-weight:500}
+:root[data-skin] .nbox b{font-size:15px;font-weight:600}
+:root[data-skin] .nnote{font-size:12px;color:var(--muted)}
+:root[data-skin] .nchip{border:0;border-top:1px solid var(--border);border-radius:0;background:none;margin:0;padding:12px 4px}
+:root[data-skin] .nchip.dash{border-style:solid;border-color:var(--border)}
+:root[data-skin] .nchip span{font-weight:500}
+:root[data-skin] .nlbl2,:root[data-skin] .nlbl{font-weight:600;color:var(--muted);letter-spacing:.6px;font-size:11.5px}
+:root[data-skin] .nrow .nic{width:10px;height:auto;align-self:flex-start;margin-top:7px}
+:root[data-skin] .nrow .nic>*{display:none!important}
+:root[data-skin] .nrow .nic::before{content:'';display:block;width:8px;height:8px;border-radius:4px;background:var(--border)}
+:root[data-skin] .nrow.k-out .nic::before{background:var(--text)}
+:root[data-skin] .nrow.k-in .nic::before{background:var(--good)}
+:root[data-skin] .nrow.k-owed .nic::before{background:var(--warn)}
+:root[data-skin] .nrow.k-moved .nic::before,:root[data-skin] .nrow.k-prior .nic::before{background:var(--muted)}
+:root[data-skin] .nrow .nt b{font-weight:500}
+:root[data-skin] .ntag{background:none!important;padding:0;margin-top:2px;font-weight:500;font-size:11px}
+:root[data-skin] .nline .nico{width:30px;height:30px;border-radius:9px;background:none!important;border:1px solid var(--border)}
+:root[data-skin] .nbar{height:6px;border-radius:3px}
+:root[data-skin] .nwarm{background:var(--surface)}
+:root[data-skin] .nhow{background:none;border:0;border-left:2px solid var(--accent);border-radius:0;padding:2px 12px;font-size:12.5px;color:var(--text-2)}
+:root[data-skin] .npips i{height:4px}
+:root[data-skin] .nprog{height:5px}
+:root[data-skin] .nkv{font-size:13.5px}
+:root[data-skin] .nemi{padding:12px 0}
+:root[data-skin] .cgrid{display:flex;flex-wrap:wrap;gap:8px}
+:root[data-skin] .ct{flex-direction:row;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface)}
+:root[data-skin] .ct .ci{display:none!important}
+:root[data-skin] .ct .cn{font-size:13.5px;color:var(--text);font-weight:500}
+:root[data-skin] .ct.on{background:var(--text);border-color:var(--text)}
+:root[data-skin] .ct.on .cn{color:var(--bg)}
+:root[data-skin] .pgrid{display:flex;flex-wrap:wrap;gap:8px}
+:root[data-skin] .pt{flex-direction:row;gap:6px;padding:8px 14px!important;border-radius:999px;border:1px solid var(--border);align-items:baseline}
+:root[data-skin] .pt .pi{display:none!important}
+:root[data-skin] .pt .pn{font-size:13.5px;font-weight:500}
+:root[data-skin] .pt .ps{font-size:11px}
+:root[data-skin] .pt.on{background:var(--text);border-color:var(--text);color:var(--bg)}
+:root[data-skin] .pt.on .ps{color:var(--bg);opacity:.75}
+:root[data-skin] .pt.on .pn{color:var(--bg)!important}
+:root[data-skin] .amtbox input{font-weight:300}
+:root[data-skin] .sheet h3{font-weight:500}
+/* ---- v85: A Paper Ledger · B Tiles · C Calm ---- */
+nav.tabs button{font-size:10.5px}
+.tdate{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--text-2);margin:2px 4px 10px;letter-spacing:.3px}
+.tbig{display:flex;flex-direction:column;gap:2px;margin:0 4px 14px}
+.tbig small{font-size:13px;color:var(--text-2)}
+.tbig>b{font-family:var(--font-display);font-weight:var(--dw);font-size:calc(56px * var(--hs,1));letter-spacing:-.02em;line-height:1.05}
+.tbig span{font-size:14.5px;color:var(--text)}
+.trow3{display:flex;gap:22px;margin:0 4px 14px}
+.nstat{display:flex;flex-direction:column;gap:2px;text-align:left;font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.nstat small{font-size:12px;color:var(--text-2)}.nstat b{font-size:15.5px;font-weight:600}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tring{display:flex;justify-content:center;margin:-4px 0 4px}.nring{width:220px;height:220px}
+.twk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:0 0 14px}
+.twk button{display:flex;flex-direction:column;align-items:center;gap:1px;font:inherit;color:inherit;background:none;border:0;border-bottom:2px solid transparent;padding:6px 0;cursor:pointer}
+.twk button small{font-size:10.5px;color:var(--text-2)}.twk button b{font-size:14px}.twk button i{font-style:normal;font-size:10.5px;color:var(--text-2)}
+.twk button.on{border-bottom-color:var(--text)}.twk button:disabled{opacity:.45;cursor:default}
+.thero small{display:block;font-size:12.5px;color:var(--text-2)}
+.ntrio{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin:-4px 4px 12px}.ntrio small{color:var(--text-2);font-size:13px}
+.nchips{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.nchips button{font:inherit;font-size:13px;padding:7px 12px;border-radius:16px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}
+.nchips button.on{background:var(--text);border-color:var(--text);color:var(--bg)}
+.ccal{padding:10px 8px}
+.cgr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.cw{font-size:11px;color:var(--text-2);padding-bottom:4px}
+.cd{height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;color:var(--text);background:none;border:0;border-top:1px solid var(--border);cursor:pointer;border-radius:0}
+.cd b{font-size:13px;font-weight:500}.cd i{font-style:normal;font-size:10px;color:var(--text-2)}
+.cd.h3 i{color:var(--text);font-weight:700}.cd.h2 i{color:var(--text);font-weight:600}
+.cd.td{border-top:2px solid var(--text)}.cd.td b{font-weight:700}
+.cd.fut{color:var(--muted);cursor:default;opacity:.5}
+.dbar{display:flex;align-items:center;gap:10px;width:100%;font:inherit;color:inherit;background:none;border:0;padding:8px 0;cursor:pointer;font-size:13.5px}
+.dbar .dd{width:64px;text-align:left;color:var(--text-2)}.dbar .db{flex:1;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}.dbar .db i{display:block;height:10px;border-radius:5px;background:var(--accent)}
+.dbar b{width:64px;text-align:right}
+.nbud{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-top:1px solid var(--border);cursor:pointer}
+.ncard>.nbud:first-child{border-top:0}
+.pav{width:38px;height:38px;border-radius:19px;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none;background:var(--good-bg);color:var(--good)}
+.pav.owe{background:var(--warn-bg);color:var(--warn)}
+.pav.big{width:52px;height:52px;border-radius:26px;font-size:17px}
+.phead{display:flex;align-items:center;gap:12px;margin:-6px 4px 14px}.phead b{display:block;font-size:22px;font-weight:700}.phead small{font-size:14px;font-weight:600}
+.ptabs .ncard{text-align:left;cursor:pointer}.ptabs .ncard.on{border:2px solid var(--text)}
+:root[data-skin] .nrow .nic:empty{width:10px}
+/* B · Tiles */
+:root[data-skin="tiles"] .tbig{background:var(--surface);border-radius:22px;padding:16px;margin:0 0 10px}
+:root[data-skin="tiles"] .tbig>b{font-weight:700;font-size:44px}
+:root[data-skin="tiles"] .tgrid .nstat{background:var(--surface);border-radius:20px;padding:14px}
+:root[data-skin="tiles"] .tgrid .nstat b{font-size:22px;font-weight:700}
+:root[data-skin="tiles"] .twk{background:var(--surface);border-radius:20px;padding:6px}
+:root[data-skin="tiles"] .cd{border:0;border-radius:12px;background:var(--surface-2)}
+:root[data-skin="tiles"] .cd.h1{background:color-mix(in srgb,var(--text) 12%,var(--surface))}
+:root[data-skin="tiles"] .cd.h2{background:color-mix(in srgb,var(--text) 28%,var(--surface))}
+:root[data-skin="tiles"] .cd.h3{background:var(--text);color:var(--bg)}:root[data-skin="tiles"] .cd.h3 i{color:var(--bg)}
+:root[data-skin="tiles"] .cd.td{outline:2px solid var(--text);outline-offset:-2px}
+:root[data-skin="tiles"] .cd.fut{background:none}
+:root[data-skin="tiles"] nav.tabs{background:var(--text);border-color:var(--text)}
+:root[data-skin="tiles"] nav.tabs button{color:color-mix(in srgb,var(--bg) 60%,var(--text))}
+:root[data-skin="tiles"] nav.tabs button.on{color:var(--bg)}
+:root[data-skin="tiles"] nav.tabs button.on svg{background:none}
+:root[data-skin="tiles"] .fab{background:var(--bg)!important;color:var(--text)!important;box-shadow:0 0 0 4px var(--text)}
+/* C · Calm */
+:root[data-skin="calm"] .cd{border:0;border-radius:12px}
+:root[data-skin="calm"] .cd.h1{background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+:root[data-skin="calm"] .cd.h2{background:color-mix(in srgb,var(--accent) 32%,var(--surface))}
+:root[data-skin="calm"] .cd.h3{background:var(--accent);color:var(--accent-ink)}:root[data-skin="calm"] .cd.h3 i{color:var(--accent-ink)}
+:root[data-skin="calm"] .cd.td{outline:2px solid var(--accent);outline-offset:-2px}
+:root[data-skin="calm"] .nchips button.on,:root[data-skin="calm"] .ct.on,:root[data-skin="calm"] .pt.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+:root[data-skin="calm"] .ct.on .cn,:root[data-skin="calm"] .pt.on .pn{color:var(--accent-ink)!important}
+:root[data-skin="calm"] .twk button.on{border-bottom-color:var(--accent)}
+:root[data-skin="calm"] .thero{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+:root[data-skin="calm"] .thero small{color:color-mix(in srgb,var(--accent-ink) 80%,transparent)}
+:root[data-skin="calm"] .ptabs .ncard.on{border-color:var(--accent)}
+/* A · Paper: hairlines only */
+:root[data-skin="paper"] .thero{padding-left:4px}
+:root[data-skin="paper"] .ptabs .ncard{border:1px solid var(--border);border-radius:14px}
+:root[data-skin="paper"] .ptabs .ncard.on{border:2px solid var(--text)}
+nav.tabs .navgap{display:none}
+.fab,:root[data-skin] .fab{left:auto!important;right:16px!important;transform:none!important;bottom:calc(98px + env(safe-area-inset-bottom))!important;width:58px!important;height:58px!important}
+@media (min-width:800px){.fab,:root[data-skin] .fab{right:calc(50% - 360px)!important}}
 </style>
 </head>
 <body>
@@ -547,6 +671,13 @@ button.ncard,.nhero{cursor:pointer}
   <section id="tab-debts" class="hidden"></section>
   <section id="tab-statement" class="hidden"></section>
   <section id="tab-insights" class="hidden"></section>
+  <section id="tab-cal" class="hidden"></section>
+  <section id="tab-day" class="hidden"></section>
+  <section id="tab-acct" class="hidden"></section>
+  <section id="tab-emis" class="hidden"></section>
+  <section id="tab-people" class="hidden"></section>
+  <section id="tab-person" class="hidden"></section>
+  <section id="tab-cat" class="hidden"></section>
   <section id="tab-history" class="hidden"></section>
   <section id="tab-analysis" class="hidden"></section>
   <section id="tab-budget" class="hidden"></section>
@@ -558,11 +689,12 @@ button.ncard,.nhero{cursor:pointer}
 <button class="fab" id="fab" aria-label="Add">+</button>
 
 <nav class="tabs">
-  <button data-tab="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</button>
-  <button data-tab="activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Activity</button>
+  <button data-tab="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>Today</button>
+  <button data-tab="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Calendar</button>
   <span class="navgap" aria-hidden="true"></span>
-  <button data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Plan</button>
   <button data-tab="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>Accounts</button>
+  <button data-tab="people"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c1-4 3.5-5 6-5s5 1 6 5M16 5a3 3 0 0 1 0 6M18 15c2 .5 3 2 3.5 5"/></svg>People</button>
+  <button data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Plan</button>
 </nav>
 
 <div class="sheet-bg" id="sheetBg">
@@ -982,8 +1114,8 @@ return {card,icon,ink,keyOf};
 })();
 
 const SKINKEY='dailyExpenseTracker.skin';
-const SKIN_IDS=['obsidian','ivory','aurora','paper','tiles','papertiles','calm'];
-function skin(){ try{ const v=localStorage.getItem(SKINKEY); return SKIN_IDS.includes(v)? v : 'obsidian'; }catch(e){ return 'obsidian'; } }
+const SKIN_IDS=['paper','tiles','calm'];
+function skin(){ try{ const v=localStorage.getItem(SKINKEY); return SKIN_IDS.includes(v)? v : ({papertiles:'tiles',obsidian:'paper',ivory:'paper',aurora:'calm'}[v]||'paper'); }catch(e){ return 'paper'; } }
 function artSkin(k){ k=k||skin(); return {paper:'ivory',papertiles:'ivory',calm:'ivory',tiles:'obsidian'}[k]||k; }
 function setSkin(v){ try{ localStorage.setItem(SKINKEY,v); }catch(e){} applyTheme(); render(); }
 const catImg = id => `<img class="cimg" alt="" src="${ART.icon(artSkin(), id)}">`;
@@ -1494,10 +1626,10 @@ function xferForm(src, back, origin, preset){
   const yest=(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); })();
   const opts=(sel,attr,outside)=>payGrid(sel, attr, outside? funds().filter(f=>!isCredit(f)) : funds(), outside?`<button class="pt ${sel===''?'on':''}" ${attr}="" id="xIncT" title="Money from outside: bonus, gift, refund to bank"${sel===''?'':' style="display:none"'}><span class="pi"><svg class="fimg" viewBox="0 0 160 100" aria-hidden="true" style="color:var(--accent)"><rect x="3" y="3" width="154" height="94" rx="14" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="7 6"/><path d="M80 24v40M64 50l16 16 16-16M58 76h44" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pn">Income</span></button>`:'');
   openSheet(`<div class="sheettop"><h3>${e.id?'Edit transfer':fromAdd?'Add':p.title||'Transfer'}</h3><button class="btn sm" id="xBack">${fromAdd||!back&&!p.back?'Close':'Back'}</button></div>
-    ${fromAdd?'<div class="seg" style="margin-top:6px"><button id="xToExp">Expense</button><button class="on">🔁 Transfer</button></div>':''}
-    <div class="small muted" style="margin-top:6px">Recharge NETS or EZ-Link, bank to bank, ATM, or move savings. Never counted as spending.${salAuto().on&&salAuto().to?` Salary goes into ${esc(fundName(salAuto().to))} by itself on payday.`:''}</div>
+    ${fromAdd?typeStrip('move'):''}
+    <div class="small muted" style="margin-top:6px">Between your own accounts: bank to bank, ATM, NETS or EZ-Link top-up, or paying a card / PayLater bill. Never counted as spending.</div>
     <div class="amtbox"><span class="cur">${esc(curInfo(curCode()).sym.trim())}</span><input class="num" id="xAmt" type="text" inputmode="decimal" autocomplete="off" value="${e.amt}" placeholder="0.00" aria-label="Amount (${curCode()})" style="width:${Math.max(4,String(e.amt||'').length+1)}ch"></div>
-    <label class="f">From</label>${opts(from,'data-xf',true)}${from===''?'':'<button type="button" class="btn sm" id="xInc" style="margin-top:8px">+ Money from outside (bonus, gift, refund)</button>'}
+    <label class="f">From</label>${opts(from,'data-xf',true)}${(from==='' || !e.id)?'':'<button type="button" class="btn sm" id="xInc" style="margin-top:8px">+ Money from outside (bonus, gift, refund)</button>'}
     <label class="f">To</label>${opts(to,'data-xt',false)}
     <div id="xPrev" class="kpi" style="margin-top:12px;display:none"></div>
     <label class="f">Date</label><div class="datechips"><button class="chip" data-xd="${todayStr()}">Today</button><button class="chip" data-xd="${yest}">Yesterday</button><input class="in" type="date" id="xDate" value="${e.date}" aria-label="Pick a date"></div>
@@ -1511,7 +1643,7 @@ function xferForm(src, back, origin, preset){
     $('#xSave').textContent = a>0? (from? 'Move '+sgd(a) : 'Add '+sgd(a)) : 'Save';
     document.querySelectorAll('[data-xd]').forEach(b=>b.classList.toggle('on',b.dataset.xd===$('#xDate').value)); };
   const pick=(attr,set)=>document.querySelectorAll(`[${attr}]`).forEach(b=>b.onclick=()=>{ set(b.getAttribute(attr)); document.querySelectorAll(`[${attr}]`).forEach(x=>x.classList.toggle('on',x===b)); upd(); });
-  pick('data-xf',v=>from=v); pick('data-xt',v=>to=v);
+  pick('data-xf',v=>from=v); pick('data-xt',v=>{ to=v; const f=funds().find(x=>x.id===v); if(!e.id && isCredit(f) && !(parseFloat(amt.value)>0) && dueAt(f)>0.004){ amt.value=dueAt(f).toFixed(2); amt.style.width=Math.max(4,amt.value.length+1)+'ch'; toast(f.name+' bill due '+niceDate(nextDue(f))+': '+sgd(dueAt(f))); upd(); } });
   if($('#xInc')) $('#xInc').onclick=()=>{ const t=$('#xIncT'); t.style.display=''; t.click(); $('#xInc').remove(); };
   document.querySelectorAll('[data-xd]').forEach(b=>b.onclick=()=>{ $('#xDate').value=b.dataset.xd; upd(); });
   $('#xDate').onchange=upd;
@@ -1519,7 +1651,7 @@ function xferForm(src, back, origin, preset){
   upd(); if(!e.id && !e.amt) amt.focus();
   const leave=()=> fromAdd||(!back&&!p.back)? closeSheet() : p.back? p.back() : accountSheet(back);
   $('#xBack').onclick=leave;
-  if($('#xToExp')) $('#xToExp').onclick=()=>openEntry(null);
+  bindTypeStrip();
   $('#xSave').onclick=()=>{
     const a=r2(parseFloat(amt.value));
     if(!(a>0)){ toast('Enter an amount'); amt.focus(); return; }
@@ -1734,10 +1866,10 @@ document.addEventListener('scroll',()=>tip(null,null),{passive:true});
 
 function render(){
   $('#mLabel').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>${ymLabel(S.ym,true)}`;
-  const PARENT={debts:'accounts',statement:'home',insights:'home',budget:'plan',history:'activity',analysis:'home'};
+  const PARENT={debts:'people',statement:'plan',insights:'plan',budget:'plan',history:'cal',analysis:'plan',activity:'cal',day:'cal',acct:'accounts',emis:'accounts',person:'people',cat:'plan'};
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(PARENT[S.tab]||S.tab)));
-  ['home','activity','plan','accounts','debts','statement','insights','history','analysis','budget','settings'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==S.tab));
-  try{ ({home:renderHome2,activity:renderActivity,plan:renderPlan,accounts:renderAccounts2,debts:renderDebts,statement:renderStatement,insights:renderInsights,history:renderHistory,analysis:renderAnalysis,budget:renderBudget,settings:renderSettings})[S.tab]();
+  ['home','activity','plan','accounts','debts','statement','insights','history','analysis','budget','settings','cal','day','acct','emis','people','person','cat'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==S.tab));
+  try{ ({home:renderToday,activity:renderActivity,plan:renderPlan3,accounts:renderAccounts3,debts:renderDebts,statement:renderStatement,insights:renderInsights,history:renderHistory,analysis:renderAnalysis,budget:renderBudget,settings:renderSettings,cal:renderCal,day:renderDay,acct:renderAcct,emis:renderEmis,people:renderPeople,person:renderPerson,cat:renderCat})[S.tab]();
     if(S.tab==='budget'||S.tab==='history'||S.tab==='analysis'){ const r=$('#tab-'+S.tab); r.insertAdjacentHTML('afterbegin', npage(S.tab==='budget'?'Salary &amp; budgets':S.tab==='history'?'Calendar':'Analysis', PARENT[S.tab])); r.querySelector('.nhead [data-go]').onclick=()=>go(PARENT[S.tab]); } }
   catch(err){ if(S.tab!=='settings'){ S.tab='settings'; toast('Some saved data couldn’t be shown. Settings opened so you can save a backup.'); return render(); }
     $('#tab-settings').innerHTML='<div class="card"><b>Something in the saved data couldn’t be shown.</b><div class="small muted">'+esc(err&&err.message)+'</div></div>'; }
@@ -1922,7 +2054,7 @@ function nRow(e, withDate){ const k=kindOf(e), c=costOf(e);
   else if(k==='moved'){ ic=`<span class="nico nmv">${svi('moved')}</span>`; amt=sgd(e.amt); const t=allFunds().find(f=>f.id===e.to); tag=isCredit(t)? 'Bill paid' : 'Moved'; }
   else { ic=`<span class="nico now">${svi('person')}</span>`; amt=sgd(e.amt); tag={lent:'Owed to you',repaid:'Got back',borrowed:'You owe',payback:'Paid back'}[e.cat]||'Owed'; }
   const cls=TAGS[k]? TAGS[k][0] : '';
-  return `<button class="nrow" onclick="openEntry(${jsa(e.id)})"><span class="nic">${ic}</span><span class="nt"><b>${nTitle(e)}</b><small>${nSub(e,withDate)}</small></span><span class="na"><b class="num ${cls}">${amt}</b>${tag?`<i class="ntag ${cls}">${tag}</i>`:''}</span></button>`; }
+  return `<button class="nrow k-${k}" onclick="openEntry(${jsa(e.id)})"><span class="nic">${ic}</span><span class="nt"><b>${nTitle(e)}</b><small>${nSub(e,withDate)}</small></span><span class="na"><b class="num ${cls}">${amt}</b>${tag?`<i class="ntag ${cls}">${tag}</i>`:''}</span></button>`; }
 function npage(title, back, right){ return `<div class="nhead"><button class="nback" data-go="${back}" aria-label="Back">${svi('back')}</button><h2>${title}</h2>${right||''}</div>`; }
 function bindGo(root){ root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); bindTips(root); }
 function monthAll(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date && e.date.startsWith(ym)).sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0)); }
@@ -1933,14 +2065,18 @@ function attention(){ const out=[], t=todayStr();
   const ns=nextSalary(); const dd=Math.round((new Date(ns.pd)-new Date(t))/86400000);
   if(!ns.got && ns.amt>0 && dd<=7) out.push({k:'sal', txt:`${ymLabel(ns.forYm,true).split(' ')[0]} salary expected ${niceDate(ns.pd)} · ${sgd0(ns.amt)}`, act:'Check ›'});
   const st=funds().filter(f=>!isCredit(f) && staleDays(f.at)>=14);
-  if(st.length) out.push({k:'rec', txt:`${st.map(f=>shortName(f)).join(', ')} not checked for ${Math.min(...st.map(f=>staleDays(f.at)))>=999? 'a while' : Math.min(...st.map(f=>staleDays(f.at)))+' days'}`, act:'Check ›'});
+  if(st.length) out.push({k:'rec', txt:`${st.map(f=>shortName(f)).join(', ')}: balance${st.length>1?'s':''} not checked in over 2 weeks`, act:'Check ›'});
   funds().filter(isCredit).forEach(f=>{ const d=dueAt(f), nd=nextDue(f), days=Math.round((new Date(nd)-new Date(t))/86400000); if(d>0.004 && days<=10) out.push({k:'card', id:f.id, txt:`${esc(f.name)} bill ${sgd(d)} due ${niceDate(nd)}`, act:'Pay ›'}); });
   return out; }
-function debtTotals(){ const cards=funds().filter(isCredit), owe=friendLedger('owe').filter(f=>f.owed>0.004), lend=friendLedger('lend').filter(f=>f.owed>0.004), emis=activeEmis();
+function netFriends(){ const m={}; const add=(l,sign)=>l.forEach(f=>{ const k=f.name.toLowerCase(), o=m[k]||(m[k]={name:f.name, net:0, items:[]}); o.net=r2(o.net+sign*f.owed); o.items.push(...f.items); });
+  add(friendLedger('lend'),1); add(friendLedger('owe'),-1);
+  const all=Object.values(m).map(o=>({...o, owed:Math.abs(o.net), items:o.items.sort((a,b)=>b.date.localeCompare(a.date))}));
+  return {lend:all.filter(o=>o.net>0.004).sort((a,b)=>b.owed-a.owed), owe:all.filter(o=>o.net<-0.004).sort((a,b)=>b.owed-a.owed)}; }
+function debtTotals(){ const cards=funds().filter(isCredit), NF=netFriends(), owe=NF.owe, lend=NF.lend, emis=activeEmis();
   const cardOwed=r2(cards.reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), emiL=r2(emis.reduce((a,e)=>a+emiLeft(e),0));
   const futureEmi=r2(cards.reduce((a,f)=>a+emiAfter(f.id,nextDue(f)),0));
   return {cards, owe, lend, emis, cardOwed, emiL, futureEmi, friendsOwe:r2(owe.reduce((a,f)=>a+f.owed,0)), owedToYou:r2(lend.reduce((a,f)=>a+f.owed,0)),
-    youOwe:r2(cardOwed - futureEmi + owe.reduce((a,f)=>a+f.owed,0))}; }
+    youOwe:r2(cardOwed + owe.reduce((a,f)=>a+f.owed,0))}; }
 
 /* ---------- Home ---------- */
 function renderHome2(){
@@ -1950,6 +2086,8 @@ function renderHome2(){
     <span class="nbig num ${m.saved<0?'neg':''}">${m.saved<0?'−':''}${sgd(Math.abs(m.saved))}</span>
     <span class="ninout"><span class="nbox nbin"><small>Money in</small><b class="num">${sgd(m.inn)}</b></span><span class="nbox nbout"><small>Money out</small><b class="num">${sgd(m.out)}</b></span></span>
     <span class="nnote">${pct!==null? (pct>=0? pct+'% of income kept. ' : 'Spent '+Math.abs(pct)+'% more than came in. ') : ''}Moving money and friends’ money aren’t counted. Full statement ›</span></button>`;
+  if(cur){ const hv=r2(funds().filter(f=>!isCredit(f)).reduce((a,f)=>a+liveBal(f),0)), ow=r2(funds().filter(isCredit).reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), ns=nextSalary(), fr=r2(hv-ow);
+    h+=`<button class="ncard nline" data-go="accounts"><span class="nt"><small style="font-weight:600">Free to use${ns.got?'':' until payday · '+niceDate(ns.pd)}</small><b class="num ${fr<0?'nbad':''}" style="font-size:20px">${fr<0?'−':''}${sgd(Math.abs(fr))}</b></span><span class="nlink">Accounts ›</span></button>`; }
   if(cur){ const at=attention(); if(at.length) h+=`<div class="nlbl2">NEEDS YOUR ATTENTION</div>`+at.map((a,i)=>`<button class="nchip ${a.k==='sal'?'dash':''}" data-at="${i}"><span>${a.txt}</span><b>${a.act}</b></button>`).join(''); }
   const cats=Object.entries(m.by).filter(([,v])=>v>0.004).sort((a,b)=>b[1]-a[1]);
   if(cats.length){ const top=cats.slice(0,4), rest=r2(cats.slice(4).reduce((a,[,v])=>a+v,0)), parts=[...top.map(([k,v],i)=>({n:CAT[k]?CAT[k].name:k,v,c:NCOL[i]})), ...(rest>0?[{n:'Other',v:rest,c:'var(--muted)'}]:[])];
@@ -1957,7 +2095,7 @@ function renderHome2(){
       <span class="nbar">${parts.map(p=>`<i style="width:${(p.v/m.out*100).toFixed(1)}%;background:${p.c}"></i>`).join('')}</span>
       <span class="nleg">${parts.map(p=>`<span><i style="background:${p.c}"></i>${esc(p.n)} <b class="num">${sgd0(p.v)}</b></span>`).join('')}</span></button>`; }
   const D=debtTotals();
-  h+=`<button class="ncard nline" data-go="debts"><span class="nico now">${svi('card')}</span><span class="nt"><b>Debts &amp; EMIs</b><small>You owe ${sgd(D.youOwe)}${D.emiL>0?' · EMIs '+sgd(D.emiL):''} · Owed to you ${sgd(D.owedToYou)}</small></span><span class="nlink">›</span></button>`;
+  h+=`<button class="ncard nline" data-go="debts"><span class="nico now">${svi('card')}</span><span class="nt"><b>Debts &amp; EMIs</b><small>You owe ${sgd(D.youOwe)}${D.futureEmi>0?' · EMIs to bill '+sgd(D.futureEmi):''} · Owed to you ${sgd(D.owedToYou)}</small></span><span class="nlink">›</span></button>`;
   const rec=monthAll(ym).slice(0,6);
   h+=`<div class="ncard"><div class="nrowh"><b>Recent</b><button class="nlink" data-go="activity">See all ›</button></div>${rec.length? rec.map(e=>nRow(e,true)).join('') : `<div class="small muted" style="padding:10px 0">Nothing recorded for ${ymLabel(ym)} yet. Tap ＋ to add.</div>`}</div>`;
   if(!m.salary && !m.outs.length && !Object.keys(DB.entries).length) h+=`<div class="ncard"><b>Welcome!</b><div class="small muted" style="margin:6px 0 10px">Set your salary and budgets, or try the app with sample data.</div><div class="btns"><button class="btn primary" data-go="budget">Set salary &amp; budgets</button><button class="btn" onclick="loadSample();render()">Try with sample data</button></div></div>`;
@@ -1971,7 +2109,7 @@ function renderActivity(){
   const match=e=>{ const k=kindOf(e); if(f!=='all' && !(f===k || (f==='in' && k==='prior'))) return false;
     if(!q) return true; const c=CAT[outCat(e)]||CAT[e.cat]||{}; return [e.note,e.friend,c.name,fundName(e.pay),fundName(e.to),fundName(e.from),String(e.amt)].join(' ').toLowerCase().includes(q); };
   const list=monthAll(ym).filter(match), days={}; list.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
-  let h=`<div class="nhead"><h2>Activity</h2><button class="btn sm" id="aCal">${svi('cal',16)} Calendar</button></div>
+  let h=`<div class="nhead"><button class="nback" data-go="cal" aria-label="Back">${svi('back')}</button><h2>All entries</h2><button class="btn sm" id="aCal">${svi('cal',16)} Month</button></div>
     <label class="nsearch">${svi('search',18)}<input id="aQ" placeholder="Search notes, friends, shops" value="${esc(S.actQ||'')}" aria-label="Search"></label>
     <div class="seg nseg">${[['all','All'],['out','Out'],['in','In'],['moved','Moved'],['owed','Owed']].map(([k,t])=>`<button data-af="${k}" class="${f===k?'on':''}">${t}</button>`).join('')}</div>`;
   const keys=Object.keys(days).sort().reverse();
@@ -1982,24 +2120,25 @@ function renderActivity(){
   const root=$('#tab-activity'); root.innerHTML=h; bindGo(root);
   root.querySelectorAll('[data-af]').forEach(b=>b.onclick=()=>{ S.actF=b.dataset.af; renderActivity(); });
   const qi=$('#aQ'); qi.oninput=()=>{ S.actQ=qi.value; clearTimeout(S._aq); S._aq=setTimeout(()=>{ renderActivity(); const n=$('#aQ'); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } },250); };
-  $('#aCal').onclick=()=>calSheet();
+  $('#aCal').onclick=()=>go('cal');
 }
 
 /* ---------- Debts & EMIs ---------- */
 function renderDebts(){
   const D=debtTotals(), f=S.debtF||'all', t=todayStr();
-  let h=npage('Debts &amp; EMIs','accounts')+`<div class="n2"><div class="ncard"><small class="muted">You owe</small><b class="nmid num nbad">${sgd(D.youOwe)}</b><small class="muted">${D.futureEmi>0? '+ '+sgd(D.futureEmi)+' EMIs to come' : 'cards + friends'}</small></div>
+  let h=npage('Cards, EMIs &amp; friends','people')+`<div class="n2"><div class="ncard"><small class="muted">You owe</small><b class="nmid num nbad">${sgd(D.youOwe)}</b><small class="muted">cards ${sgd(D.cardOwed)} + friends ${sgd(D.friendsOwe)}${D.futureEmi>0?' · incl. '+sgd(D.futureEmi)+' EMIs billed later':''}</small></div>
     <div class="ncard nwarm"><small>Owed to you</small><b class="nmid num">${sgd(D.owedToYou)}</b><small>${D.lend.length} friend${D.lend.length===1?'':'s'}</small></div></div>
     <div class="seg nseg">${[['all','All'],['owe','I owe'],['lend','Owed to me']].map(([k,x])=>`<button data-df="${k}" class="${f===k?'on':''}">${x}</button>`).join('')}</div>`;
   if(f!=='lend'){
     const soon=[]; D.cards.forEach(c=>{ const d=dueAt(c), nd=nextDue(c); if(d>0.004 && nd<=dstr(new Date(Date.now()+30*86400000))) soon.push([nd, c.name, d]); });
     D.owe.forEach(o=>soon.push(['', o.name, o.owed]));
     const st=r2(soon.reduce((a,x)=>a+x[2],0));
-    if(soon.length) h+=`<div class="ncard"><small class="nlbl">YOU PAY IN THE NEXT 30 DAYS</small><b class="nmid num">${sgd(st)}</b><div class="ntags">${soon.sort((a,b)=>(a[0]||'9').localeCompare(b[0]||'9')).map(x=>`<i class="ntag nout">${x[0]?niceDate(x[0])+' · ':''}${esc(x[1])} ${sgd(x[2])}</i>`).join('')}</div></div>`;
-    h+=`<div class="nlbl2">EMIS · INSTALMENT PLANS${D.emiL>0?' · '+sgd(D.emiL)+' LEFT':''}</div><div class="ncard">`+(D.emis.length? D.emis.map(e=>{ const pl=emiPlan(e,true), open=emiOpen(e), n=pl.length, done=Math.max(0,n-new Set(open.map(p=>p.k)).size), nx=open[0];
-        return `<button class="nemi" onclick="openEntry(${jsa(e.id)})"><span class="nrowh"><span class="nt"><b>${esc(e.note||CAT[e.cat].name)}</b><small>${esc(fundName(e.pay))} · bought ${niceDate(e.date)} · ${sgd(costOf(e))}</small></span><span class="na"><b class="num">${sgd(pl[0].amt)}/mo</b><small>${sgd(emiLeft(e))} left</small></span></span>
-          <span class="npips">${pl.map((p,i)=>`<i class="${i<done?'on':''}"></i>`).join('')}</span><small class="muted">${done} of ${n} billed${nx?' · next '+niceDate(nx.date):''}</small></button>`; }).join('')
+    if(soon.length) h+=`<div class="ncard"><small class="nlbl">DUE IN THE NEXT 30 DAYS</small><b class="nmid num">${sgd(st)}</b><div class="ntags">${soon.sort((a,b)=>(a[0]||'9').localeCompare(b[0]||'9')).map(x=>`<i class="ntag nout">${x[0]?niceDate(x[0])+' · ':''}${esc(x[1])} ${sgd(x[2])}</i>`).join('')}</div></div>`;
+    h+=`<div class="nlbl2">EMIS · INSTALMENT PLANS${D.futureEmi>0?' · '+sgd(D.futureEmi)+' STILL TO BE BILLED':''}</div><div class="ncard">`+(D.emis.length? D.emis.map(e=>{ const pl=emiPlan(e,true), cf=allFunds().find(f=>f.id===e.pay), nd=cf? nextDue(cf) : todayStr(), n=pl.length, done=pl.filter(p=>p.date<=nd).length, nx=pl.find(p=>p.date>nd), later=r2(pl.filter(p=>p.date>nd).reduce((a,p)=>a+p.amt,0));
+        return `<button class="nemi" onclick="openEntry(${jsa(e.id)})"><span class="nrowh"><span class="nt"><b>${esc(e.note||CAT[e.cat].name)}</b><small>${esc(fundName(e.pay))} · bought ${niceDate(e.date)} · ${sgd(costOf(e))}</small></span><span class="na"><b class="num">${sgd(pl[0].amt)}/mo</b><small>${sgd(later)} to bill</small></span></span>
+          <span class="npips">${pl.map((p,i)=>`<i class="${i<done?'on':''}"></i>`).join('')}</span><small class="muted">${done} of ${n} billed${nx?' · next bill '+niceDate(nx.date):' · all billed'}</small></button>`; }).join('')
       : `<div class="small muted" style="padding:6px 0">No EMIs. To start one, add a spend on a card and pick 3 or 6 months.</div>`)+`</div>`;
+    if(D.emis.length) h+=`<button class="btn sm" id="dEmiPay" style="margin:-4px 0 8px">Pay an EMI early</button>`;
     h+=`<div class="nlbl2">CARD &amp; PAYLATER BILLS · ${sgd(D.cardOwed)}</div><div class="ncard">`+D.cards.map(c=>{ const o=Math.max(0,owedOf(c)), d=dueAt(c), fe=emiAfter(c.id,nextDue(c));
         return `<button class="nrow" onclick="accountSheet(${jsa(c.id)})"><span class="nic">${fIcon(c)}</span><span class="nt"><b>${esc(c.name)}</b><small>${d>0.004? 'Bill '+sgd(d)+' due '+niceDate(nextDue(c)) : 'Nothing due'}${fe>0.004?' · '+sgd(fe)+' EMIs later':''}</small></span><span class="na"><b class="num ${o>0.004?'nout':''}">${sgd(o)}</b></span></button>`; }).join('')+`</div>`;
     h+=`<div class="nlbl2">YOU OWE FRIENDS · ${sgd(D.friendsOwe)}</div><div class="ncard">`+(D.owe.length? D.owe.map(o=>fRow(o,'owe')).join('') : '<div class="small muted" style="padding:6px 0">You don’t owe anyone.</div>')+`</div>`; }
@@ -2009,9 +2148,10 @@ function renderDebts(){
   const root=$('#tab-debts'); root.innerHTML=h; bindGo(root);
   root.querySelectorAll('[data-df]').forEach(b=>b.onclick=()=>{ S.debtF=b.dataset.df; renderDebts(); });
   $('#dAdd').onclick=()=>{ E=null; debtChooser(); };
+  if($('#dEmiPay')) $('#dEmiPay').onclick=()=>{ openEntry(null); E.cat='emi'; drawSheet(); };
 }
-function fRow(o, dir){ const last=o.items.find(x=>x.cat===(dir==='lend'?'lent':'borrowed'))||o.items[0], days=last? Math.max(0,Math.round((new Date(todayStr())-new Date(last.date))/86400000)) : 0;
-  return `<button class="nrow" onclick="friendDetail(${jsa(o.name)},'${dir}')"><span class="nic"><span class="nico now">${svi('person')}</span></span><span class="nt"><b>${esc(o.name)}</b><small>${o.items.length} entr${o.items.length===1?'y':'ies'} · ${days} day${days===1?'':'s'} open</small></span><span class="na"><b class="num ${dir==='lend'?'now':'nout'}">${sgd(o.owed)}</b></span></button>`; }
+function fRow(o, dir){ const last=o.items.find(x=>x.cat==='lent'||x.cat==='borrowed')||o.items[0], days=last? Math.max(0,Math.round((new Date(todayStr())-new Date(last.date))/86400000)) : 0;
+  return `<button class="nrow" onclick="friendDetail(${jsa(o.name)},'${dir}')"><span class="nic"><span class="nico now">${svi('person')}</span></span><span class="nt"><b>${esc(o.name)}</b><small>${o.items.length} entr${o.items.length===1?'y':'ies'} · open ${days} day${days===1?'':'s'}${o.items.some(x=>x.cat==='lent')&&o.items.some(x=>x.cat==='borrowed'||x.cat==='payback')?' · netted':''}</small></span><span class="na"><b class="num ${dir==='lend'?'now':'nout'}">${sgd(o.owed)}</b></span></button>`; }
 
 /* ---------- Accounts ---------- */
 function renderAccounts2(){
@@ -2030,13 +2170,13 @@ function renderAccounts2(){
 function renderStatement(){
   const ym=S.ym, m=mm(ym), ln=(a,b,cls)=>`<div class="nkv ${cls||''}"><span>${a}</span><b class="num">${b}</b></div>`;
   const cats=Object.entries(m.by).sort((a,b)=>b[1]-a[1]), ss=savedSince();
-  let h=npage(ymLabel(ym,true)+' statement','home')+`<div class="ncard"><small class="muted">Saved from income</small><b class="nbig2 num ${m.saved<0?'neg':'pos'}">${m.saved<0?'−':''}${sgd(Math.abs(m.saved))}</b><small class="muted">${m.inn>0? Math.round(m.saved/m.inn*100)+'% of income' : ''}${ss.from? ' · since '+ymLabel(ss.from,true)+': '+sgd(ss.sum) : ''}</small></div>
+  let h=(S.tab==='plan'? planHead() : npage(ymLabel(ym,true)+' statement','plan'))+`<div class="ncard"><small class="muted">Saved from income</small><b class="nbig2 num ${m.saved<0?'neg':'pos'}">${m.saved<0?'−':''}${sgd(Math.abs(m.saved))}</b><small class="muted">${m.inn>0? Math.round(m.saved/m.inn*100)+'% of income' : ''}${ss.from? ' · running total since '+ymLabel(ss.from,true)+': '+(ss.sum<0?'−':'')+sgd(Math.abs(ss.sum)) : ''}</small></div>
     <div class="nlbl2">MONEY IN · ${sgd(m.inn)}</div><div class="ncard">${ln('Salary'+(m.salAssumed?' (from budget)':'')+' for '+ymLabel(ym).split(' ')[0], sgd(m.salary))}${m.ins.map(e=>ln(esc(e.note||'Cashback / refund')+' · '+niceDate(e.date), sgd(e.amt))).join('')}</div>
     <div class="nlbl2">MONEY OUT · ${sgd(m.out)}</div><div class="ncard">${cats.length? cats.map(([k,v])=>ln(esc(CAT[k]?CAT[k].name:k), sgd(v))).join('') : '<div class="small muted">No spending.</div>'}
       ${m.outs.some(isEmi)? '<div class="small muted" style="margin-top:6px">EMI purchases count in full on the day you bought them.</div>':''}</div>
     <div class="nlbl2">NOT IN SAVED</div><div class="ncard">${ln('Moved between accounts / bills paid', sgd(m.movedT),'mut')}${ln('Lent to friends', sgd(m.ow.lent||0),'mut')}${ln('Friends paid you back', sgd(m.ow.repaid||0),'mut')}${ln('Borrowed (cash)', sgd(m.ow.borrowed||0),'mut')}${ln('You paid back friends', sgd(m.ow.payback||0),'mut')}${ln('Earlier refunds (before tracking)', sgd(m.priorT),'mut')}</div>
     <div class="nhow"><b>How this counts · </b>Saved from income = money in − money out. Salary counts for the month it pays and only once it arrives. Moving money, card bills and friends’ money only change balances.</div>`;
-  const root=$('#tab-statement'); root.innerHTML=h; bindGo(root);
+  const root=$(S.tab==='plan'?'#tab-plan':'#tab-statement'); root.innerHTML=h; bindGo(root);
 }
 
 /* ---------- Insights ---------- */
@@ -2045,7 +2185,7 @@ function renderInsights(){
   const parts=cats.slice(0,7).map(([k,v],i)=>({name:CAT[k]?CAT[k].name:k, v, c:NCOL[i]})); const rest=r2(cats.slice(7).reduce((a,[,v])=>a+v,0)); if(rest>0) parts.push({name:'Other',v:rest,c:'var(--muted)'});
   const months=[]; let x=activeFrom()||ym; const from=addMonths(ym,-5); if(x<from) x=from; while(x<=ym){ months.push(mm(x)); x=addMonths(x,1); }
   const mx=Math.max(1,...months.map(z=>Math.max(z.inn,z.out)));
-  let h=npage('Insights','home')+`<div class="ncard"><div class="ndonut">${donutSvg(parts,'Out',sgd0(m.out))||'<div class="small muted">No spending yet.</div>'}<div class="nleg2">${parts.map(p=>`<span><i style="background:${p.c}"></i>${esc(p.name)}<b class="num">${sgd0(p.v)}</b></span>`).join('')}</div></div></div>
+  let h=(S.tab==='plan'? planHead() : npage('Insights','plan'))+`<div class="ncard"><div class="ndonut">${donutSvg(parts,'Out',sgd0(m.out))||'<div class="small muted">No spending yet.</div>'}<div class="nleg2">${parts.map(p=>`<span><i style="background:${p.c}"></i>${esc(p.name)}<b class="num">${sgd0(p.v)}</b></span>`).join('')}</div></div></div>
     <div class="nlbl2">IN VS OUT BY MONTH</div><div class="ncard"><div class="nbars">${months.map(z=>`<div><span class="nb2"><i class="bi" style="height:${(z.inn/mx*110).toFixed(0)}px" data-tip="In ${sgd(z.inn)}"></i><i class="bo" style="height:${(z.out/mx*110).toFixed(0)}px" data-tip="Out ${sgd(z.out)}"></i></span><small>${ymLabel(z.ym,true).split(' ')[0]}</small><small class="num ${z.saved<0?'nbad':'pos'}">${z.saved<0?'−':'+'}${sgd0(Math.abs(z.saved))}</small></div>`).join('')}</div><div class="nleg" style="justify-content:center"><span><i style="background:var(--good)"></i>In</span><span><i style="background:var(--g2)"></i>Out</span></div></div>`;
   const notes=[]; cats.slice(0,4).forEach(([k,v])=>{ const p=pm.by[k]||0; if(p>0){ const d=Math.round((v-p)/p*100); if(Math.abs(d)>=15) notes.push(`${esc(CAT[k]?CAT[k].name:k)} ${d>0?'up':'down'} ${Math.abs(d)}% vs ${ymLabel(pm.ym,true).split(' ')[0]} (${sgd0(p)} → ${sgd0(v)})`); } });
   if(m.out>0 && cats[0]) notes.push(`${esc(CAT[cats[0][0]]?CAT[cats[0][0]].name:cats[0][0])} is ${Math.round(cats[0][1]/m.out*100)}% of money out`);
@@ -2053,28 +2193,32 @@ function renderInsights(){
   if(notes.length) h+=`<div class="nlbl2">WHAT STANDS OUT</div><div class="ncard">${notes.map(t=>`<div class="nkv"><span>${t}</span></div>`).join('')}</div>`;
   const top=m.outs.slice().sort((a,b)=>costOf(b)-costOf(a)).slice(0,5);
   if(top.length) h+=`<div class="nlbl2">TOP SPENDS</div><div class="ncard">${top.map(e=>nRow(e,true)).join('')}</div>`;
-  const root=$('#tab-insights'); root.innerHTML=h; bindGo(root);
+  const root=$(S.tab==='plan'?'#tab-plan':'#tab-insights'); root.innerHTML=h; bindGo(root);
 }
 
 /* ---------- Plan: target, budgets, upcoming ---------- */
 function upcoming(days){ const t=todayStr(), end=dstr(new Date(Date.now()+days*86400000)), out=[];
   const ns=nextSalary(); if(!ns.got && ns.amt>0 && ns.pd<=end) out.push({d:ns.pd, t:'Salary for '+ymLabel(ns.forYm,true), a:ns.amt, in:true});
   funds().filter(isCredit).forEach(f=>{ const nd=nextDue(f), d=dueAt(f); if(d>0.004 && nd<=end) out.push({d:nd, t:f.name+' bill', a:d, id:f.id});
-    activeEmis().filter(e=>e.pay===f.id).forEach(e=>emiOpen(e).filter(p=>p.date>nd && p.date<=end).forEach(p=>out.push({d:p.date, t:esc(e.note||'EMI')+' · instalment '+p.k+'/'+p.n, a:p.amt, id:f.id}))); });
+    const later={}; activeEmis().filter(e=>e.pay===f.id).forEach(e=>emiOpen(e).filter(p=>p.date>nd && p.date<=end).forEach(p=>{ later[p.date]=r2((later[p.date]||0)+p.amt); }));
+    Object.entries(later).forEach(([d,a])=>out.push({d, t:f.name+' bill · EMIs so far (new spending adds to it)', a, id:f.id})); });
   return out.sort((a,b)=>a.d.localeCompare(b.d)); }
 function renderPlan(){
   const ym=S.ym, m=mm(ym), c=cfg(ym), cur=ym===curYM(), tgt=+DB.settings.saveTarget||0, dl=cur? daysLeft(ym) : 0, sub=S.planF||'budget';
-  let h=`<div class="nhead"><h2>Plan</h2></div><div class="seg nseg">${[['budget','Budget'],['up','Upcoming']].map(([k,x])=>`<button data-pf="${k}" class="${sub===k?'on':''}">${x}</button>`).join('')}</div>`;
+  let h=planHead();
   if(sub==='budget'){
     if(tgt>0){ const p=Math.max(0,Math.min(100,m.saved/tgt*100)), room=r2(m.inn-tgt-m.out), ok=m.saved>=tgt;
       h+=`<button class="ncard" id="pTgt"><small class="nlbl">SAVINGS TARGET · ${esc(ymLabel(ym).split(' ')[0].toUpperCase())}</small><span class="nrowh"><b class="nbig2 num">${sgd(m.saved)}</b><small class="muted">of ${sgd(tgt)}</small></span><span class="nprog"><i style="width:${p.toFixed(0)}%"></i></span>
         ${cur? `<i class="ntag ${room>=0?'nin':'nout'}">${room>=0? (ok?'On track':'Possible')+' · keep spending under '+sgd(r2(room/Math.max(1,dl)))+'/day for '+dl+' day'+(dl===1?'':'s') : 'Target out of reach this month by '+sgd(-room)}</i>` : `<i class="ntag ${ok?'nin':'nout'}">${ok?'Target met':'Missed by '+sgd(r2(tgt-m.saved))}</i>`}</button>`; }
     else h+=`<button class="ncard nline" id="pTgt"><span class="nico nin">${svi('flag')}</span><span class="nt"><b>Set a savings target</b><small>Pick how much to keep each month, then budget from what’s left</small></span><span class="nlink">›</span></button>`;
     const rows=BUDGET_CATS.map(k=>({k, b:+c.budgets[k.id]||0, s:m.by[k.id]||0})).filter(r=>r.b>0||r.s>0).sort((a,b)=>(b.b>0)-(a.b>0)||b.s-a.s);
-    h+=`<div class="nlbl2">BUDGETS · ${esc(ymLabel(ym).toUpperCase())}</div><div class="ncard">${rows.length? rows.map(r=>`<div class="nbud"><span class="nrowh"><b>${esc(r.k.name)}</b><small class="${r.b>0&&r.s>r.b?'nbad':'muted'} num">${sgd0(r.s)}${r.b>0?' of '+sgd0(r.b):' · no budget'}</small></span>${r.b>0?`<span class="nprog ${r.s>r.b?'over':''}"><i style="width:${Math.min(100,r.s/r.b*100).toFixed(0)}%"></i></span>`:''}</div>`).join('') : '<div class="small muted">No budgets yet.</div>'}</div>
+    const fx=rows.filter(r=>FIXED.has(r.k.id)), fl=rows.filter(r=>!FIXED.has(r.k.id)), flLeft=r2(fl.filter(r=>r.b>0).reduce((a,r)=>a+Math.max(0,r.b-r.s),0));
+    const bud=(r,fixed)=>`<button class="nbud" data-bcat="${r.k.id}"><span class="nrowh"><b>${esc(r.k.name)}</b><small class="${!fixed&&r.b>0&&r.s>r.b?'nbad':'muted'} num">${sgd0(r.s)}${r.b>0?' of '+sgd0(r.b):' · no budget'}${fixed? (r.s>=r.b&&r.b>0?' · paid':'') : ''}</small></span>${r.b>0&&!fixed?`<span class="nprog ${r.s>r.b?'over':''}"><i style="width:${Math.min(100,r.s/r.b*100).toFixed(0)}%"></i></span>`:''}</button>`;
+    h+=`<div class="nlbl2">EVERYDAY SPENDING${cur&&flLeft>0?' · '+sgd(flLeft)+' LEFT · '+sgd(r2(flLeft/Math.max(1,dl)))+'/DAY':''}</div><div class="ncard">${fl.length? fl.map(r=>bud(r,false)).join('') : '<div class="small muted">No budgets yet.</div>'}</div>
+      ${fx.length? `<div class="nlbl2">FIXED BILLS · ${sgd(r2(fx.reduce((a,r)=>a+r.s,0)))}</div><div class="ncard">${fx.map(r=>bud(r,true)).join('')}</div>`:''}
       <button class="btn bigsave" data-go="budget">Edit salary &amp; budgets</button>`; }
   else { const up=upcoming(60), tot=r2(up.filter(u=>!u.in).reduce((a,u)=>a+u.a,0));
-    h+=`<div class="nlbl2">NEXT 60 DAYS · YOU PAY ${sgd(tot)}</div><div class="ncard">${up.length? up.map(u=>`<button class="nrow" ${u.id?`onclick="accountSheet(${jsa(u.id)})"`:''}><span class="nic"><span class="nico ${u.in?'nin':'nmv'}">${svi(u.in?'in':'card')}</span></span><span class="nt"><b>${esc(u.t)}</b><small>${dayLabel(u.d)}</small></span><span class="na"><b class="num ${u.in?'nin':''}">${u.in?'+':''}${sgd(u.a)}</b></span></button>`).join('') : '<div class="small muted">Nothing due in the next 60 days.</div>'}</div>`;
+    h+=`<div class="nlbl2">NEXT 60 DAYS · YOU PAY ${sgd(tot)}</div><div class="ncard">${up.length? up.map(u=>`<button class="nrow ${u.in?'k-in':'k-out'}" ${u.id?`onclick="accountSheet(${jsa(u.id)})"`:''}><span class="nic"><span class="nico ${u.in?'nin':'nmv'}">${svi(u.in?'in':'card')}</span></span><span class="nt"><b>${esc(u.t)}</b><small>${dayLabel(u.d)}</small></span><span class="na"><b class="num ${u.in?'nin':''}">${u.in?'+':''}${sgd(u.a)}</b></span></button>`).join('') : '<div class="small muted">Nothing due in the next 60 days.</div>'}</div>`;
     const D=debtTotals(); if(D.owe.length) h+=`<div class="nlbl2">NO DATE · FRIENDS YOU OWE</div><div class="ncard">${D.owe.map(o=>fRow(o,'owe')).join('')}</div>`;
     h+=`<div class="nhow">Card bills come from your card balances and due days (set them in Accounts). EMI instalments show on the month they’re billed.</div>`; }
   const root=$('#tab-plan'); root.innerHTML=h; bindGo(root);
@@ -2103,6 +2247,187 @@ function addChooser(){
     else if(k==='salary') salaryAutoSheet(()=>{ closeSheet(); render(); });
     else calcSheet(); });
 }
+
+
+/* ---- v83: one add sheet with a type switch (no chooser step) ---- */
+const PAYCAT='dailyExpenseTracker.payByCat';
+function payMem(){ try{ return JSON.parse(localStorage.getItem(PAYCAT)||'{}')||{}; }catch(e){ return {}; } }
+function setPayMem(cat,pay){ if(!cat||!pay) return; try{ const m=payMem(); m[cat]=pay; localStorage.setItem(PAYCAT, JSON.stringify(m)); }catch(e){} }
+function typeStrip(on){ return `<div class="seg ntype">${[['spend','Spend'],['in','Money in'],['move','Move'],['friend','Friend']].map(([k,t])=>`<button type="button" data-ty="${k}" class="${on===k?'on':''}">${t}</button>`).join('')}</div>`; }
+function bindTypeStrip(){ document.querySelectorAll('[data-ty]').forEach(b=>b.onclick=()=>{ const k=b.dataset.ty, ai=$('#eAmt')||$('#xAmt')||$('#ffAmt'), amt=ai? ai.value : '';
+  if(k==='spend'){ openEntry(null, undefined, amt); }
+  else if(k==='in'){ openEntry(null, undefined, amt); E.cat='refund'; E.kind=E.kind||'cashback'; drawSheet(); }
+  else if(k==='move'){ E=null; xferForm(null,null,'add',{amt}); }
+  else { E=amt? {amt} : null; FF_FROM_ADD=true; debtChooser(true); } }); }
+function recentFriends(){ const m={}; for(const e of Object.values(DB.entries)) if(!e.del && e.friend && CAT[e.cat] && CAT[e.cat].friend){ const k=e.friend.trim(); if(!m[k]||m[k]<e.date) m[k]=e.date; }
+  return Object.entries(m).sort((a,b)=>b[1].localeCompare(a[1])).map(x=>x[0]).slice(0,8); }
+const MI_KINDS=[['cashback','Cashback'],['interest','Interest'],['refund','Refund'],['other','Other']];
+
+/* ============ v85: three designs as themes (A Paper Ledger · B Tiles · C Calm) ============
+   Sections: Today · Calendar · ＋ · Accounts · People · Plan. Sub-pages: Day, Account, EMIs, Person (Given / Taken), Category. */
+const DS = () => skin();   // 'paper' | 'tiles' | 'calm'
+function dayTotals(ym){ const t={}; mm(ym).outs.forEach(e=>{ t[e.date]=r2((t[e.date]||0)+costOf(e)); }); return t; }
+function dayOutOf(list){ return r2(list.filter(e=>kindOf(e)==='out').reduce((a,e)=>a+costOf(e),0)); }
+function everyday(ym){ const c=cfg(ym), m=mm(ym); let left=0, tot=0;
+  BUDGET_CATS.filter(k=>!FIXED.has(k.id)).forEach(k=>{ const b=+c.budgets[k.id]||0; if(b>0){ tot+=b; left+=Math.max(0,b-(m.by[k.id]||0)); } });
+  return {left:r2(left), tot:r2(tot)}; }
+function monday(ds){ const d=new Date(ds+'T00:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
+const wd = ds => new Date(ds+'T00:00:00').toLocaleDateString('en-SG',{weekday:'short'});
+function ring(frac, l1, big, l2){ const C=2*Math.PI*96, f=Math.max(0,Math.min(1,frac));
+  return `<svg class="nring" viewBox="0 0 230 230" role="img" aria-label="${esc(l1)} ${esc(big)}"><circle cx="115" cy="115" r="96" fill="none" stroke="var(--surface-2)" stroke-width="16"/><circle cx="115" cy="115" r="96" fill="none" stroke="var(--accent)" stroke-width="16" stroke-linecap="round" stroke-dasharray="${(C*f).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 115 115)"/>
+  <text x="115" y="96" text-anchor="middle" font-size="13" style="fill:var(--text-2)">${esc(l1)}</text><text x="115" y="132" text-anchor="middle" font-size="32" font-weight="800" style="fill:var(--text)">${esc(big)}</text><text x="115" y="156" text-anchor="middle" font-size="12.5" style="fill:var(--text-2)">${esc(l2)}</text></svg>`; }
+const stat = (l,v,cls,go) => `<${go?'button data-go="'+go+'"':'div'} class="nstat"><small>${l}</small><b class="num ${cls||''}">${v}</b></${go?'button':'div'}>`;
+
+/* ---------- Today ---------- */
+function renderToday(){
+  const t=todayStr(), ym=curYM(), tt=dayTotals(ym), m=mm(ym), ev=everyday(ym), dl=Math.max(1,daysLeft(ym));
+  const today=tt[t]||0, yd=dstr(new Date(Date.now()-86400000)), ydT=(dayTotals(ymOf(yd))[yd]||0);
+  const mon=monday(t), wk=[...Array(7)].map((_,i)=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return dstr(d); });
+  const wkT=r2(wk.filter(d=>d<=t).reduce((a,d)=>a+(dayTotals(ymOf(d))[d]||0),0));
+  const hv=r2(funds().filter(f=>!isCredit(f)).reduce((a,f)=>a+liveBal(f),0)), ow=r2(funds().filter(isCredit).reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), free=r2(hv-ow);
+  const D=debtTotals(), per=r2(ev.left/dl), sk=DS();
+  let h=`<div class="tdate"><span>${new Date().toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'})}</span></div>`;
+  if(sk==='calm') h+=`<div class="tring">${ring(ev.tot? ev.left/ev.tot : 0,'Left for everyday',sgd(ev.left),sgd(per)+' a day · '+dl+' day'+(dl===1?'':'s'))}</div>
+    <div class="trow3">${stat('Today',sgd(today))}${stat('Saved '+ymLabel(ym,true).split(' ')[0],sgd(m.saved),m.saved<0?'nbad':'pos','statement')}${stat('Free to use',sgd(free),'','accounts')}</div>`;
+  else if(sk==='tiles') h+=`<div class="tbig"><small>Spent today</small><b class="num">${sgd(today)}</b><span>Room today ${sgd(per)} · ${dl} day${dl===1?'':'s'} left</span></div>
+    <div class="tgrid">${stat('Saved in '+ymLabel(ym,true).split(' ')[0],sgd(m.saved),m.saved<0?'nbad':'','statement')}${stat('Free to use',sgd(free),'','accounts')}${stat('You owe',sgd(D.youOwe),'nbad','people')}${stat('Owed to you',sgd(D.owedToYou),'now','people')}</div>`;
+  else h+=`<div class="tbig"><small>Spent today</small><b class="num">${sgd(today)}</b><span>You can spend <b>${sgd(per)}</b> a day for ${dl} more day${dl===1?'':'s'}</span></div>
+    <div class="trow3">${stat('Yesterday',sgd(ydT))}${stat('This week',sgd(wkT))}${stat('Free to use',sgd(free),'','accounts')}</div>`;
+  h+=`<div class="twk">${wk.map(d=>{ const v=dayTotals(ymOf(d))[d]; return `<button class="${d===t?'on':''}" ${d<=t?`data-day="${d}"`:'disabled'}><small>${wd(d).slice(0,1)}</small><b>${+d.slice(8)}</b><i class="num">${d<=t? (v? (v>=100? Math.round(v) : v.toFixed(2)) : '0') : '·'}</i></button>`; }).join('')}</div>`;
+  const at=attention(); if(at.length) h+=`<div class="nlbl2">NEEDS YOU</div><div class="ncard">${at.map((a,i)=>`<button class="nchip" data-at="${i}"><span>${a.txt}</span><b>${a.act}</b></button>`).join('')}</div>`;
+  if(sk!=='calm') h+=`<button class="ncard nline" data-go="statement"><span class="nt"><small>Saved from income · ${ymLabel(ym,true).split(' ')[0]}</small><b class="num ${m.saved<0?'nbad':''}" style="font-size:19px">${m.saved<0?'−':''}${sgd(Math.abs(m.saved))}</b></span><span class="nlink">In ${sgd0(m.inn)} · Out ${sgd0(m.out)} ›</span></button>`;
+  const todays=monthAll(ym).filter(e=>e.date===t), yl=monthAll(ymOf(yd)).filter(e=>e.date===yd);
+  const show=todays.length? todays : yl, lab=todays.length? 'TODAY · '+sgd(today) : 'YESTERDAY · '+sgd(ydT);
+  h+=`<div class="nlbl2">${lab}</div><div class="ncard">${show.length? show.map(e=>nRow(e)).join('') : '<div class="small muted" style="padding:6px 0">Nothing yet. Tap ＋ to add.</div>'}</div>`;
+  const root=$('#tab-home'); root.innerHTML=h; bindGo(root);
+  root.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{ S.day=b.dataset.day; go('day'); });
+  root.querySelectorAll('[data-at]').forEach(b=>b.onclick=()=>{ const a=at[+b.dataset.at]; if(a.k==='sal') salaryAutoSheet(()=>{ closeSheet(); render(); }); else if(a.k==='rec') balancesSheet({}); else accountSheet(a.id); });
+}
+
+/* ---------- Calendar ---------- */
+function renderCal(){
+  const ym=S.ym, [y,mo]=ym.split('-').map(Number), n=dim(ym), first=new Date(y,mo-1,1).getDay(), t=todayStr(), m=mm(ym), f=S.calF||'all';
+  const view=S.calV||(DS()==='calm'?'list':'grid');
+  const ok=e=> f==='all'? true : f==='living'? !LIVING_EXCL.has(outCat(e)) : outCat(e)===f;
+  const tot={}; m.outs.filter(ok).forEach(e=>{ tot[e.date]=r2((tot[e.date]||0)+costOf(e)); });
+  const sum=r2(Object.values(tot).reduce((a,v)=>a+v,0)), past=ym<curYM()? n : ym===curYM()? +t.slice(8) : 0;
+  const lvl=v=> v>=100? 'h3' : v>=40? 'h2' : v>0? 'h1' : '';
+  let h=`<div class="nhead"><h2>${ymLabel(ym).split(' ')[0]}</h2><button class="btn sm" data-go="activity">${svi('search',16)} Search</button></div>
+    <div class="ntrio"><span><small>Out</small> <b class="num">${sgd(sum)}</b></span><span><small>In</small> <b class="num">${sgd(m.inn)}</b></span><span><small>Avg</small> <b class="num">${sgd0(past? sum/past : 0)}/day</b></span></div>
+    <div class="nchips">${[['all','All'],['living','Daily living'],['food','Food']].map(([k,x])=>`<button data-cf="${k}" class="${f===k?'on':''}">${x}</button>`).join('')}<span style="flex:1"></span>${[['grid','Month'],['list','Days']].map(([k,x])=>`<button data-cv="${k}" class="${view===k?'on':''}">${x}</button>`).join('')}</div>`;
+  if(view==='grid'){
+    h+=`<div class="ncard ccal"><div class="cgr">${['S','M','T','W','T','F','S'].map(d=>`<span class="cw">${d}</span>`).join('')}${'<span></span>'.repeat(first)}`;
+    for(let d=1; d<=n; d++){ const ds=ym+'-'+pad(d), v=tot[ds]||0, fut=ds>t;
+      h+=`<button class="cd ${fut?'fut':lvl(v)} ${ds===t?'td':''}" ${fut?'disabled':`data-day="${ds}"`}><b>${d}</b><i class="num">${fut? '' : v? (v>=1000? Math.round(v).toLocaleString('en-SG') : v>=100? Math.round(v) : v.toFixed(2)) : '0'}</i></button>`; }
+    h+=`</div></div><div class="small muted" style="margin:0 4px 12px">Darker / bolder = more spent. Only your own spending; tap a day for everything else.</div>`; }
+  else { const days=[]; for(let d=Math.min(n,past||n); d>=1; d--) days.push(ym+'-'+pad(d)); const cap=100; let wkKey='', out='';
+    days.filter(ds=>ds<=t).forEach(ds=>{ const k=dstr(monday(ds)); if(k!==wkKey){ wkKey=k; const wsum=r2(days.filter(x=>x<=t && dstr(monday(x))===k).reduce((a,x)=>a+(tot[x]||0),0)); out+=`${out?'</div>':''}<div class="nlbl2">WEEK OF ${niceDate(k).toUpperCase()} · ${sgd(wsum)}</div><div class="ncard">`; }
+      const v=tot[ds]||0; out+=`<button class="dbar" data-day="${ds}"><span class="dd">${wd(ds)} ${+ds.slice(8)}</span><span class="db"><i style="width:${Math.min(100,v/cap*100).toFixed(0)}%"></i></span><b class="num">${v.toFixed(2)}</b></button>`; });
+    h+=out+(out?'</div>':'<div class="empty">No days yet.</div>')+`<div class="small muted" style="margin:0 4px 12px">Bars stop at ${sgd0(cap)} so big days don’t hide the rest.</div>`; }
+  const root=$('#tab-cal'); root.innerHTML=h; bindGo(root);
+  root.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{ S.day=b.dataset.day; go('day'); });
+  root.querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{ S.calF=b.dataset.cf; renderCal(); });
+  root.querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{ S.calV=b.dataset.cv; renderCal(); });
+}
+function renderDay(){
+  const ds=S.day||todayStr(), list=monthAll(ymOf(ds)).filter(e=>e.date===ds), outs=list.filter(e=>kindOf(e)==='out'), rest=list.filter(e=>kindOf(e)!=='out');
+  const d=new Date(ds+'T00:00:00').toLocaleDateString('en-SG',{weekday:'long',day:'numeric',month:'short'});
+  let h=npage(esc(d),'cal')+`<div class="n2" style="margin-bottom:12px"><div class="ncard"><small class="muted">Spent</small><b class="nmid num">${sgd(dayOutOf(list))}</b></div><div class="ncard"><small class="muted">Not counted</small><b class="nmid num muted">${sgd(r2(rest.reduce((a,e)=>a+e.amt,0)))}</b></div></div>
+    <div class="nlbl2">SPENDING</div><div class="ncard">${outs.length? outs.map(e=>nRow(e)).join('') : '<div class="small muted" style="padding:6px 0">No spending this day.</div>'}</div>
+    ${rest.length? `<div class="nlbl2">NOT COUNTED IN SAVED</div><div class="ncard">${rest.map(e=>nRow(e)).join('')}</div>`:''}
+    <button class="btn primary bigsave" id="dyAdd">Add to ${niceDate(ds)}</button>`;
+  const root=$('#tab-day'); root.innerHTML=h; bindGo(root); $('#dyAdd').onclick=()=>openEntry(null, ds);
+}
+
+/* ---------- Accounts, Account, EMIs ---------- */
+function renderAccounts3(){
+  const have=funds().filter(f=>!isCredit(f)), cr=funds().filter(isCredit), totH=r2(have.reduce((a,f)=>a+liveBal(f),0)), totO=r2(cr.reduce((a,f)=>a+Math.max(0,owedOf(f)),0)), ns=nextSalary(), free=r2(totH-totO), D=debtTotals();
+  const row=(f,amt,sub,cls)=>`<button class="nrow" data-acct="${esc(f.id)}"><span class="nic">${fIcon(f)}</span><span class="nt"><b>${esc(f.name)}</b><small class="${cls||''}">${sub}</small></span><span class="na"><b class="num">${amt}</b></span></button>`;
+  let h=`<div class="nhead"><h2>Accounts</h2><button class="btn sm" id="acMove">${svi('moved',16)} Move</button></div>
+    <div class="ncard thero"><small>Free to use${ns.got?'':' until payday · '+niceDate(ns.pd)}</small><b class="nbig2 num ${free<0?'neg':''}">${free<0?'−':''}${sgd(Math.abs(free))}</b><small>${sgd(totH)} you have − ${sgd(totO)} you owe</small></div>
+    <div class="nlbl2">YOU HAVE · ${sgd(totH)}</div><div class="ncard">${have.map(f=>row(f, sgd(liveBal(f)), ago(f.at), staleDays(f.at)>=14?'nbad':'')).join('')}</div>
+    <div class="nlbl2">YOU OWE · ${sgd(totO)}</div><div class="ncard">${cr.map(f=>row(f, sgd(Math.max(0,owedOf(f))), dueAt(f)>0.004? 'Bill '+sgd(dueAt(f))+' due '+niceDate(nextDue(f)) : (emiAfter(f.id,nextDue(f))>0.004?'EMI only':'Nothing due'))).join('')}</div>
+    <button class="ncard nline" data-go="emis"><span class="nt"><b>EMIs</b><small>${D.emis.length} plan${D.emis.length===1?'':'s'} · ${sgd(D.futureEmi)} still to bill</small></span><span class="nlink">›</span></button>
+    <div class="btns ngrid2"><button class="btn" id="acChk">Check balances</button><button class="btn" id="acMan">Manage accounts</button></div>`;
+  const root=$('#tab-accounts'); root.innerHTML=h; bindGo(root);
+  root.querySelectorAll('[data-acct]').forEach(b=>b.onclick=()=>{ S.acct=b.dataset.acct; go('acct'); });
+  $('#acMove').onclick=()=>xferForm(null); $('#acChk').onclick=()=>balancesSheet({}); $('#acMan').onclick=()=>balancesSheet({settings:true});
+}
+function renderAcct(){
+  const f=funds().find(x=>x.id===S.acct); if(!f){ go('accounts'); return; } const cr=isCredit(f), tx=acctTx(f.id).slice(0,40);
+  let h=npage(esc(f.name),'accounts');
+  if(cr){ const o=Math.max(0,owedOf(f)), d=dueAt(f), later=emiAfter(f.id,nextDue(f));
+    h+=`<div class="n2"><div class="ncard"><small class="muted">Bill due ${niceDate(nextDue(f))}</small><b class="nmid num">${sgd(d)}</b></div><div class="ncard"><small class="muted">Owed in total</small><b class="nmid num">${sgd(o)}</b></div></div>
+      <div class="nlbl2">WHAT MAKES UP ${sgd(o)}</div><div class="ncard"><div class="nkv"><span>This bill</span><b>${sgd(d)}</b></div><div class="nkv"><span>EMIs on later bills</span><b>${sgd(later)}</b></div>${availOf(f)!==null?`<div class="nkv mut"><span>Limit left</span><b>${sgd(availOf(f))} of ${sgd0(+f.limit)}</b></div>`:''}</div>`; }
+  else h+=`<div class="ncard thero"><b class="nbig2 num">${sgd(liveBal(f))}</b><small class="${staleDays(f.at)>=14?'nbad':''}">${f.at? 'Checked '+niceDate(dstr(new Date(f.at)))+' · '+ago(f.at) : 'Never checked'}</small></div>`;
+  h+=`<div class="btns ngrid2"><button class="btn primary" id="aChk">${cr?'Edit / check owed':'Check balance'}</button><button class="btn" id="aMv">${cr?'Pay bill':'Move money'}</button></div>
+    <div class="nlbl2">HISTORY</div><div class="ncard">${tx.length? tx.map(x=>`<button class="nrow k-${kindOf(x.e)}" onclick="openEntry(${jsa(x.e.id)})"><span class="nic"></span><span class="nt"><b>${nTitle(x.e)}</b><small>${niceDate(x.e.date)}${x.after?'':' · before last check'}</small></span><span class="na"><b class="num ${x.d>0?'nin':''}">${x.d>0?'+':'−'}${sgd(Math.abs(x.d))}</b></span></button>`).join('') : '<div class="small muted" style="padding:6px 0">No entries yet.</div>'}</div>`;
+  const root=$('#tab-acct'); root.innerHTML=h; bindGo(root);
+  $('#aChk').onclick=()=>accountSheet(f.id); $('#aMv').onclick=()=> cr? xferForm(null,null,null,{to:f.id, amt:dueAt(f)>0? dueAt(f).toFixed(2):''}) : xferForm(null, f.id);
+}
+function renderEmis(){
+  const D=debtTotals(), t=todayStr(), sched={};
+  D.emis.forEach(e=>emiPlan(e).filter(p=>p.date>=t && !p.early).forEach(p=>{ sched[p.date]=sched[p.date]||{a:0,n:[]}; sched[p.date].a=r2(sched[p.date].a+p.amt); sched[p.date].n.push(esc(e.note||'EMI')+' '+p.k+'/'+p.n); }));
+  let h=npage('EMIs','accounts')+`<div class="n2" style="margin-bottom:12px"><div class="ncard"><small class="muted">Still to bill</small><b class="nmid num">${sgd(D.futureEmi)}</b></div><div class="ncard"><small class="muted">Plans running</small><b class="nmid num">${D.emis.length}</b></div></div>`;
+  h+=D.emis.length? D.emis.map(e=>{ const pl=emiPlan(e,true), cf=allFunds().find(f=>f.id===e.pay), nd=cf? nextDue(cf) : t, n=pl.length, done=pl.filter(p=>p.date<=nd).length, nx=pl.find(p=>p.date>nd), later=r2(pl.filter(p=>p.date>nd).reduce((a,p)=>a+p.amt,0));
+      return `<button class="ncard nemi" onclick="openEntry(${jsa(e.id)})"><span class="nrowh"><span class="nt"><b>${esc(e.note||CAT[e.cat].name)}</b><small>${esc(fundName(e.pay))}</small></span><span class="na"><b class="num">${sgd(pl[0].amt)} × ${n}</b></span></span><span class="npips">${pl.map((p,i)=>`<i class="${i<done?'on':''}"></i>`).join('')}</span><small class="muted">Bought ${niceDate(e.date)} for ${sgd(costOf(e))} (counted that day) · ${done} of ${n} billed${nx?' · next '+niceDate(nx.date)+' · '+sgd(later)+' to bill':' · all billed'}</small></button>`; }).join('')
+    : '<div class="ncard small muted">No EMIs. Pick 3 or 6 months when you add a spend on a card.</div>';
+  const ks=Object.keys(sched).sort(); if(ks.length) h+=`<div class="nlbl2">SCHEDULE</div><div class="ncard">${ks.map(k=>`<div class="nkv"><span>${niceDate(k)}<small class="muted" style="display:block;font-size:12px">${sched[k].n.join(' · ')}</small></span><b>${sgd(sched[k].a)}</b></div>`).join('')}</div>`;
+  h+=`<div class="nhow"><b>How this counts · </b>Each purchase counted in full on the day you bought it. Instalments only pay the card back.</div>${D.emis.length?'<button class="btn bigsave" id="eyPay">Pay an EMI early</button>':''}`;
+  const root=$('#tab-emis'); root.innerHTML=h; bindGo(root); if($('#eyPay')) $('#eyPay').onclick=()=>{ openEntry(null); E.cat='emi'; drawSheet(); };
+}
+
+/* ---------- People, Person (Given / Taken) ---------- */
+function personData(name){ const k=name.toLowerCase(), all=Object.values(DB.entries).filter(e=>!e.del && e.friend && e.friend.trim().toLowerCase()===k && CAT[e.cat] && CAT[e.cat].friend).sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0));
+  const g=all.filter(e=>e.cat==='lent'), gb=all.filter(e=>e.cat==='repaid'), tk=all.filter(e=>e.cat==='borrowed'), tb=all.filter(e=>e.cat==='payback'), s=l=>r2(l.reduce((a,e)=>a+e.amt,0));
+  const L=friendLedger('lend').find(f=>f.name.toLowerCase()===k), O=friendLedger('owe').find(f=>f.name.toLowerCase()===k), net=r2((L?L.owed:0)-(O?O.owed:0));
+  return {g,gb,tk,tb, G:s(g), GB:s(gb), T:s(tk), TB:s(tb), Gn:L?L.owed:0, Tn:O?O.owed:0, net, name:(all[0]&&all[0].friend)||name}; }
+function renderPeople(){
+  const NF=netFriends(), D=debtTotals(), net=r2(D.owedToYou-D.friendsOwe), names=new Set([...NF.lend,...NF.owe].map(o=>o.name.toLowerCase()));
+  const settled=[...new Set([...friendLedger('lend'),...friendLedger('owe')].map(f=>f.name))].filter(n=>!names.has(n.toLowerCase()));
+  const pr=(o,dir)=>{ const P=personData(o.name); return `<button class="nrow" data-person="${esc(o.name)}"><span class="pav ${dir}">${esc(o.name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><span class="nt"><b>${esc(o.name)}</b><small>Given ${sgd(P.Gn)} · Taken ${sgd(P.Tn)}</small></span><span class="na"><small>${dir==='lend'?'owes you':'you owe'}</small><b class="num ${dir==='lend'?'now':'nbad'}">${sgd(o.owed)}</b></span></button>`; };
+  const splits=Object.values(DB.entries).filter(e=>!e.del && e.split>1).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  let h=`<div class="nhead"><h2>People</h2></div>
+    <div class="n2" style="margin-bottom:6px"><div class="ncard"><small class="muted">Owed to you</small><b class="nmid num now">${sgd(D.owedToYou)}</b></div><div class="ncard"><small class="muted">You owe</small><b class="nmid num nbad">${sgd(D.friendsOwe)}</b></div></div>
+    <div class="small muted" style="margin:0 4px 6px">Overall you are ${net>=0?'owed':'owing'} <b>${sgd(Math.abs(net))}</b></div>
+    ${NF.lend.length? `<div class="nlbl2">OWE YOU</div><div class="ncard">${NF.lend.map(o=>pr(o,'lend')).join('')}</div>`:''}
+    ${NF.owe.length? `<div class="nlbl2">YOU OWE</div><div class="ncard">${NF.owe.map(o=>pr(o,'owe')).join('')}</div>`:''}
+    ${splits.length? `<div class="nlbl2">RECENT SPLITS</div><div class="ncard">${splits.map(e=>`<button class="nrow k-out" onclick="openEntry(${jsa(e.id)})"><span class="nic"></span><span class="nt"><b>${esc(e.note||CAT[e.cat].name)}</b><small>${niceDate(e.date)} · split ${e.split} ways</small></span><span class="na"><small>your share</small><b class="num">${sgd(e.amt)}</b></span></button>`).join('')}</div>`:''}
+    ${settled.length? `<div class="nlbl2">SETTLED</div><div class="ncard"><div class="nchips" style="margin:0;flex-wrap:wrap">${settled.map(n=>`<button data-person="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>`:''}
+    <div class="btns ngrid2"><button class="btn primary" id="pAdd">Add friend money</button><button class="btn" data-go="debts">Cards &amp; all debts</button></div>`;
+  const root=$('#tab-people'); root.innerHTML=h; bindGo(root);
+  root.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{ S.person=b.dataset.person; S.pTab=null; go('person'); });
+  $('#pAdd').onclick=()=>{ E=null; FF_FROM_ADD=true; debtChooser(true); };
+}
+function renderPerson(){
+  const P=personData(S.person||''), tab=S.pTab||(P.net<0?'taken':'given'), give=tab==='given';
+  const ini=esc(P.name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase());
+  const list=(l,empty)=> l.length? l.map(e=>`<button class="nrow k-${kindOf(e)}" onclick="openEntry(${jsa(e.id)})"><span class="nic"></span><span class="nt"><b>${esc(e.note||(spendFor(e)? CAT[e.for].name : CAT[e.cat].name))}</b><small>${niceDate(e.date)}${spendFor(e)?' · they paid · counted as '+esc(CAT[e.for].name):''}${e.pay?' · '+esc(fundName(e.pay)):''}</small></span><span class="na"><b class="num">${sgd(e.amt)}</b></span></button>`).join('') : `<div class="small muted" style="padding:6px 0">${empty}</div>`;
+  let h=npage('','people')+`<div class="phead"><span class="pav big ${P.net<0?'owe':'lend'}">${ini}</span><div><b>${esc(P.name)}</b><small class="${P.net<0?'nbad':P.net>0?'now':'muted'}">${P.net>0? esc(P.name.split(' ')[0])+' owes you '+sgd(P.net) : P.net<0? 'You owe '+sgd(-P.net) : 'All settled'}</small></div></div>
+    <div class="n2 ptabs"><button class="ncard ${give?'on':''}" data-pt="given"><small class="muted">Given ›</small><b class="nmid num now">${sgd(P.Gn)}</b><small class="muted">${P.g.length+P.gb.length} entries</small></button><button class="ncard ${give?'':'on'}" data-pt="taken"><small class="muted">Taken ›</small><b class="nmid num nbad">${sgd(P.Tn)}</b><small class="muted">${P.tk.length+P.tb.length} entries</small></button></div>`;
+  if(give) h+=`<div class="nlbl2">YOU GAVE · ${sgd(P.G)}</div><div class="ncard">${list(P.g,'Nothing given.')}</div><div class="nlbl2">PAID BACK TO YOU · ${sgd(P.GB)}</div><div class="ncard">${list(P.gb,'Nothing paid back yet.')}</div>
+    <div class="btns ngrid2"><button class="btn primary" data-pa="repaid">Got money back</button><button class="btn" data-pa="lent">Gave more</button></div>`;
+  else h+=`<div class="nlbl2">YOU TOOK · ${sgd(P.T)}</div><div class="ncard">${list(P.tk,'Nothing taken.')}</div><div class="nlbl2">YOU PAID BACK · ${sgd(P.TB)}</div><div class="ncard">${list(P.tb,'Nothing paid back yet.')}</div>
+    <div class="btns ngrid2"><button class="btn primary" data-pa="payback">${P.net<0?'Settle up '+sgd(-P.net):'Paid back'}</button><button class="btn" data-pa="borrowed">Took more</button></div>`;
+  if(P.net!==0 && P.Gn>0.004 && P.Tn>0.004) h+=`<div class="nhow"><b>Net · </b>${sgd(P.Tn)} taken − ${sgd(P.Gn)} given = ${P.net<0?'you owe':'they owe'} ${sgd(Math.abs(P.net))}. Settling the net clears both pages.</div>`;
+  const root=$('#tab-person'); root.innerHTML=h; bindGo(root);
+  root.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{ S.pTab=b.dataset.pt; renderPerson(); });
+  root.querySelectorAll('[data-pa]').forEach(b=>b.onclick=()=>{ const k=b.dataset.pa; FF_FROM_ADD=true; friendForm(k, P.name, null, k==='payback'&&P.net<0? -P.net : k==='repaid'&&P.net>0? P.net : undefined); });
+}
+
+/* ---------- Category detail ---------- */
+function renderCat(){
+  const ym=S.ym, id=S.cat||'food', k=CAT[id]||{name:id}, m=mm(ym), pm=mm(addMonths(ym,-1)), v=m.by[id]||0, b=+cfg(ym).budgets[id]||0, days=Math.max(1,daysElapsed(ym));
+  const top=m.outs.filter(e=>outCat(e)===id).sort((a,c)=>costOf(c)-costOf(a)).slice(0,8);
+  let h=npage(esc(k.name)+' · '+ymLabel(ym,true).split(' ')[0],'plan')+`<div class="ncard thero"><b class="nbig2 num">${sgd(v)}</b><small>${b? 'of '+sgd0(b)+' budget · ':''}${sgd(r2(v/days))} a day · ${ymLabel(pm.ym,true).split(' ')[0]} ${sgd(pm.by[id]||0)}</small>${b?`<span class="nprog ${v>b?'over':''}"><i style="width:${Math.min(100,v/b*100).toFixed(0)}%"></i></span>`:''}</div>
+    <div class="nlbl2">BIGGEST</div><div class="ncard">${top.length? top.map(e=>nRow(e,true)).join('') : '<div class="small muted" style="padding:6px 0">Nothing yet.</div>'}</div>
+    <button class="btn bigsave" data-go="budget">Change budget</button>`;
+  const root=$('#tab-cat'); root.innerHTML=h; bindGo(root);
+}
+function planHead(){ const sub=S.planF||'budget'; return `<div class="nhead"><h2>Plan</h2></div><div class="seg nseg">${[['budget','Budget'],['up','Upcoming'],['an','Analysis'],['st','Statement']].map(([k,x])=>`<button data-pf="${k}" class="${sub===k?'on':''}">${x}</button>`).join('')}</div>`; }
+function renderPlan3(){ const f=S.planF||'budget'; if(f==='an') renderInsights(); else if(f==='st') renderStatement(); else renderPlan();
+  const root=$('#tab-plan'); root.querySelectorAll('[data-pf]').forEach(b=>b.onclick=()=>{ S.planF=b.dataset.pf; renderPlan3(); });
+  root.querySelectorAll('[data-bcat]').forEach(b=>b.onclick=()=>{ S.cat=b.dataset.bcat; go('cat'); }); }
 
 /* ============ HISTORY ============ */
 function monthXfers(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.cat==='xfer' && e.date.startsWith(ym)); }
@@ -2621,7 +2946,7 @@ function hideOnOpen(){ try{ return localStorage.getItem(HIDEKEY)!=='0'; }catch(e
 function renderSettings(){
   const th=DB.settings.theme||'auto', p=curProfile();
   const item=(l,r,id,cls='')=>`<button class="sit ${cls}" ${id?`id="${id}"`:''}><span>${l}</span><span class="muted">${r}</span></button>`;
-  const SKN=[['obsidian','Classic','Warm cards · gold'],['ivory','Ivory','Light · editorial'],['aurora','Aurora','Gradient glass'],['paper','Paper','Text & thin lines'],['tiles','Tiles','Big number tiles'],['papertiles','Paper + Tiles','Paper with tiles'],['calm','Calm','Soft green']];
+  const SKN=[['paper','A · Paper Ledger','Black on paper, calendar first'],['tiles','B · Tiles','Big numbers in tiles'],['calm','C · Calm','Soft green, one ring']];
   const SKC={obsidian:['#0e0e10','#F4EFE6'],ivory:['#F6F2EA','#1C1A17'],aurora:['#151240','#F4EFE6'],paper:['#FAFAF8','#111111'],tiles:['#F2F2F4','#1c1c1e'],papertiles:['#FAFAF8','#111111'],calm:['#F6F8F7','#14201b']};
   let h=`<div class="row" style="justify-content:space-between;align-items:center;margin:2px 0 6px"><h2 style="margin:0;font-family:var(--font-display);font-weight:var(--dw);font-size:calc(26px * var(--hs, 1))">Settings</h2><button class="btn sm" id="sBackTab">‹ Back</button></div>
   <div class="sgrp">Appearance</div><div class="card scard"><div class="skins">${SKN.map(([id,n,t])=>`<button class="skin ${skin()===id?'on':''}" data-skin="${id}" style="background:${SKC[id][0]};color:${SKC[id][1]};${id==='papertiles'||id==='paper'?'border-color:'+(skin()===id?'':'#e6e6e1'):''}"><span class="sp"><img alt="" src="${ART.card(artSkin(id),{id:'mari'})}"><img class="si" alt="" src="${ART.icon(artSkin(id),'food')}"></span><span class="sn">${n}<small>${t}</small></span></button>`).join('')}</div>
@@ -2730,18 +3055,18 @@ function friendDetail(name, dir='lend'){
   if($('#fdBackAmt')) $('#fdBackAmt').onclick=()=>friendForm(T.B,f.name,null,f.owed);
   document.querySelectorAll('[data-fe]').forEach(r=>r.onclick=()=>friendForm(null,null,DB.entries[r.dataset.fe]));
 }
-const SHORT_NAME={food:'Food',travel:'Travel',temple:'Temple',entertainment:'Fun',medical:'Medical',laundry:'Laundry',salon:'Salon',shopping:'Shopping',rent:'Rent',ac:'AC bill',subs:'Subs',home:'Home',misc:'Misc'};
+const SHORT_NAME={food:'Food',travel:'Travel',temple:'Temple',entertainment:'Fun',medical:'Medical',laundry:'Laundry',salon:'Salon',shopping:'Shopping',rent:'Rent',ac:'AC bill',subs:'Subs',home:'Sent home',misc:'Misc'};
 const forTile=(id,name,icon)=>`<button class="ct" data-ffor="${id}" type="button"><span class="ci">${icon}</span><span class="cn">${name}</span></button>`;
 let FF_FROM_ADD=false;
 /* Debt from the Add screen: four plain choices */
-function debtChooser(){
+function debtChooser(fromAdd){
   const opt=(k,t,s)=>`<button class="salbtn" data-dk="${k}" style="margin-top:8px"><span style="flex:1;text-align:left"><b>${t}</b><span class="small muted" style="display:block">${s}</span></span><span class="muted">›</span></button>`;
-  openSheet(`<div class="sheettop"><h3>${catImg('debt')} Debt</h3><button class="btn sm" id="dcBack">Back</button></div>
+  openSheet(`<div class="sheettop"><h3>${fromAdd?'Add':'Friend money'}</h3><button class="btn sm" id="dcBack">${fromAdd?'Close':'Back'}</button></div>${fromAdd?typeStrip('friend'):''}
     <div class="small muted" style="margin-top:6px">Money between you and friends. Never counted as spending, except when a friend pays for something for you.</div>
     ${opt('borrowed','I took money','Borrowed, or a friend paid for me')}${opt('payback','I paid back','Settle what you owe')}
     ${opt('lent','I gave money','Lent to a friend')}${opt('repaid','Friend paid me back','Money returned to you')}
     <div class="btns" style="margin-top:12px"><button class="btn sm" onclick="friendsSheet('owe')">You owe friends ›</button><button class="btn sm" onclick="friendsSheet('lend')">Friends owe you ›</button></div>`);
-  $('#dcBack').onclick=()=>{ if(E) drawSheet(); else closeSheet(); };
+  $('#dcBack').onclick=()=>{ if(E && E.cat!==undefined) drawSheet(); else closeSheet(); }; bindTypeStrip();
   document.querySelectorAll('[data-dk]').forEach(b=>b.onclick=()=>{ FF_FROM_ADD=true; const amt=E&&+E.amt>0? +E.amt : undefined; friendForm(b.dataset.dk, '', null, amt); });
 }
 /* Turn a logged expense into debt (paid back to / given to a friend): it leaves its category and stops counting as spending */
@@ -2771,7 +3096,7 @@ function friendForm(kind, name, src, amt){
     ${e.cat==='borrowed'? `<label class="f">What was it for?</label><div class="cgrid" id="ffFor">${forTile('', 'To account', `<img class="cimg" alt="" style="object-fit:contain" src="${ART.card(artSkin(), funds().find(f=>f.id==='mari')||funds()[0]||{id:'mari'})}">`)}${[...SPEND_CATS.filter(c=>!MORE_CATS.has(c.id)), ...SPEND_CATS.filter(c=>MORE_CATS.has(c.id))].map(c=>forTile(c.id, SHORT_NAME[c.id]||c.name, c.icon)).join('')}</div>
       <div class="small muted" id="ffForNote" style="margin-top:6px"></div>`:''}
     <label class="f" for="ffNote">${first?'Reason':'Note (optional)'}</label><input class="in" id="ffNote" value="${esc(e.note)}" placeholder="${first?'e.g. dinner, movie ticket, loan':'e.g. PayNow'}">
-    <div id="ffPayBox">${payChips(pay, 'data-ffpay', MONEY_IN.has(e.cat)? 'Received in' : 'Paid with')}</div>
+    <div id="ffPayBox">${MONEY_IN.has(e.cat)? '<label class="f">Received in</label>'+payGrid(pay,'data-ffpay',funds().filter(f=>!isCredit(f))) : payChips(pay, 'data-ffpay', 'Paid with')}</div>
     ${e.id? '<div class="actrow"><button class="btn danger" id="ffDel">Delete</button><button class="btn primary" id="ffSave">Save changes</button></div>' : '<div style="margin-top:16px"><button class="btn primary bigsave" id="ffSave">Save</button></div>'}`;
   openSheet(h);
   $('#ffBack').onclick=()=> e.friend? friendDetail(e.friend, dir) : (FF_FROM_ADD? debtChooser() : friendsSheet(dir));
@@ -2882,15 +3207,16 @@ function emiRow(){ const n=emiN(), opts=[1,3,6]; if(n>1 && !opts.includes(n)) op
     ${photoHas()? `<span class="emiph"><button type="button" class="lnk" id="ePhChg" style="float:none">Change photo</button> · <button type="button" class="lnk" id="ePhDel" style="float:none;color:var(--bad)">Remove</button></span>` : ''}</div>`; }
 function drawSheet(){
   const k = CAT[E.cat] || {}, emis = E.id? [] : activeEmis();
-  const SHORT={food:'Food',travel:'Travel',temple:'Temple',entertainment:'Fun',medical:'Medical',laundry:'Laundry',salon:'Salon',shopping:'Shopping',rent:'Rent',ac:'AC bill',subs:'Subs',home:'Home',misc:'Misc',refund:'Refund'};
+  const SHORT={food:'Food',travel:'Travel',temple:'Temple',entertainment:'Fun',medical:'Medical',laundry:'Laundry',salon:'Salon',shopping:'Shopping',rent:'Rent',ac:'AC bill',subs:'Subs',home:'Sent home',misc:'Misc',refund:'Refund'};
   const yest=(()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toLocaleDateString('en-CA'); })();
-  let h = `<div class="sheettop"><h3>${E.id?'Edit':'Add'} ${k.income?'refund':'expense'}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
-  ${E.id?'':'<div class="seg" style="margin-top:6px"><button class="on">Expense</button><button id="eXfer">🔁 Transfer</button></div>'}
+  let h = `<div class="sheettop"><h3>${E.id?'Edit '+(k.income?'money in':'spend'):'Add'}</h3><span style="display:flex;gap:6px"><button class="btn sm" id="eCalc" aria-label="Calculator" title="Calculator"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg></button><button class="btn sm" onclick="closeSheet()">Close</button></span></div>
+  ${E.id?'':typeStrip(k.income?'in':'spend')}
   <div class="amtbox"><span class="cur">${esc(curInfo(curCode()).sym.trim())}</span><input class="num" id="eAmt" type="text" inputmode="decimal" autocomplete="off" value="${E.amt}" placeholder="0.00" aria-label="${k.income?'Refund received':'Amount'} (${curCode()})" style="width:${Math.max(4,String(E.amt||'').length+1)}ch"></div>
-  ${(()=>{ const tile=c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`;
-    const all=CATS.filter(c=>!c.friend && !c.track), main=all.filter(c=>!MORE_CATS.has(c.id)), more=all.filter(c=>MORE_CATS.has(c.id));
-    const emiT = !E.id && (emis.length||E.cat==='emi')? `<button class="ct ${E.cat==='emi'?'on':''}" data-c="emi"><span class="ci">${catImg('emi')}</span><span class="cn">EMI</span></button>` : '';
-    return `<div class="cgrid">${all.map(tile).join('')}${emiT}${E.id?'':`<button class="ct" id="eDebt"><span class="ci">${catImg('debt')}</span><span class="cn">Debt</span></button>`}</div>`; })()}
+  ${(()=>{ if(k.income) return `<label class="f">What is it?</label><div class="fgrid">${MI_KINDS.map(([id,n])=>`<button class="chip ${(E.kind||'')===id?'on':''}" data-mk="${id}">${n}</button>`).join('')}</div>
+      <div class="small muted" style="margin-top:6px">Salary is added by itself on payday (Settings › Salary account).</div>`;
+    const tile=c=>`<button class="ct ${c.id===E.cat?'on':''}" data-c="${c.id}"><span class="ci">${c.icon}</span><span class="cn">${SHORT[c.id]||c.name}</span></button>`;
+    const all=CATS.filter(c=>!c.friend && !c.track && !c.income);
+    return `<div class="cgrid">${all.map(tile).join('')}</div>`; })()}
   ${E.cat?'':'<div class="small muted" style="margin-top:6px;text-align:center">Choose a category</div>'}`;
   if(E.cat==='emi'){ drawEmiPay(h, emis); return; }
   if(k.subs){ const chip=s=>`<button class="chip ${s.id===E.sub?'on':''}" data-s="${s.id}">${s.name}</button>`;
@@ -2900,25 +3226,34 @@ function drawSheet(){
     <div><label class="f">Rate: 1 ${curCode()} = ${curInfo(homeCode()).sym.trim()}</label><input class="in num" type="number" inputmode="decimal" step="0.0001" id="eRate" value="${E.rate||''}" placeholder="fetching…"></div></div>
     <div class="small muted" id="rateNote" style="margin-top:6px">Enter either ${curCode()} or ${homeCode()} — the other is calculated.</div>`;
   h += `<label class="f">${k.income? 'Received in' : 'Paid with'}</label>${payGrid(E.pay,'data-pay')}`;
+  if(!E.id && !k.income && E.cat){ const sp=E.split||[], fr=[...new Set([...sp, ...recentFriends()])], a=r2(parseFloat(E.amt)||0), n=sp.length, share=n? Math.floor(a/(n+1)*100)/100 : 0;
+    h += `<label class="f">Split with friends <span class="muted" style="font-weight:500">(optional)</span></label><div class="fgrid nsplit">${fr.map(f=>`<button type="button" class="chip ${sp.includes(f)?'on':''}" data-sp="${esc(f)}">${esc(f)}</button>`).join('')}<button type="button" class="chip" id="eSpAdd">+ Name</button></div>
+      ${n? `<div class="nhow" style="margin-top:8px"><b>Split ${n+1} ways · </b>${a>0? `you spend <b class="num">${sgd(r2(a-share*n))}</b>; ${sp.map(esc).join(', ')} ${n>1?'each owe':'owes'} you <b class="num">${sgd(share)}</b>.` : 'enter the amount you paid.'} One entry, no double counting.</div>`:''}`; }
   { const pf=funds().find(x=>x.id===E.pay); if(isCredit(pf) && !k.income && !emiAllowed()) h += `<div class="small muted" style="margin-top:6px">💳 Credit: ${emiN()>1? 'split into '+emiN()+' monthly payments from '+ymLabel(addMonths(ymOf(E.date),1),true) : 'paid in full on '+niceDate(nextDue(pf, E.date))}</div>`; }
-  const ph = {refund:'e.g. insurance claim, shop return, cashback', subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
-  h += `${emiAllowed()? `<div style="margin-top:14px"></div>` : `<label class="f" for="eNote">${k.reason?'Reason (required)':'Note (optional)'}</label>`}<input class="in${emiAllowed()?' insm':''}" id="eNote" value="${esc(E.note)}" placeholder="${emiAllowed()? (k.reason?'Reason (required)':'Note (optional)')+' · '+ph.replace(/^e\.g\. /,'') : ph}" aria-label="${k.reason?'Reason':'Note'}" ${k.reason?'required':''}>
+  const ph = {refund:(E.kind==='interest'?'e.g. DBS interest':E.kind==='cashback'?'e.g. Mari referral reward, card cashback':'e.g. shop return, insurance claim'), subs:'e.g. Netflix, Spotify, phone plan', travel:'e.g. MRT, Grab', temple:'e.g. archanai, donation', home:'e.g. via Wise', misc:'e.g. phone top-up, gift, haircut', ac:'e.g. Sep bill', food: E.sub==='delivery'?'e.g. GrabFood, foodpanda':E.sub==='groceries'?'e.g. NTUC, Mustafa':'e.g. where / what'}[E.cat] || 'e.g. where / what';
+  h += `${emiAllowed()? `<div style="margin-top:14px"></div>` : `<label class="f" for="eNote">${k.reason && !(E.cat==='refund' && E.kind && E.kind!=='refund')?'What is it for? (required)':'Note (optional)'}</label>`}<input class="in${emiAllowed()?' insm':''}" id="eNote" value="${esc(E.note)}" placeholder="${emiAllowed()? (k.reason?'Reason (required)':'Note (optional)')+' · '+ph.replace(/^e\.g\. /,'') : ph}" aria-label="${k.reason?'Reason':'Note'}" ${k.reason?'required':''}>
   ${E.cat==='refund'? `<label class="nprior"><input type="checkbox" id="ePrior" ${isPrior(E)?'checked':''}><span>This pays me back for spending from <b>before I started tracking</b> (e.g. TEDx). Shown in the statement but not counted in Saved.</span></label>` : ''}
-  ${emiAllowed()? emiRow() : `<label class="f">Bill photo (optional)</label><div class="phrow" id="ePhRow">${photoHas()? `<button class="phthumb" id="ePhView" aria-label="View bill photo"><img id="ePhImg" alt="Bill photo" ${E.photoData?`src="${E.photoData}"`:''}><span id="ePhMiss" class="small muted" style="display:none">On another device</span></button><button class="btn sm" id="ePhChg">Change</button><button class="btn sm danger" id="ePhDel">Remove</button>` : `<button class="btn" id="ePhAdd">📷 Add bill photo</button>`}</div>`}<input type="file" id="ePhFile" accept="image/*" class="hidden">
+  ${emiAllowed() && !(E.split||[]).length? emiRow() : `<label class="f">Bill photo (optional)</label><div class="phrow" id="ePhRow">${photoHas()? `<button class="phthumb" id="ePhView" aria-label="View bill photo"><img id="ePhImg" alt="Bill photo" ${E.photoData?`src="${E.photoData}"`:''}><span id="ePhMiss" class="small muted" style="display:none">On another device</span></button><button class="btn sm" id="ePhChg">Change</button><button class="btn sm danger" id="ePhDel">Remove</button>` : `<button class="btn" id="ePhAdd">📷 Add bill photo</button>`}</div>`}<input type="file" id="ePhFile" accept="image/*" class="hidden">
   ${E.id? '<div class="actrow"><button class="btn danger" id="eDel">Delete</button><button class="btn primary" id="eSave">Save changes</button></div>'
     : '<div style="margin-top:16px"><button class="btn primary bigsave" id="eSave">Save</button></div><div class="btns" style="margin-top:8px;justify-content:center"><button class="btn" id="eSaveMore">Save &amp; add another</button></div>'}
 `;
   openSheet(h);
   const amt=$('#eAmt');
-  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; drawSheet(); });
+  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; if(E.cat!=='food') E.sub=null; if(!E.id && !E.payTouched){ const m=payMem()[E.cat]; if(m && funds().some(f=>f.id===m)) E.pay=m; } if(E.cat==='food' && !E.sub && !E.id) E.sub=guessMeal(); drawSheet(); });
+  document.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{ readSheet(); E.kind=b.dataset.mk; drawSheet(); });
+  document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ readSheet(); const n=b.dataset.sp, sp=E.split||[]; E.split= sp.includes(n)? sp.filter(x=>x!==n) : [...sp,n]; drawSheet(); });
+  if($('#eSpAdd')) $('#eSpAdd').onclick=()=>{ readSheet(); const n=(prompt('Friend’s name')||'').trim(); if(n){ E.split=[...new Set([...(E.split||[]), n])]; drawSheet(); } };
+  if($('#eCalc')) $('#eCalc').onclick=()=>{ readSheet(); calcSheet(); };
+  bindTypeStrip();
   if($('#eMore')) $('#eMore').onclick=()=>{ readSheet(); const open=E.more || MORE_CATS.has(E.cat) || E.cat==='emi'; if(open && (MORE_CATS.has(E.cat)||E.cat==='emi')) E.cat=''; E.more=!open; drawSheet(); };
   if($('#eDebt')) $('#eDebt').onclick=()=>{ readSheet(); debtChooser(); };
   bindPhoto();
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; drawSheet(); });
-  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{ readSheet(); E.pay = E.pay===b.dataset.pay? '' : b.dataset.pay; drawSheet(); });
+  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{ readSheet(); E.pay = E.pay===b.dataset.pay? '' : b.dataset.pay; E.payTouched=true; drawSheet(); });
   document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{ readSheet(); E.date=b.dataset.d; drawSheet(); });
   $('#eDate').addEventListener('change',()=>{ readSheet(); if(E.cat!=='home') drawSheet(); });
   amt.addEventListener('input',()=>{ const v=amt.value.replace(/,/g,'.').replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1'); if(v!==amt.value) amt.value=v; amt.style.width=Math.max(4,v.length+1)+'ch'; });
+  if((E.split||[]).length) amt.addEventListener('change',()=>{ readSheet(); drawSheet(); });
   if(E.cat==='home' && $('#eInr')){
     const ie=$('#eInr'), re=$('#eRate');
     amt.oninput=()=>{ const r=+re.value; if(r&&amt.value) ie.value=Math.round(+amt.value*r); };
@@ -2927,7 +3262,6 @@ function drawSheet(){
     $('#eDate').onchange=()=>{ readSheet(); E.rate=''; loadRate(); };
     if(!E.rate) loadRate();
   }
-  if($('#eXfer')) $('#eXfer').onclick=()=>{ E=null; xferForm(null,null,'add'); };
   document.querySelectorAll('[data-emin]').forEach(b=>b.onclick=()=>{ readSheet(); const n=+b.dataset.emin; E.emiChoice = n>1? {n, fee:emiFeeNow()} : null; drawSheet(); });
   if($('#eFeeAdd')) $('#eFeeAdd').onclick=()=>{ readSheet(); E.feeOpen=true; drawSheet(); setTimeout(()=>$('#eEmiFee')&&$('#eEmiFee').focus(),0); };
   if($('#eEmiFee')) $('#eEmiFee').addEventListener('input',()=>{ const n=emiN(); E.emiChoice={n, fee:r2(Math.max(0,+$('#eEmiFee').value||0))}; const a=r2(parseFloat($('#eAmt').value)||0); if(a>0) $('#eEmiPer').innerHTML=n+' × <b class="num">'+sgd(r2((a+E.emiChoice.fee)/n))+'</b> a month from '+ymLabel(addMonths(ymOf(E.date),1),true); });
@@ -2976,11 +3310,11 @@ function drawEmiPay(h, emis){
   document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ readSheet(); E.cat=b.dataset.c; E.sub=null; if(E.cat!=='emi') E.amt=''; drawSheet(); });
   document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ readSheet(); E.sub=b.dataset.s; E.amt=''; drawSheet(); });
   document.querySelectorAll('[data-ea]').forEach(b=>b.onclick=()=>{ readSheet(); E.amt=(+b.dataset.ea).toFixed(2); drawSheet(); });
-  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{ readSheet(); E.pay = E.pay===b.dataset.pay? '' : b.dataset.pay; drawSheet(); });
+  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{ readSheet(); E.pay = E.pay===b.dataset.pay? '' : b.dataset.pay; E.payTouched=true; drawSheet(); });
   document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{ readSheet(); E.date=b.dataset.d; drawSheet(); });
   if($('#eDate')) $('#eDate').addEventListener('change',()=>{ readSheet(); drawSheet(); });
   amt.addEventListener('input',()=>{ const v=amt.value.replace(/,/g,'.').replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1'); if(v!==amt.value) amt.value=v; amt.style.width=Math.max(4,v.length+1)+'ch'; });
-  if($('#eXfer')) $('#eXfer').onclick=()=>{ E=null; xferForm(null,null,'add'); };
+  if((E.split||[]).length) amt.addEventListener('change',()=>{ readSheet(); drawSheet(); });
   if($('#eSave')) $('#eSave').onclick=()=>{ readSheet(); const a=r2(parseFloat(E.amt));
     if(!cur){ toast('Choose which EMI'); return; }
     if(!(a>0)){ toast('Enter an amount'); amt.focus(); return; }
@@ -3011,7 +3345,10 @@ function commitEntry(more){
   if(!E.cat || !CAT[E.cat]){ toast('Choose a category'); return; }
   if(E.cat==='food' && !E.sub){ toast('Choose breakfast, lunch, dinner, coffee, groceries or delivery'); return; }
   if(!(amt>0)){ toast('Enter an amount'); $('#eAmt').focus(); return; }
-  if(CAT[E.cat].reason && !(E.note||'').trim()){ toast(E.cat==='refund'?'Add a reason for this refund':'Add a reason for this miscellaneous expense'); $('#eNote').focus(); return; }
+  if(E.cat==='refund' && !E.kind && !E.id) E.kind='refund';
+  if(E.cat==='refund' && !(E.note||'').trim() && E.kind && E.kind!=='refund') E.note=(MI_KINDS.find(x=>x[0]===E.kind)||['',''])[1];
+  if(CAT[E.cat].reason && !(E.note||'').trim()){ toast(E.cat==='refund'?'Add what this refund is for':'Add a reason for this miscellaneous expense'); $('#eNote').focus(); return; }
+  if(!CAT[E.cat].income && !E._billOk && /(bill|paylater|pay later|credit card|statement)/i.test(E.note||'') && /(grab|shopee|card|paylater|credit|mari)/i.test(E.note||'')){ E._billOk=true; toast('Paying a card or PayLater bill? Use Move so it isn’t counted twice. Tap Save again to keep it as spending.'); return; }
   const pf=E.pay? funds().find(x=>x.id===E.pay) : null, onCredit=isCredit(pf), emiOk = emiAllowed();
   const now=Date.now();
   const rec = {id:E.id||uid(), date:E.date, cat:E.cat, amt, note:(E.note||'').trim(), upd:now, cr:E.cr||now};
@@ -3019,18 +3356,24 @@ function commitEntry(more){
   const prevOwed = onCredit? owedOf(pf) - (E.id&&DB.entries[E.id]&&DB.entries[E.id].pay===pf.id? (DB.entries[E.id].amt+(DB.entries[E.id].emi?emiFee(DB.entries[E.id]):0)) : 0) : 0;
   if(E.cat==='food') rec.sub=E.sub;
   if(E.cat==='refund' && E.prior!==undefined) rec.prior=E.prior?1:0;
+  if(E.cat==='refund' && E.kind) rec.kind=E.kind;
   if(E.pay){ rec.pay=E.pay; setLastPay(E.pay); }
   rec.cur = curCode();
   if(E.photoData){ rec.photo=1; idb.set('photo:'+rec.id, E.photoData); }
   else if(E.photoDel){ idb.del('photo:'+rec.id); }
   else if(E.photo) rec.photo=1;
   if(E.cat==='home'){ if(curCode()===homeCode()){ rec.rate=1; rec.inr=amt; } else { rec.rate=+E.rate||null; rec.inr= +E.inr || (rec.rate? Math.round(amt*rec.rate):null); } rec.homeCur=homeCode(); }
+  const sp=(!E.id && !CAT[E.cat].income && Array.isArray(E.split))? E.split.filter(Boolean) : [];
+  if(sp.length){ const share=Math.floor(amt/(sp.length+1)*100)/100; rec.amt=r2(amt-share*sp.length); delete rec.emi; rec.split=sp.length+1;
+    sp.forEach((n,i)=>{ const id=uid()+i; DB.entries[id]={id, date:rec.date, cat:'lent', friend:n, amt:share, note:(rec.note||CAT[rec.cat].name)+' (split)', pay:rec.pay, upd:now, cr:now, cur:curCode(), splitOf:rec.id}; }); }
+  if(!CAT[E.cat].income && rec.pay) setPayMem(E.cat, rec.pay);
   DB.entries[rec.id]=rec; S.lastCat=E.cat;
   save();
   const m=ymOf(rec.date); if(m!==S.ym) S.ym=m;
   toast(`Saved ${sgd(amt)} · ${CAT[rec.cat].name}${rec.emi?' · EMI '+rec.emi.n+' months':''}`);
   if(onCredit && +pf.limit>0 && prevOwed+amt+(rec.emi?rec.emi.fee:0) > +pf.limit+0.004) setTimeout(()=>toast(`⚠ ${pf.name} is over its ${sgd0(+pf.limit)} limit by ${sgd(prevOwed+amt-(+pf.limit))}`),1600);
   render();
+  if(sp.length) setTimeout(()=>toast(`Split ${sp.length+1} ways · ${sp.join(', ')} owe${sp.length>1?'':'s'} you ${sgd(Math.floor(amt/(sp.length+1)*100)/100)}${sp.length>1?' each':''}`),1400);
   if(more){ const keep={cat:E.cat,sub:E.sub,date:E.date,back:E.back,pay:E.pay}; delete E.emiChoice; delete E.photoData; delete E.photoDel; delete E.photo; E={id:null,...keep,amt:'',inr:'',rate:E.cat==='home'?E.rate:'',note:''}; drawSheet(); } else closeSheet();
 }
 
@@ -3154,7 +3497,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v82';
+const APP_VERSION='v85';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -3461,10 +3804,10 @@ function go(t){ if(t==='settings' && S.tab!=='settings') S.prevTab=S.tab; S.tab=
 /* After a refresh, reopen the page you were on (Analysis, Calendar, …) instead of Home. */
 (function(){ try{ const t=localStorage.getItem(TABKEY); if(t && (t==='settings' || document.querySelector('nav.tabs button[data-tab="'+t+'"]'))) S.tab=t; }catch(e){} })();
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
-$('#fab').onclick=()=>addChooser();
+$('#fab').onclick=()=>openEntry(null);
 $('#setBtn').onclick=()=>go('settings');
 /* Swipe left/right on a page to move between Home, Calendar, Analysis and Budget. Stops at the ends; ignored on cards, charts, tables and inputs. */
-(function(){ const ORDER=['home','activity','plan','accounts']; let sx=null, sy=0, st=0;
+(function(){ const ORDER=['home','cal','accounts','people','plan']; let sx=null, sy=0, st=0;
   const skip=t=>!!(t.closest && t.closest('.crail,.ccar,.tablewrap,svg,[data-tip],input,select,textarea,.chips,.seg,.datechips,.calgrid,.cal'));
   document.addEventListener('touchstart',e=>{ sx=null; if(e.touches.length!==1 || $('#sheetBg').classList.contains('open') || !ORDER.includes(S.tab) || !e.target.closest('main') || skip(e.target)) return;
     sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now(); },{passive:true});
