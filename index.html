@@ -1372,6 +1372,32 @@ function moveOctDebts(){ const M={mumh4sw279s93v:'Sai Krishna', mumhcbf6wzr4kq:'
   for(const [id,n] of Object.entries(M)){ const e=DB.entries[id]; if(e && !e.del && e.cat==='misc'){ DB.entries[id]={...e, cat:'payback', friend:n, upd:now++}; ch=true; } }
   return ch; }
 function safeMove(){ try{ return moveOctDebts(); }catch(e){ return false; } }
+/* One-time (user asked, 23 Nov 2026): match Mari Credit Card to its 21 Nov 2026 statement (21 Oct – 20 Nov).
+   Bill on the 10th, statement on the 21st. Each edit only applies if the entry still has the old value. */
+function fixMccNov(){ if(DB.settings.fixMcc1) return false; const E=DB.entries; if(!E['mvz9khs1sstmz7'] && !E['mvt41et1yr409a']) return false;
+  let now=Date.now(); const ed=(id,old,nw)=>{ const e=E[id]; if(!e||e.del) return; for(const k in old) if(e[k]!==old[k]) return; E[id]={...e,...nw,upd:now++}; };
+  ed('mvz9khs1sstmz7',{amt:35.78},{amt:42.63});                       // Sheng Siong 2 Nov
+  ed('mvxjj4850d27b3',{amt:4.4},{amt:5.4, note:'RM Food'});           // 30 Oct
+  ed('mvp5gva8rjyzhs',{amt:31.38},{amt:31.83});                       // Food Panda 26 Oct
+  ed('mwdsdmnqpu7wj0',{amt:18.69},{amt:18.96});                       // FairPrice 12 Nov (with 4.35 yogurt = 23.31)
+  ed('mw4neb2qlo54ie',{pay:'mari'},{pay:'maricc'});                   // laundry 6 Nov was on the card
+  ed('mvwmohvy28qzgc',{pay:'mari',date:'2026-11-01'},{pay:'maricc', note:'Physiotherapy · NUHS'});
+  ed('mwlcgf2mq7hxv6',{date:'2026-11-18'},{date:'2026-11-17'});       // Food Panda 5.99
+  ed('mvgshlrgsj95hi',{date:'2026-10-19'},{date:'2026-10-20'});       // Simba 12.00
+  ed('mvt41et1yr409a',{amt:84.69},{amt:69.15});                       // card payment 29 Oct
+  const add=(id,o)=>{ if(E[id]) return; E[id]={id, cur:'SGD', cr:now, upd:now++, ...o}; };
+  add('mcc1121a',{date:'2026-11-01', cat:'xfer', from:'mari', to:'maricc', amt:181.51, note:'Paid NUHS on the card'});
+  add('mcc1121b',{date:'2026-10-30', cat:'xfer', from:'mari', to:'maricc', amt:11.98, note:'Mari Credit Card payment'});
+  add('mcc1121c',{date:'2026-10-28', cat:'shopping', amt:11.98, pay:'maricc', note:'ShopeePay top-up'});
+  add('mcc1121d',{date:'2026-11-05', cat:'food', sub:'lunch', amt:7, pay:'maricc', note:'Wholly Greens'});
+  add('mcc1121e',{date:'2026-11-09', cat:'travel', amt:6.3, pay:'maricc', note:'Bus/MRT'});
+  add('mcc1121f',{date:'2026-11-16', cat:'food', sub:'coffee', amt:1.6, pay:'maricc', note:'Ashui'});
+  add('mcc1121g',{date:'2026-11-18', cat:'food', sub:'coffee', amt:2, pay:'maricc', note:'IJOOZ'});
+  add('mcc1121h',{date:'2026-11-20', cat:'xfer', from:'maricc', to:'grab', amt:20, note:'Grab PayLater bill (2 × S$10 on card)'});
+  DB.settings={...DB.settings, funds:(DB.settings.funds||[]).map(x=>x.id==='maricc'? {...x, due:10, stmt:21} : x), fixMcc1:1, upd:Date.now()};
+  return true; }
+function safeMcc(){ try{ return fixMccNov(); }catch(e){ return false; } }
+
 function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
   const order=['nets','mari','ezlink','dbs','maricc','shopee','grab','cash'], all=allFunds();
   const sorted=[...order.map(id=>all.find(f=>f.id===id)).filter(Boolean), ...all.filter(f=>!order.includes(f.id))]
@@ -1485,7 +1511,11 @@ const owedOf = f => r2(-liveBal(f));
 function nextDue(f, from){ from=from||todayStr(); const c=ymOf(from)+'-'+pad(dueDay(f)); return from<=c? c : addMonths(ymOf(from),1)+'-'+pad(dueDay(f)); }
 function lastDue(f, from){ return addMonths(ymOf(nextDue(f,from)),-1)+'-'+pad(dueDay(f)); }
 /* Bill due on the next due day = what you owe now, minus EMI instalments that fall after that day */
-function dueAt(f){ return r2(Math.max(0, owedOf(f) - emiAfter(f.id, nextDue(f)))); }
+function stmtDay(f){ const s=parseInt((f||{}).stmt); return s>=1&&s<=28? s : 0; }
+function stmtCut(f, D){ const s=stmtDay(f); if(!s) return null; D=D||nextDue(f); const c=ymOf(D)+'-'+pad(s); return c<D? c : addMonths(ymOf(D),-1)+'-'+pad(s); }
+/* Charges made on or after the statement date belong to the next bill */
+function afterCut(f){ const c=stmtCut(f); if(!c) return 0; let n=0; for(const x of acctTx(f.id)) if(x.after && x.e.cat!=='xfer' && !isEmi(x.e) && x.e.date>=c) n+=x.d; return r2(Math.max(0,-n)); }
+function dueAt(f){ return r2(Math.max(0, owedOf(f) - emiAfter(f.id, nextDue(f)) - afterCut(f))); }
 /* Still unpaid from the last due day: owed now minus later instalments minus charges made after that day */
 function overdueOf(f){ const L=lastDue(f); let after=0;
   for(const x of acctTx(f.id)) if(x.after && x.d<0 && x.e.cat!=='xfer' && x.e.date>L && !isEmi(x.e)) after+=-x.d;
@@ -1683,7 +1713,8 @@ function accountSheet(id, back){
     <div class="grid2"><div><label class="f" for="aName">Name</label><input class="in" id="aName" value="${esc(f.name)}" autocomplete="off"></div>
       <div><label class="f" for="aBal">Amount you owe now (as in the app)</label><input class="in num" id="aBal" type="number" inputmode="decimal" step="0.01" value="${Math.max(0,owedOf(f))}"></div>
       <div><label class="f" for="aLim">Credit limit</label><input class="in num" id="aLim" type="number" inputmode="decimal" value="${+f.limit||''}" placeholder="e.g. 500"></div>
-      <div><label class="f" for="aDue">Due day of month</label><input class="in num" id="aDue" type="number" inputmode="numeric" min="1" max="28" value="${dueDay(f)}"></div></div>
+      <div><label class="f" for="aDue">Due day of month</label><input class="in num" id="aDue" type="number" inputmode="numeric" min="1" max="28" value="${dueDay(f)}"></div>
+      <div><label class="f" for="aStmt">Statement day (optional)</label><input class="in num" id="aStmt" type="number" inputmode="numeric" min="1" max="28" value="${stmtDay(f)||''}" placeholder="e.g. 21"></div></div>
     <div class="btns" style="margin-top:10px"><button class="btn primary" id="aSave">Save</button><button class="btn" id="aPay">Pay bill</button><button class="btn" id="aCal">📅 Reminder</button><button class="btn danger" id="aDel">Delete account</button></div>
     ${tx.length?`<div class="list" style="margin-top:12px">${tx.slice(0,60).map(item).join('')}</div>`:'<div class="empty" style="margin-top:12px">Nothing paid with this account yet.</div>'}` : `
     <div class="kpis" style="margin-top:8px"><div class="kpi"><div class="l">Balance now</div><div class="v num">${sgd(liveBal(f))}</div><div class="s">${f.at?'set to '+sgd(+f.amt||0)+' on '+new Date(f.at).toLocaleDateString('en-SG',{day:'numeric',month:'short'}):'not set yet'}</div></div>
@@ -1698,7 +1729,7 @@ function accountSheet(id, back){
   $('#aSave').onclick=()=>{ const n=($('#aName').value||'').trim(), v0=parseFloat($('#aBal').value), v=cr? -v0 : v0;
     if(!n){ toast('The account needs a name'); $('#aName').focus(); return; }
     if(isNaN(v)){ toast('Enter the balance as a number'); $('#aBal').focus(); return; }
-    const changedBal = Math.abs(v-liveBal(f))>0.004, extra = cr? {limit:r2(Math.max(0,+$('#aLim').value||0)), due:Math.min(28,Math.max(1,parseInt($('#aDue').value)||1))} : {};
+    const changedBal = Math.abs(v-liveBal(f))>0.004, extra = cr? {limit:r2(Math.max(0,+$('#aLim').value||0)), due:Math.min(28,Math.max(1,parseInt($('#aDue').value)||1)), stmt:(v=>v>=1&&v<=28? v : 0)(parseInt($('#aStmt').value))} : {};
     saveFunds(allFunds().map(x=>x.id!==id? x : (changedBal? {...x,...extra,name:n,amt:r2(v),at:Date.now()} : {...x,...extra,name:n})));
     if(cr && changedBal && !f.at) reOpening();
     render(); toast(changedBal? (cr? n+': you owe '+sgd(v0) : n+' balance set to '+sgd(v)) : 'Saved'); accountSheet(id, back); };
@@ -3686,7 +3717,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v90';
+const APP_VERSION='v91';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -3721,7 +3752,7 @@ async function cloudSync(manual, poll){
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
     if(j.same){ setTimeout(autoSalary, 50); if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
-    if(n){ try{ if(layoutMigrate()|fixMariNov()|safeMove()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
+    if(n){ try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
     persist(); setTimeout(autoSalary, 50);
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
@@ -4017,7 +4048,7 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 try{ if(localStorage.getItem('dailyExpenseTracker.hideOnOpen')!=='0') localStorage.setItem('dailyExpenseTracker.showBal','0'); }catch(e){}
 applyTheme();
 renderProfileBtn();
-try{ if(layoutMigrate()|fixMariNov()|safeMove()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
+try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
 render();
 /* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
 /* A setup link never connects by itself: it only fills in the code on the Sync screen, and you tap Connect. */
