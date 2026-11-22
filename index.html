@@ -1444,7 +1444,7 @@ function efKept(ym){ const cur=ym>=curYM(), end=ym+'-'+pad(dim(ym));
   return r2(funds().filter(f=>isEF(f,ym)).reduce((a,f)=>a+(cur? liveBal(f) : balOn(f,end)),0)); }
 /* Savings used in a month's budget = savings brought into the month (opening balance) − what stays in the emergency fund.
    Negative = some of this month's money was put aside. With every payment logged, Money left this month = balance of the ticked accounts. */
-function fundsIncluded(ym){ const op=openingOf(ym); if(op===null) return 0; return r2(op - efKept(ym)); }
+function fundsIncluded(ym){ return 0; }   /* user asked: emergency fund (DBS, Cash) is never part of the budget */
 /* ============ Accounts / payment methods: balance = entered balance ± everything logged after it was entered ============ */
 const MONEY_IN = new Set(['refund','repaid','borrowed']);
 const PAYKEY='dailyExpenseTracker.lastPay';
@@ -3096,7 +3096,7 @@ function moneySheet(){
     <div class="card"><h2>Why “Budget left” is different</h2>
       ${ln('Budget left <span class="small muted">budgets − spending in those categories</span>',sgd(st.budgetLeft))}
       ${ln(plan<0?'Budgets are more than salary + money carried over':'Salary + money carried over is more than budgets',sg(plan),'sub2')}
-      <div class="small muted" style="margin:-2px 0 6px 16px">Salary ${sgd(st.salary)} + carried over ${sgd(st.extra)} − all budgets ${sgd(st.budgetTotal)} = ${sg(plan)}</div>
+      <div class="small muted" style="margin:-2px 0 6px 16px">Salary ${sgd(st.salary)} − all budgets ${sgd(st.budgetTotal)} = ${sg(plan)}</div>
       ${st.refund?ln('Refunds (not taken off any budget)',sg(st.refund),'sub2'):''}
       ${repOut?ln('Friends paid back',sg(repOut),'sub2'):''}
       ${Math.abs(unb)>0.004?ln('Spending in categories with no budget',sg(-unb),'sub2'):''}
@@ -3104,7 +3104,7 @@ function moneySheet(){
       ${Math.abs(dc)>0.004? ln('Friends’ money this month (borrowed − paid back, lent)',sg(dc),'sub2'):''}
       ${Math.abs(creditNet())>0.004? ln('Spending accounts '+sgd(spendTotal())+' − credit owed (not yet counted as spending)', sgd(r2(spendTotal()+creditNet())),'sub2') : ''}
       ${Math.abs(diff)<0.005? '<div class="stdiff ok"><span>Matches your accounts</span><span>✓</span></div>' : `<div class="stdiff bad"><span>Accounts hold ${diff>0?'more':'less'}</span><span class="num">${diff>0?'+':'−'}${sgd(Math.abs(diff))}</span></div><div class="small muted" style="margin-top:6px">Usually a payment or refund logged without “Paid with”, or a balance that needs updating.</div>`}
-      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + money carried over ${sgd(st.extra)} + refunds ${sgd(st.refund)} + spending ${sgd(st.gross)} = ${sgd(calc)}. Money from or to friends is debt, not spending.</div></div>`;
+      <div class="small muted" style="margin-top:8px">Salary ${sgd(st.salary)} + refunds ${sgd(st.refund)} + spending ${sgd(st.gross)} = ${sgd(calc)}. Money from or to friends is debt, not spending.</div></div>`;
   openSheet(h);
 }
 /* How the two living-pace figures are worked out */
@@ -3793,7 +3793,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v97';
+const APP_VERSION='v98';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
