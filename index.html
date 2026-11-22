@@ -739,6 +739,7 @@ button.tbig{width:100%;text-align:left;font:inherit;color:inherit;background:non
 .ncard>.nkv.nbtn:first-child{border-top:0}
 .nt small.nsplit,.nsplit{display:block;margin-top:3px;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;color:var(--text-2)!important;font-size:12px;line-height:1.35}
 .ndayh{justify-content:space-between}.ndayh h2{flex:1;text-align:center;font-size:clamp(20px,6vw,28px)!important}.nnext svg{transform:rotate(180deg)}
+.clrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer}.clrow input{width:20px;height:20px;accent-color:var(--accent);flex:none}.clrow .nt{flex:1;min-width:0}.clrow small{display:block;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -2010,7 +2011,7 @@ function render(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(PARENT[S.tab]||S.tab)));
   ['home','activity','plan','accounts','debts','statement','insights','history','analysis','budget','settings','cal','day','acct','emis','people','person','cat'].forEach(t=>$('#tab-'+t).classList.toggle('hidden',t!==S.tab));
   try{ ({home:renderToday,activity:renderActivity,plan:renderPlan3,accounts:renderAccounts3,debts:renderDebts,statement:renderStatement,insights:renderInsights,history:renderHistory,analysis:renderAnalysis,budget:renderBudget,settings:renderSettings,cal:renderCal,day:renderDay,acct:renderAcct,emis:renderEmis,people:renderPeople,person:renderPerson,cat:renderCat})[S.tab]();
-    if(S.tab==='budget'||S.tab==='history'||S.tab==='analysis'){ const r=$('#tab-'+S.tab); r.insertAdjacentHTML('afterbegin', npage(S.tab==='budget'?'Salary &amp; budgets':S.tab==='history'?'Calendar':'Analysis', PARENT[S.tab])); r.querySelector('.nhead [data-go]').onclick=()=>go(PARENT[S.tab]); } }
+    if(S.tab==='budget'||S.tab==='history'||S.tab==='analysis'){ const r=$('#tab-'+S.tab); r.insertAdjacentHTML('afterbegin', npage(S.tab==='budget'?'Salary &amp; budgets':S.tab==='history'?'Calendar':'Analysis', PARENT[S.tab])); const bb=r.querySelector('.nhead [data-back]'); if(bb) bb.onclick=()=>navBack(PARENT[S.tab]); } }
   catch(err){ if(S.tab!=='settings'){ S.tab='settings'; toast('Some saved data couldn’t be shown. Settings opened so you can save a backup.'); return render(); }
     $('#tab-settings').innerHTML='<div class="card"><b>Something in the saved data couldn’t be shown.</b><div class="small muted">'+esc(err&&err.message)+'</div></div>'; }
   try{ renderSyncDot(); }catch(e){}
@@ -2204,9 +2205,9 @@ function nRow(e, withDate){ if(foldedSplit(e)) return ''; const k=kindOf(e), c=c
 function npage(title, back, right){ return `<div class="nhead"><button class="nback" data-back="${back}" aria-label="Back">${svi('back')}</button><h2>${title}</h2>${right||''}</div>`; }
 function bindGo(root){ root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); root.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>navBack(b.dataset.back)); bindTips(root);
   root.querySelectorAll('[data-bcat]').forEach(b=>b.onclick=()=>{ S.cat=b.dataset.bcat; S.txAll=false; go('cat'); });
-  const so=root.querySelector('#swOpen'); if(so) so.onclick=sweepSheet; const sv=root.querySelector('#svCard'); if(sv) sv.onclick=()=>{ S.showEF=!S.showEF; render(); }; }
+  const so=root.querySelector('#swOpen'); if(so) so.onclick=sweepSheet; const co=root.querySelector('#clOpen'); if(co) co.onclick=closeSheet2; const sv=root.querySelector('#svCard'); if(sv) sv.onclick=()=>{ S.showEF=!S.showEF; render(); }; }
 function monthAll(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date && e.date.startsWith(ym)).sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0)); }
-function nextSalary(){ const t=todayStr(), cur=curYM(), pd0=payday(cur), pd= t<=pd0? pd0 : payday(addMonths(cur,1)), forYm=addMonths(ymOf(pd),1);
+function nextSalary(){ const t=todayStr(), cur=curYM(), pd0=payday(cur), pd= (t<pd0 || (t===pd0 && salaryIn(addMonths(cur,1))<=0.004))? pd0 : payday(addMonths(cur,1)), forYm=addMonths(ymOf(pd),1);
   const amt=+cfg(forYm).salary||0, got=salaryIn(forYm)>0.004 || salaryIn(ymOf(pd))>0.004 && ymOf(pd)===forYm;
   return {pd, forYm, amt, got: salaryIn(forYm)>0.004}; }
 function attention(){ const out=[], t=todayStr();
@@ -2604,12 +2605,12 @@ function sweepInfo(){ const t=todayStr(), cur=curYM(), nx=addMonths(cur,1);
   if(!key) return null; const mo=DB.months[key]||{};
   const sp=funds().filter(f=>isSpend(f, key)), ef=funds().filter(f=>!isCredit(f) && !isSpend(f, key));
   const total=r2(sp.reduce((a,f)=>a+liveBal(f),0)), sal=salaryIn(key), billEnd=key+'-03';
-  const bills=funds().filter(isCredit).filter(f=>dueAt(f)>0.004 && nextDue(f)<=billEnd), billT=r2(bills.reduce((a,f)=>a+dueAt(f),0));
+  const bills=funds().filter(isCredit).filter(f=>dueAt(f)>0.004), billT=r2(bills.reduce((a,f)=>a+dueAt(f),0));
   const extra=r2(total-sal-billT), prev=addMonths(key,-1), res=mm(prev);
   const from=(funds().find(f=>f.id===salAuto().to && isSpend(f,key)) || sp.slice().sort((a,b)=>liveBal(b)-liveBal(a))[0]);
   return {key, prev, sp, ef, total, sal, bills, billT, extra, res, from, done:!!mo.sweepAt, skip:!!mo.sweepSkip, amt:+mo.sweepAmt||0}; }
 function sweepSnoozed(k){ try{ return localStorage.getItem('dailyExpenseTracker.sweepLater')===k+'|'+todayStr(); }catch(e){ return false; } }
-function sweepCard(){ const s=sweepInfo(); if(!s || s.done || s.skip || sweepSnoozed(s.key)) return '';
+function sweepCard(){ const cc=closeCard(); if(cc) return cc; const s=sweepInfo(); if(!s || s.done || s.skip || sweepSnoozed(s.key)) return '';
   const m=ymLabel(s.key).split(' ')[0], p=ymLabel(s.prev).split(' ')[0];
   return `<button class="ncard nsweep" id="swOpen"><span class="nt"><small>New month · ${esc(m)}</small><b>${s.extra>0.004? 'Move '+sgd(s.extra)+' to savings' : s.extra<-0.004? 'Short by '+sgd(-s.extra) : 'Start '+esc(m)+' with '+sgd(s.sal)}</b><small>${esc(p)}: ${s.res.saved>=0? 'saved '+sgd(s.res.saved) : 'overspent '+sgd(-s.res.saved)} · start ${esc(m)} with ${sgd(s.sal)}</small></span><span class="nlink">Open ›</span></button>`; }
 function sweepSheet(){ const s=sweepInfo(); if(!s) return; const m=ymLabel(s.key).split(' ')[0], p=ymLabel(s.prev).split(' ')[0];
@@ -2620,7 +2621,7 @@ function sweepSheet(){ const s=sweepInfo(); if(!s) return; const m=ymLabel(s.key
       <div class="small muted" style="margin-top:4px">Start ${esc(m)} with only your ${sgd(s.sal)} salary in spending accounts. ${neg?'Last month went over, so top up from savings.':'Move what’s left to savings.'}</div>
       <div class="swres ${s.res.saved>=0?'ok':'bad'}">${esc(p)}: ${s.res.saved>=0? 'saved '+sgd(s.res.saved) : 'overspent '+sgd(-s.res.saved)}</div>
       <div class="ncard" style="margin-top:10px">${s.sp.map(f=>line(esc(f.name), sgd(liveBal(f)))).join('')}
-        ${line('Spending accounts total', sgd(s.total))}${line('− '+esc(m)+' salary', sgd(s.sal),'mut')}${s.billT>0.004? line('− Bills due on the 1st ('+s.bills.map(f=>esc(shortName(f))).join(', ')+')', sgd(s.billT),'mut') : ''}
+        ${line('Spending accounts total', sgd(s.total))}${line('− '+esc(m)+' salary', sgd(s.sal),'mut')}${s.billT>0.004? line('− Card bills still to pay ('+s.bills.map(f=>esc(shortName(f))).join(', ')+')', sgd(s.billT),'mut') : ''}
         ${line(neg? 'Short by' : 'Left over to move', sgd(Math.abs(s.extra)))}</div>
       <label class="f" for="swAmt">${neg?'Top up from savings':'Amount to move'} (${curCode()})</label><input class="in num" id="swAmt" type="number" inputmode="decimal" step="0.01" value="${Math.abs(s.extra).toFixed(2)}">
       <label class="f">${neg?'From':'Move to'}</label>${payGrid(to,'data-swto',s.ef)}
@@ -2634,6 +2635,53 @@ function sweepSheet(){ const s=sweepInfo(); if(!s) return; const m=ymLabel(s.key
     $('#swNo').onclick=()=>{ setMonthFlag(s.key,{sweepSkip:1}); closeSheet(); render(); toast('Left in spending accounts for '+m); };
     $('#swLater').onclick=()=>{ try{ localStorage.setItem('dailyExpenseTracker.sweepLater', s.key+'|'+todayStr()); }catch(e){} closeSheet(); render(); }; };
   draw(); }
+
+/* ============ v97: month close — clear card / PayLater bills on one day, then move what's left to savings ============ */
+/* Close day: 'pd' (payday, default) or a day 1–28. Shown from that day for 7 days until done, skipped or snoozed. */
+function closeDaySet(){ const v=DB.settings.closeDay; return v==='pd'||v==null? 'pd' : Math.min(28,Math.max(1,parseInt(v)||1)); }
+function closeDayLabel(){ const v=closeDaySet(); return v==='pd'? 'Payday' : v+(v===1||v===21?'st':v===2||v===22?'nd':v===3||v===23?'rd':'th')+' of the month'; }
+function closeDateFor(K){ const v=closeDaySet(); if(v==='pd') return payday(addMonths(K,-1)); return (v>=15? addMonths(K,-1) : K)+'-'+pad(v); }
+function plusDays(ds,n){ const d=new Date(ds+'T00:00:00'); d.setDate(d.getDate()+n); return dstr(d); }
+function closeSnoozed(k){ try{ return localStorage.getItem('dailyExpenseTracker.closeLater')===k+'|'+todayStr(); }catch(e){ return false; } }
+function closeInfo(){ const t=todayStr(), cur=curYM(); let key=null;
+  for(const K of [cur, addMonths(cur,1)]){ const cd=closeDateFor(K); if(t>=cd && t<=plusDays(cd,7)){ key=K; break; } }
+  if(!key) return null; const mo=DB.months[key]||{};
+  const rows=funds().filter(isCredit).map(f=>{ const nd=nextDue(f); return {f, amt:dueAt(f), due:nd, later:afterCut(f), emi:emiAfter(f.id,nd)}; }).filter(r=>r.amt>0.004).sort((a,b)=>a.due.localeCompare(b.due));
+  return {key, cd:closeDateFor(key), rows, total:r2(rows.reduce((a,r)=>a+r.amt,0)), done:!!mo.closeAt, skip:!!mo.closeSkip}; }
+function closeCard(){ const c=closeInfo(); if(!c || c.done || c.skip || !c.rows.length || closeSnoozed(c.key)) return '';
+  const m=ymLabel(c.key).split(' ')[0];
+  return `<button class="ncard nsweep" id="clOpen"><span class="nt"><small>Month close · ${esc(m)}</small><b>Clear ${c.rows.length} bill${c.rows.length>1?'s':''} · ${sgd(c.total)}</b><small>${c.rows.map(r=>esc(shortName(r.f))+' '+sgd(r.amt)).join(' · ')} · then move what’s left to savings</small></span><span class="nlink">Open ›</span></button>`; }
+function closeSheet2(){ const c=closeInfo(); if(!c) return; const m=ymLabel(c.key).split(' ')[0];
+  const spend=funds().filter(f=>!isCredit(f) && isSpend(f)); let from=(spend.find(f=>f.id===salAuto().to)||spend[0]||{}).id||''; const on=new Set(c.rows.map(r=>r.f.id));
+  const draw=()=>{ const sel=c.rows.filter(r=>on.has(r.f.id)), tot=r2(sel.reduce((a,r)=>a+r.amt,0)), ff=funds().find(f=>f.id===from), bal=ff? liveBal(ff) : 0;
+    openSheet(`<div class="sheettop"><h3>Close the month · ${esc(m)}</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+      <div class="small muted" style="margin-top:4px">Step 1 · clear what’s billed on your cards. Spends after a statement and future EMI instalments stay for their own bill.</div>
+      <div class="ncard" style="margin-top:10px">${c.rows.map(r=>`<label class="clrow"><input type="checkbox" data-ck="${esc(r.f.id)}" ${on.has(r.f.id)?'checked':''}><span class="nt"><b>${esc(r.f.name)}</b><small>Due ${niceDate(r.due)}${r.later>0.004?' · '+sgd(r.later)+' more on next bill':''}${r.emi>0.004?' · EMI '+sgd(r.emi)+' later':''}</small></span><b class="num">${sgd(r.amt)}</b></label>`).join('')}
+        <div class="nkv"><span>Total</span><b class="num">${sgd(tot)}</b></div></div>
+      <label class="f">Pay from</label>${payGrid(from,'data-clfrom',spend)}
+      ${ff? `<div class="small ${bal-tot<-0.004?'nbad':'muted'}" style="margin-top:6px">${esc(ff.name)} ${sgd(bal)} → ${sgd(r2(bal-tot))} after paying${bal-tot<-0.004?' · not enough: pay the earliest due first':''}</div>`:''}
+      <div class="small muted" style="margin-top:6px">Pay in your bank / card apps, then tap Paid. It records ${esc(ff?shortName(ff):'')} → card transfers (not spending).</div>
+      <button class="btn primary bigsave" id="clYes" ${tot>0.004?'':'disabled'}>Paid · ${sgd(tot)}</button>
+      <div class="btns ngrid2" style="margin-top:8px"><button class="btn" id="clLater">Ask me later today</button><button class="btn" id="clSkip">Skip this month</button></div>`);
+    document.querySelectorAll('[data-ck]').forEach(b=>b.onchange=()=>{ b.checked? on.add(b.dataset.ck) : on.delete(b.dataset.ck); draw(); });
+    document.querySelectorAll('[data-clfrom]').forEach(b=>b.onclick=()=>{ from=b.dataset.clfrom; draw(); });
+    $('#clYes').onclick=()=>{ if(!from){ toast('Pick an account to pay from'); return; } let now=Date.now(); const t=todayStr();
+      sel.forEach(r=>{ const id=uid(); DB.entries[id]={id, date:t, cat:'xfer', from, to:r.f.id, amt:r.amt, note:'Month close · '+m+' · '+r.f.name+' bill', closeFor:c.key, upd:now, cr:now++, cur:curCode()}; });
+      setMonthFlag(c.key,{closeAt:Date.now()}); closeSheet(); render(); toast('Recorded '+sel.length+' bill payment'+(sel.length>1?'s':'')+' · '+sgd(tot));
+      const s=sweepInfo(); if(s && !s.done && !s.skip) setTimeout(sweepSheet,700); };
+    $('#clLater').onclick=()=>{ try{ localStorage.setItem('dailyExpenseTracker.closeLater', c.key+'|'+todayStr()); }catch(e){} closeSheet(); render(); };
+    $('#clSkip').onclick=()=>{ setMonthFlag(c.key,{closeSkip:1}); closeSheet(); render(); toast('Month close skipped for '+m); }; };
+  draw(); }
+function closeDaySheet(){ const v=closeDaySet();
+  openSheet(`<div class="sheettop"><h3>Month close day</h3><button class="btn sm" onclick="closeSheet()">Close</button></div>
+    <div class="small muted" style="margin-top:4px">On this day the app asks you to clear all card and PayLater bills, then move what’s left in spending accounts to savings.</div>
+    <div class="nchips" style="margin-top:12px;flex-wrap:wrap">${[['pd','Payday'],['1','1st'],['25','25th'],['28','28th']].map(([k,l])=>`<button data-cd="${k}" class="${String(v)===k?'on':''}">${l}</button>`).join('')}</div>
+    <label class="f" for="cdIn">Or a day (1–28)</label><input class="in num" id="cdIn" type="number" inputmode="numeric" min="1" max="28" value="${v==='pd'?'':v}">
+    <div class="small muted" style="margin-top:6px">Grab and Shopee PayLater are due on the 1st, so payday or earlier avoids late fees.</div>
+    <button class="btn primary bigsave" id="cdSave">Save</button>`);
+  let pick=String(v); document.querySelectorAll('[data-cd]').forEach(b=>b.onclick=()=>{ pick=b.dataset.cd; document.querySelectorAll('[data-cd]').forEach(x=>x.classList.toggle('on',x===b)); $('#cdIn').value=pick==='pd'?'':pick; });
+  $('#cdSave').onclick=()=>{ const n=parseInt($('#cdIn').value); const val=n>=1&&n<=28? n : (pick==='pd'?'pd':parseInt(pick)||'pd');
+    DB.settings={...DB.settings, closeDay:val, upd:Date.now()}; save(); closeSheet(); render(); toast('Month close: '+closeDayLabel()); }; }
 
 /* Savings = emergency-fund accounts (everything not ticked as spending). This month: money in and out of them. */
 function savingsInfo(){ const ym=curYM(), ef=funds().filter(f=>isEF(f)), ids=new Set(ef.map(f=>f.id)); let inn=0, out=0;
@@ -3206,6 +3254,7 @@ function renderSettings(){
       ${item('Currency', curCode()+' · home '+homeCode()+' ›','sCur')}
       ${item('Accounts', funds().filter(f=>isSpend(f)).length+' spending · '+funds().filter(f=>isEF(f)).length+' emergency ›','sAcc')}
       ${item('Salary account', (salAuto().on&&salAuto().to? 'Auto → '+esc(fundName(salAuto().to)) : 'Off')+' ›','sSal')}
+      ${item('Month close day', closeDayLabel()+' ›','sClose')}
     </div>
     <div class="sgrp">Data</div><div class="card scard">
       ${item('Export '+ymLabel(S.ym,true)+' as CSV','›','dCsv')}
@@ -3221,7 +3270,7 @@ function renderSettings(){
   document.querySelectorAll('.skin[data-skin]').forEach(b=>b.onclick=()=>{ setSkin(b.dataset.skin); renderSettings(); });
   document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{ DB.settings.theme=b.dataset.th; DB.settings.upd=Date.now(); applyTheme(); save(); renderSettings(); });
   $('#sHide').onchange=ev=>{ try{ localStorage.setItem(HIDEKEY, ev.target.checked?'1':'0'); }catch(e){} toast(ev.target.checked?'Balances will be hidden each time the app opens':'Balances stay as you last left them'); };
-  $('#sTgt').onclick=targetSheet; $('#sProf').onclick=profileSheet; $('#sCur').onclick=()=>editProfile(PROFILES.current); $('#sAcc').onclick=()=>balancesSheet({settings:true}); $('#sSal').onclick=()=>salaryAutoSheet(()=>{ closeSheet(); renderSettings(); });
+  $('#sTgt').onclick=targetSheet; if($('#sClose')) $('#sClose').onclick=closeDaySheet; $('#sProf').onclick=profileSheet; $('#sCur').onclick=()=>editProfile(PROFILES.current); $('#sAcc').onclick=()=>balancesSheet({settings:true}); $('#sSal').onclick=()=>salaryAutoSheet(()=>{ closeSheet(); renderSettings(); });
   $('#dCsv').onclick=()=>exportCSV(S.ym); $('#dCsvAll').onclick=()=>exportCSV(null);
   $('#sExport').onclick=exportSyncFile; $('#sImport').onclick=()=>$('#fileIn').click();
   if($('#dSampleOff')) $('#dSampleOff').onclick=()=>{ removeSample(); toast('Sample data removed'); render(); };
@@ -3744,7 +3793,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v94';
+const APP_VERSION='v97';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
