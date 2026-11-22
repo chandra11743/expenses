@@ -2188,7 +2188,7 @@ function renderHome2(){
       <span class="nbar">${parts.map(p=>`<i style="width:${(p.v/m.out*100).toFixed(1)}%;background:${p.c}"></i>`).join('')}</span>
       <span class="nleg">${parts.map(p=>`<span><i style="background:${p.c}"></i>${esc(p.n)} <b class="num">${sgd0(p.v)}</b></span>`).join('')}</span></button>`; }
   const D=debtTotals();
-  h+=`<button class="ncard nline" data-go="debts"><span class="nico now">${svi('card')}</span><span class="nt"><b>Debts &amp; EMIs</b><small>You owe ${sgd(D.youOwe)}${D.futureEmi>0?' · EMIs to bill '+sgd(D.futureEmi):''} · Owed to you ${sgd(D.owedToYou)}</small></span><span class="nlink">›</span></button>`;
+  h+=`<button class="ncard nline" data-go="debts"><span class="nico now">${svi('card')}</span><span class="nt"><b>Debts &amp; EMIs</b><small>Cards ${sgd(D.cardOwed)}${D.futureEmi>0?' · EMIs to bill '+sgd(D.futureEmi):''} · You owe friends ${sgd(D.friendsOwe)} · Friends owe you ${sgd(D.owedToYou)}</small></span><span class="nlink">›</span></button>`;
   const rec=monthAll(ym).slice(0,6);
   h+=`<div class="ncard"><div class="nrowh"><b>Recent</b><button class="nlink" data-go="activity">See all ›</button></div>${rec.length? rec.map(e=>nRow(e,true)).join('') : `<div class="small muted" style="padding:10px 0">Nothing recorded for ${ymLabel(ym)} yet. Tap ＋ to add.</div>`}</div>`;
   if(!m.salary && !m.outs.length && !Object.keys(DB.entries).length) h+=`<div class="ncard"><b>Welcome!</b><div class="small muted" style="margin:6px 0 10px">Set your salary and budgets, or try the app with sample data.</div><div class="btns"><button class="btn primary" data-go="budget">Set salary &amp; budgets</button><button class="btn" onclick="loadSample();render()">Try with sample data</button></div></div>`;
@@ -2391,7 +2391,7 @@ function renderToday(){
   if(sk==='calm') h+=`<div class="tring">${ring(1-Math.min(1,(L.cycle-L.days)/L.cycle),'Left to spend',leftV,perTxt)}</div>
     <div class="trow3">${stat('Spent today',sgd(today))}${stat('Budget left',sgd(ev.left))}${stat('Saved '+ymLabel(ym,true).split(' ')[0],sgd(m.saved),m.saved<0?'nbad':'pos','statement')}</div>`;
   else if(sk==='tiles'||sk==='pro') h+=`<button class="tbig" data-go="accounts"><small>Left to spend until payday · ${pdTxt}</small><b class="num ${L.left<0?'nbad':''}">${leftV}</b><span>${perTxt}</span></button>
-    <div class="tgrid">${stat('Spent today',sgd(today))}${stat('Budget left',sgd(ev.left))}${stat('You owe',sgd(D.youOwe),'nbad','people')}${stat('Owed to you',sgd(D.owedToYou),'now','people')}</div>`;
+    <div class="tgrid">${stat('Spent today',sgd(today))}${stat('Budget left',sgd(ev.left))}${stat('Friends owe you',sgd(D.owedToYou),'now','people')}${stat('You owe friends',sgd(D.friendsOwe),'nbad','people')}</div>`;
   else h+=`<button class="tbig" data-go="accounts"><small>Left to spend until payday · ${pdTxt}</small><b class="num ${L.left<0?'nbad':''}">${leftV}</b><span>${L.left>0?'You can spend <b>'+sgd(L.per)+'</b> a day for '+dTxt:'Nothing left before payday'}</span></button>
     <div class="trow3">${stat('Spent today',sgd(today))}${stat('Yesterday',sgd(ydT))}${stat('Budget left',sgd(ev.left))}</div>`;
   if(sk==='pro'){ const l7=[...Array(7)].map((_,i)=>dstr(new Date(Date.now()-(6-i)*86400000))), vals=l7.map(d=>dayTotals(ymOf(d))[d]||0), mx=Math.max(1,...vals), s7=r2(vals.reduce((a,v)=>a+v,0));
@@ -2495,16 +2495,16 @@ function personData(name){ const k=name.toLowerCase(), all=Object.values(DB.entr
 function renderPeople(){
   const NF=netFriends(), D=debtTotals(), net=r2(D.owedToYou-D.friendsOwe), names=new Set([...NF.lend,...NF.owe].map(o=>o.name.toLowerCase()));
   const settled=[...new Set([...friendLedger('lend'),...friendLedger('owe')].map(f=>f.name))].filter(n=>!names.has(n.toLowerCase()));
-  const pr=(o,dir)=>{ const P=personData(o.name); return `<button class="nrow" data-person="${esc(o.name)}"><span class="pav ${dir}">${esc(o.name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><span class="nt"><b>${esc(o.name)}</b><small>Given ${sgd(P.Gn)} · Taken ${sgd(P.Tn)}</small></span><span class="na"><small>${dir==='lend'?'owes you':'you owe'}</small><b class="num ${dir==='lend'?'now':'nbad'}">${sgd(o.owed)}</b></span></button>`; };
+  const pr=(o,dir)=>{ const P=personData(o.name); return `<button class="nrow" data-person="${esc(o.name)}"><span class="pav ${dir}">${esc(o.name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><span class="nt"><b>${esc(o.name)}</b><small>${P.Gn>0.004&&P.Tn>0.004? 'Gave '+sgd(P.Gn)+' · took '+sgd(P.Tn) : P.Gn>0.004? 'You gave · not back yet' : 'You took · not paid back yet'}</small></span><span class="na"><small>${dir==='lend'?'owes you':'you owe'}</small><b class="num ${dir==='lend'?'now':'nbad'}">${sgd(o.owed)}</b></span></button>`; };
   const splits=Object.values(DB.entries).filter(e=>!e.del && e.split>1).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   let h=`<div class="nhead"><h2>People</h2></div>
-    <div class="n2" style="margin-bottom:6px"><div class="ncard"><small class="muted">Owed to you</small><b class="nmid num now">${sgd(D.owedToYou)}</b></div><div class="ncard"><small class="muted">You owe</small><b class="nmid num nbad">${sgd(D.friendsOwe)}</b></div></div>
-    <div class="small muted" style="margin:0 4px 6px">Overall you are ${net>=0?'owed':'owing'} <b>${sgd(Math.abs(net))}</b></div>
-    ${NF.lend.length? `<div class="nlbl2">OWE YOU</div><div class="ncard">${NF.lend.map(o=>pr(o,'lend')).join('')}</div>`:''}
-    ${NF.owe.length? `<div class="nlbl2">YOU OWE</div><div class="ncard">${NF.owe.map(o=>pr(o,'owe')).join('')}</div>`:''}
+    <div class="n2" style="margin-bottom:6px"><div class="ncard"><small class="muted">Friends owe you</small><b class="nmid num now">${sgd(D.owedToYou)}</b></div><div class="ncard"><small class="muted">You owe friends</small><b class="nmid num nbad">${sgd(D.friendsOwe)}</b></div></div>
+    <div class="small muted" style="margin:0 4px 6px">${net>=0?'After settling both, friends owe you':'After settling both, you owe friends'} <b>${sgd(Math.abs(net))}</b> · card bills are in Accounts</div>
+    ${NF.lend.length? `<div class="nlbl2">FRIENDS OWE YOU · ${sgd(D.owedToYou)}</div><div class="ncard">${NF.lend.map(o=>pr(o,'lend')).join('')}</div>`:''}
+    ${NF.owe.length? `<div class="nlbl2">YOU OWE FRIENDS · ${sgd(D.friendsOwe)}</div><div class="ncard">${NF.owe.map(o=>pr(o,'owe')).join('')}</div>`:''}
     ${splits.length? `<div class="nlbl2">RECENT SPLITS</div><div class="ncard">${splits.map(e=>`<button class="nrow k-out" onclick="openEntry(${jsa(e.id)})"><span class="nic"></span><span class="nt"><b>${esc(e.note||CAT[e.cat].name)}</b><small>${niceDate(e.date)} · split ${e.split} ways</small></span><span class="na"><small>your share</small><b class="num">${sgd(e.amt)}</b></span></button>`).join('')}</div>`:''}
     ${settled.length? `<div class="nlbl2">SETTLED</div><div class="ncard"><div class="nchips" style="margin:0;flex-wrap:wrap">${settled.map(n=>`<button data-person="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>`:''}
-    <div class="btns ngrid2"><button class="btn primary" id="pAdd">Add friend money</button><button class="btn" data-go="debts">Cards &amp; all debts</button></div>`;
+    <div class="btns ngrid2"><button class="btn primary" id="pAdd">Add friend money</button><button class="btn" data-go="debts">Cards, EMIs &amp; friends</button></div>`;
   const root=$('#tab-people'); root.innerHTML=h; bindGo(root);
   root.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{ S.person=b.dataset.person; S.pTab=null; go('person'); });
   $('#pAdd').onclick=()=>{ E=null; FF_FROM_ADD=true; debtChooser(true); };
@@ -3686,7 +3686,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v89';
+const APP_VERSION='v90';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
