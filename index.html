@@ -738,6 +738,7 @@ button.tbig{width:100%;text-align:left;font:inherit;color:inherit;background:non
 .nkv.nbtn{width:100%;font:inherit;color:inherit;background:none;border:0;border-top:1px solid var(--border);cursor:pointer;text-align:left}
 .ncard>.nkv.nbtn:first-child{border-top:0}
 .nt small.nsplit,.nsplit{display:block;margin-top:3px;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;color:var(--text-2)!important;font-size:12px;line-height:1.35}
+.ndayh{justify-content:space-between}.ndayh h2{flex:1;text-align:center;font-size:clamp(20px,6vw,28px)!important}.nnext svg{transform:rotate(180deg)}
 </style>
 </head>
 <body>
@@ -1407,6 +1408,13 @@ function fixCabNov(){ if(DB.settings.fixCab1) return false; const E=DB.entries, 
   ids.forEach(id=>{ E[id]={...E[id], splitOf:pid, note:'Cab (split)', upd:now++}; });
   DB.settings={...DB.settings, fixCab1:1, upd:Date.now()}; return true; }
 function safeCab(){ try{ return fixCabNov(); }catch(e){ return false; } }
+/* One-time (user asked, 23 Nov 2026): the 5-way cab split was saved on 31 Oct from Mari Bank; it was on 21 Nov on Grab PayLater. */
+function fixCab2(){ if(DB.settings.fixCab2) return false; const E=DB.entries, p=E['mwsc5ojqapcerr'];
+  if(!p || p.del || p.date!=='2026-10-31' || p.pay!=='mari' || p.split!==5) return false; let now=Date.now();
+  E[p.id]={...p, date:'2026-11-21', pay:'grab', note:p.note||'Cab', upd:now++};
+  Object.values(E).forEach(x=>{ if(!x.del && x.splitOf===p.id && x.date==='2026-10-31') E[x.id]={...x, date:'2026-11-21', pay:'grab', note:'Cab (split)', upd:now++}; });
+  DB.settings={...DB.settings, fixCab2:1, upd:Date.now()}; return true; }
+function safeCab2(){ try{ return fixCab2(); }catch(e){ return false; } }
 
 function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
   const order=['nets','mari','ezlink','dbs','maricc','shopee','grab','cash'], all=allFunds();
@@ -2193,8 +2201,8 @@ function nRow(e, withDate){ if(foldedSplit(e)) return ''; const k=kindOf(e), c=c
   else { ic=`<span class="nico now">${svi('person')}</span>`; amt=sgd(e.amt); tag={lent:'Owed to you',repaid:'Got back',borrowed:'You owe',payback:'Paid back'}[e.cat]||'Owed'; }
   const cls=TAGS[k]? TAGS[k][0] : '';
   return `<button class="nrow k-${k}" onclick="openEntry(${jsa(e.id)})"><span class="nic">${ic}</span><span class="nt"><b>${nTitle(e)}</b><small>${nSub(e,withDate)}</small>${kids.length?`<small class="nsplit">${splitLine(e,kids)}</small>`:''}</span><span class="na"><b class="num ${cls}">${amt}</b>${tag?`<i class="ntag ${cls}">${tag}</i>`:''}</span></button>`; }
-function npage(title, back, right){ return `<div class="nhead"><button class="nback" data-go="${back}" aria-label="Back">${svi('back')}</button><h2>${title}</h2>${right||''}</div>`; }
-function bindGo(root){ root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); bindTips(root);
+function npage(title, back, right){ return `<div class="nhead"><button class="nback" data-back="${back}" aria-label="Back">${svi('back')}</button><h2>${title}</h2>${right||''}</div>`; }
+function bindGo(root){ root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); root.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>navBack(b.dataset.back)); bindTips(root);
   root.querySelectorAll('[data-bcat]').forEach(b=>b.onclick=()=>{ S.cat=b.dataset.bcat; S.txAll=false; go('cat'); });
   const so=root.querySelector('#swOpen'); if(so) so.onclick=sweepSheet; const sv=root.querySelector('#svCard'); if(sv) sv.onclick=()=>{ S.showEF=!S.showEF; render(); }; }
 function monthAll(ym){ return Object.values(DB.entries).filter(e=>!e.del && e.date && e.date.startsWith(ym)).sort((a,b)=>b.date.localeCompare(a.date)||(b.cr||0)-(a.cr||0)); }
@@ -2249,7 +2257,7 @@ function renderActivity(){
   const match=e=>{ const k=kindOf(e); if(f!=='all' && !(f===k || (f==='in' && k==='prior'))) return false;
     if(!q) return true; const c=CAT[outCat(e)]||CAT[e.cat]||{}; return [e.note,e.friend,c.name,fundName(e.pay),fundName(e.to),fundName(e.from),String(e.amt)].join(' ').toLowerCase().includes(q); };
   const list=monthAll(ym).filter(match), days={}; list.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
-  let h=`<div class="nhead"><button class="nback" data-go="cal" aria-label="Back">${svi('back')}</button><h2>All entries</h2><button class="btn sm" id="aCal">${svi('cal',16)} Month</button></div>
+  let h=`<div class="nhead"><button class="nback" data-back="cal" aria-label="Back">${svi('back')}</button><h2>All entries</h2><button class="btn sm" id="aCal">${svi('cal',16)} Month</button></div>
     <label class="nsearch">${svi('search',18)}<input id="aQ" placeholder="Search notes, friends, shops" value="${esc(S.actQ||'')}" aria-label="Search"></label>
     <div class="seg nseg">${[['all','All'],['out','Out'],['in','In'],['moved','Moved'],['owed','Owed']].map(([k,t])=>`<button data-af="${k}" class="${f===k?'on':''}">${t}</button>`).join('')}</div>`;
   const keys=Object.keys(days).sort().reverse();
@@ -2483,14 +2491,16 @@ function renderCal(){
   root.querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{ S.calF=b.dataset.cf; renderCal(); });
   root.querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{ S.calV=b.dataset.cv; renderCal(); });
 }
+function dayStep(n){ const d=new Date((S.day||todayStr())+'T00:00:00'); d.setDate(d.getDate()+n); S.day=dstr(d); S.ym=ymOf(S.day); window.scrollTo(0,0); render(); }
 function renderDay(){
   const ds=S.day||todayStr(), list=monthAll(ymOf(ds)).filter(e=>e.date===ds), outs=list.filter(e=>kindOf(e)==='out'), rest=list.filter(e=>kindOf(e)!=='out' && !foldedSplit(e));
   const d=new Date(ds+'T00:00:00').toLocaleDateString('en-SG',{weekday:'long',day:'numeric',month:'short'});
-  let h=npage(esc(d),'cal')+`<div class="n2" style="margin-bottom:12px"><div class="ncard"><small class="muted">Spent</small><b class="nmid num">${sgd(dayOutOf(list))}</b></div><div class="ncard"><small class="muted">Not counted</small><b class="nmid num muted">${sgd(r2(rest.reduce((a,e)=>a+e.amt,0)))}</b></div></div>
+  let h=`<div class="nhead ndayh"><button class="nback" id="dyPrev" aria-label="Previous day">${svi('back')}</button><h2>${esc(d)}</h2><button class="nback nnext" id="dyNext" aria-label="Next day">${svi('back')}</button></div>`+`<div class="n2" style="margin-bottom:12px"><div class="ncard"><small class="muted">Spent</small><b class="nmid num">${sgd(dayOutOf(list))}</b></div><div class="ncard"><small class="muted">Not counted</small><b class="nmid num muted">${sgd(r2(rest.reduce((a,e)=>a+e.amt,0)))}</b></div></div>
     <div class="nlbl2">SPENDING</div><div class="ncard">${outs.length? outs.map(e=>nRow(e)).join('') : '<div class="small muted" style="padding:6px 0">No spending this day.</div>'}</div>
     ${rest.length? `<div class="nlbl2">NOT COUNTED IN SAVED</div><div class="ncard">${rest.map(e=>nRow(e)).join('')}</div>`:''}
     <button class="btn primary bigsave" id="dyAdd">Add to ${niceDate(ds)}</button>`;
   const root=$('#tab-day'); root.innerHTML=h; bindGo(root); $('#dyAdd').onclick=()=>openEntry(null, ds);
+  $('#dyPrev').onclick=()=>dayStep(-1); $('#dyNext').onclick=()=>dayStep(1);
 }
 
 /* ---------- Accounts, Account, EMIs ---------- */
@@ -3207,7 +3217,7 @@ function renderSettings(){
     </div>
     <div class="small muted" style="text-align:center;margin:14px 0 6px">Daily Expenses ${APP_VERSION} · ${Object.values(DB.entries).filter(e=>!e.del).length} entries · your data stays on your devices and your own Google Drive</div>`;
   $('#tab-settings').innerHTML = h;
-  $('#sBackTab').onclick=()=>go(S.prevTab && S.prevTab!=='settings'? S.prevTab : 'home');
+  $('#sBackTab').onclick=()=>{ if(!navBack(S.prevTab && S.prevTab!=='settings'? S.prevTab : 'home')) go('home'); };
   document.querySelectorAll('.skin[data-skin]').forEach(b=>b.onclick=()=>{ setSkin(b.dataset.skin); renderSettings(); });
   document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{ DB.settings.theme=b.dataset.th; DB.settings.upd=Date.now(); applyTheme(); save(); renderSettings(); });
   $('#sHide').onchange=ev=>{ try{ localStorage.setItem(HIDEKEY, ev.target.checked?'1':'0'); }catch(e){} toast(ev.target.checked?'Balances will be hidden each time the app opens':'Balances stay as you last left them'); };
@@ -3604,6 +3614,7 @@ function commitEntry(more){
     sp.forEach((n,i)=>{ const id=uid()+i; DB.entries[id]={id, date:rec.date, cat:'lent', friend:n, amt:share, note:(rec.note||CAT[rec.cat].name)+' (split)', pay:rec.pay, upd:now, cr:now, cur:curCode(), splitOf:rec.id}; }); }
   if(!CAT[E.cat].income && rec.pay) setPayMem(E.cat, rec.pay);
   DB.entries[rec.id]=rec; S.lastCat=E.cat;
+  if(E.id) Object.values(DB.entries).forEach(x=>{ if(!x.del && x.splitOf===rec.id && (x.date!==rec.date || x.pay!==rec.pay)) DB.entries[x.id]={...x, date:rec.date, pay:rec.pay, upd:now}; });
   save();
   const m=ymOf(rec.date); if(m!==S.ym) S.ym=m;
   toast(`Saved ${sgd(amt)} · ${CAT[rec.cat].name}${rec.emi?' · EMI '+rec.emi.n+' months':''}`);
@@ -3733,7 +3744,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v92';
+const APP_VERSION='v94';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -3768,7 +3779,7 @@ async function cloudSync(manual, poll){
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
     if(j.same){ setTimeout(autoSalary, 50); if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
-    if(n){ try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()|safeCab()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
+    if(n){ try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()|safeCab()|safeCab2()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
     persist(); setTimeout(autoSalary, 50);
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
@@ -4036,7 +4047,14 @@ function removeSample(){
 
 /* ============ Wiring ============ */
 const TABKEY='dailyExpenseTracker.tab';
-function go(t){ if(t==='settings' && S.tab!=='settings') S.prevTab=S.tab; S.tab=t; try{ localStorage.setItem(TABKEY,t); }catch(e){} window.scrollTo(0,0); render(); }
+const NAVK=['tab','day','cat','acct','person','pTab','ym','txAll','planF'], NAV=[];
+function navSnap(){ const o={}; NAVK.forEach(k=>o[k]=S[k]); return o; }
+/* Back: return to the page opened before this one (fallback: the page's parent, then Home) */
+function navBack(fallback){ while(NAV.length){ const o=NAV.pop(); if(o.tab===S.tab && o.day===S.day && o.cat===S.cat && o.acct===S.acct && o.person===S.person) continue;
+    NAVK.forEach(k=>S[k]=o[k]); try{ localStorage.setItem(TABKEY,S.tab); }catch(e){} window.scrollTo(0,0); render(); return true; }
+  if(S.tab!=='home'){ go(fallback||'home', true); return true; } return false; }
+function go(t, noPush){ if(!noPush && t!==S.tab){ NAV.push(navSnap()); if(NAV.length>40) NAV.shift(); }
+  if(t==='settings' && S.tab!=='settings') S.prevTab=S.tab; S.tab=t; try{ localStorage.setItem(TABKEY,t); }catch(e){} window.scrollTo(0,0); render(); }
 /* After a refresh, reopen the page you were on (Analysis, Calendar, …) instead of Home. */
 (function(){ try{ const t=localStorage.getItem(TABKEY); if(t && (t==='settings' || document.querySelector('nav.tabs button[data-tab="'+t+'"]'))) S.tab=t; }catch(e){} })();
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
@@ -4046,10 +4064,11 @@ $('#calcBtn').onclick=()=>calcSheet();
 /* Swipe left/right on a page to move between Home, Calendar, Analysis and Budget. Stops at the ends; ignored on cards, charts, tables and inputs. */
 (function(){ const ORDER=['home','cal','accounts','people','plan']; let sx=null, sy=0, st=0;
   const skip=t=>!!(t.closest && t.closest('.crail,.ccar,.tablewrap,svg,[data-tip],input,select,textarea,.chips,.seg,.datechips,.calgrid,.cal'));
-  document.addEventListener('touchstart',e=>{ sx=null; if(e.touches.length!==1 || $('#sheetBg').classList.contains('open') || !ORDER.includes(S.tab) || !e.target.closest('main') || skip(e.target)) return;
+  document.addEventListener('touchstart',e=>{ sx=null; if(e.touches.length!==1 || $('#sheetBg').classList.contains('open') || !(ORDER.includes(S.tab)||S.tab==='day') || !e.target.closest('main') || skip(e.target)) return;
     sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now(); },{passive:true});
   document.addEventListener('touchend',e=>{ if(sx===null) return; const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy; sx=null;
     if(Math.abs(dx)<70 || Math.abs(dx)<Math.abs(dy)*2 || Date.now()-st>700) return;
+    if(S.tab==='day'){ dayStep(dx<0?1:-1); return; }
     const i=ORDER.indexOf(S.tab), j=i+(dx<0?1:-1); if(j<0 || j>=ORDER.length) return; go(ORDER[j]); },{passive:true});
 })();
 $('#fabCalc').onclick=()=>calcSheet();
@@ -4064,7 +4083,7 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 try{ if(localStorage.getItem('dailyExpenseTracker.hideOnOpen')!=='0') localStorage.setItem('dailyExpenseTracker.showBal','0'); }catch(e){}
 applyTheme();
 renderProfileBtn();
-try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()|safeCab()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
+try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()|safeCab()|safeCab2()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
 render();
 /* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
 /* A setup link never connects by itself: it only fills in the code on the Sync screen, and you tap Connect. */
@@ -4073,7 +4092,7 @@ render();
   if(!o){ setTimeout(()=>toast('That sync link isn’t valid'),600); return; }
   if(cloudOn()){ setTimeout(()=>toast('This device is already syncing — link ignored'),600); return; }
   go('settings'); setTimeout(()=>{ const i=$('#cCode'); if(i){ i.value=connCode(o); i.scrollIntoView({block:'center'}); } toast('Check the code, then tap Connect'); },300); })();
-/* Back button: closes an open sheet; from Calendar/Analysis/Budget/Settings goes to Home, and the next back closes the app.
+/* Back button / back swipe: closes an open sheet; otherwise returns to the page you opened before (then Home), and on Home the next back closes the app.
    On Home after using it, back once shows "Press back again to close". The guard history entry is re-added on taps,
    because Chrome skips history entries that no tap followed. */
 (function(){ if(!(history.pushState && window.matchMedia)) return; let exitT=0;
@@ -4081,7 +4100,7 @@ render();
   guard(); ['pointerdown','keydown'].forEach(t=>document.addEventListener(t,()=>guard(),{capture:true,passive:true}));
   window.addEventListener('popstate',()=>{
     if($('#sheetBg').classList.contains('open')){ closeSheet(); guard(); return; }
-    if(S.tab!=='home'){ go('home'); return; }
+    if(S.tab!=='home' || NAV.length){ if(navBack('home')){ guard(); return; } }
     if(Date.now()-exitT<2000) return;
     exitT=Date.now(); toast('Press back again to close');
     setTimeout(()=>{ if(Date.now()-exitT>=1900) guard(); },2000);
