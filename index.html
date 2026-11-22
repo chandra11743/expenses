@@ -737,6 +737,7 @@ button.tbig{width:100%;text-align:left;font:inherit;color:inherit;background:non
 .nsave.took{border:1.5px solid var(--warn)!important}.nsave.took .nt small:last-child{color:var(--warn);font-weight:600}
 .nkv.nbtn{width:100%;font:inherit;color:inherit;background:none;border:0;border-top:1px solid var(--border);cursor:pointer;text-align:left}
 .ncard>.nkv.nbtn:first-child{border-top:0}
+.nt small.nsplit,.nsplit{display:block;margin-top:3px;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;color:var(--text-2)!important;font-size:12px;line-height:1.35}
 </style>
 </head>
 <body>
@@ -1397,6 +1398,15 @@ function fixMccNov(){ if(DB.settings.fixMcc1) return false; const E=DB.entries; 
   DB.settings={...DB.settings, funds:(DB.settings.funds||[]).map(x=>x.id==='maricc'? {...x, due:10, stmt:21} : x), fixMcc1:1, upd:Date.now()};
   return true; }
 function safeMcc(){ try{ return fixMccNov(); }catch(e){ return false; } }
+/* One-time (user asked, 23 Nov 2026): the three S$5.54 cab shares on 21 Nov become one S$27.70 cab on Grab PayLater, split 5 ways.
+   Friends still owe their S$5.54 (People page); your part is the rest (S$11.08). */
+function fixCabNov(){ if(DB.settings.fixCab1) return false; const E=DB.entries, ids=['mwpfcp3fxhj53s','mwpfdw3vp3sykx','mwpfegf3evtr81'];
+  const ok=ids.filter(id=>E[id] && !E[id].del && E[id].cat==='lent' && Math.abs(E[id].amt-5.54)<0.005 && !E[id].splitOf); if(ok.length!==3) return false;
+  let now=Date.now(); const pid='cab1121x';
+  if(!E[pid]) E[pid]={id:pid, date:'2026-11-21', cat:'travel', amt:11.08, note:'Cab', pay:'grab', split:5, cur:'SGD', cr:now, upd:now++};
+  ids.forEach(id=>{ E[id]={...E[id], splitOf:pid, note:'Cab (split)', upd:now++}; });
+  DB.settings={...DB.settings, fixCab1:1, upd:Date.now()}; return true; }
+function safeCab(){ try{ return fixCabNov(); }catch(e){ return false; } }
 
 function layoutMigrate(){ if((DB.settings.layoutV||0)>=1 || !Array.isArray(DB.settings.funds) || !DB.settings.funds.length) return false;   // never on a fresh device: synced settings must win
   const order=['nets','mari','ezlink','dbs','maricc','shopee','grab','cash'], all=allFunds();
@@ -2090,12 +2100,14 @@ function renderHome(){
   bindTips($('#tab-home'));
 }
 function entRow(e){
+  if(foldedSplit(e)) return '';
   const k = CAT[e.cat]||{name:esc(e.cat),icon:'•'};
   const s = e.sub && k.subs ? k.subs.find(x=>x.id===e.sub) : null;
   const title = s ? s.name : e.cat==='refund' ? 'Refund' : e.cat==='lent' ? 'Lent to '+esc(e.friend||'friend') : e.cat==='repaid' ? esc(e.friend||'Friend')+' paid back' : e.cat==='payback' ? 'Paid back to '+esc(e.friend||'friend') : e.cat==='borrowed' ? (spendFor(e)? esc(CAT[e.for].name)+' · paid by '+esc(e.friend||'friend') : 'Borrowed from '+esc(e.friend||'friend')) : k.name;
   const extra = [];
   if(e.cat==='home' && e.inr && (e.homeCur||'INR')!==(e.cur||curCode())) extra.push(inr(e.inr, e.homeCur||'INR')+(e.rate?' @ '+e.rate.toFixed(2):''));
   if(e.note) extra.push(esc(e.note));
+  { const kids=splitKids(e); if(kids.length && kindOf(e)==='out') extra.push(splitLine(e,kids)); }
   if(e.photo) extra.push('📷');
   if(e.inst) extra.unshift('EMI '+(parseInt(e.inst.k)||0)+'/'+(parseInt(e.inst.n)||0)+(e.inst.early?' · paid early':''));
   if(e.emiOrig){ const pl=emiPlan({...e, amt:e.emiOrig}, true); extra.unshift('On EMI · '+(parseInt(e.emi.n)||1)+' × '+sgd(pl[0].amt)+' from '+ymLabel(pl[0].ym,true)); }
@@ -2168,15 +2180,19 @@ function nSub(e, withDate){ const k=CAT[e.cat]||{name:''}, bits=[];
   if(withDate) bits.push(niceDate(e.date));
   return bits.filter(Boolean).join(' · '); }
 const TAGS={in:['nin','Money in'], moved:['nmv','Moved'], owed:['now','Owed'], prior:['nmv','Not in Saved']};
-function nRow(e, withDate){ const k=kindOf(e), c=costOf(e);
+function splitKids(e){ return e&&e.id? Object.values(DB.entries).filter(x=>!x.del && x.splitOf===e.id) : []; }
+function foldedSplit(e){ const p=e && e.splitOf && DB.entries[e.splitOf]; return !!(p && !p.del); }
+function splitLine(e, kids){ const t=r2(costOf(e)+kids.reduce((a,x)=>a+x.amt,0));
+  return `Paid ${sgd(t)} · split ${e.split||kids.length+1} ways · your share ${sgd(costOf(e))} · ${kids.map(x=>esc(x.friend||'Friend')+' '+sgd(x.amt)).join(', ')} owe${kids.length>1?'':'s'} you`; }
+function nRow(e, withDate){ if(foldedSplit(e)) return ''; const k=kindOf(e), c=costOf(e), kids=k==='out'? splitKids(e) : [];
   let ic, amt, tag='';
-  if(k==='out'){ ic=catImg(outCat(e)); amt='−'+sgd(c); }
+  if(k==='out'){ ic=catImg(outCat(e)); amt='−'+sgd(kids.length? r2(c+kids.reduce((a,x)=>a+x.amt,0)) : c); if(kids.length) tag='Split'; }
   else if(k==='in'){ ic=`<span class="nico nin">${svi('in')}</span>`; amt='+'+sgd(e.amt); tag=e.cat==='xfer'? 'Salary' : 'Money in'; }
   else if(k==='prior'){ ic=`<span class="nico nmv">${svi('in')}</span>`; amt='+'+sgd(e.amt); tag='Not in Saved'; }
   else if(k==='moved'){ ic=`<span class="nico nmv">${svi('moved')}</span>`; amt=sgd(e.amt); const t=allFunds().find(f=>f.id===e.to); tag=isCredit(t)? 'Bill paid' : 'Moved'; }
   else { ic=`<span class="nico now">${svi('person')}</span>`; amt=sgd(e.amt); tag={lent:'Owed to you',repaid:'Got back',borrowed:'You owe',payback:'Paid back'}[e.cat]||'Owed'; }
   const cls=TAGS[k]? TAGS[k][0] : '';
-  return `<button class="nrow k-${k}" onclick="openEntry(${jsa(e.id)})"><span class="nic">${ic}</span><span class="nt"><b>${nTitle(e)}</b><small>${nSub(e,withDate)}</small></span><span class="na"><b class="num ${cls}">${amt}</b>${tag?`<i class="ntag ${cls}">${tag}</i>`:''}</span></button>`; }
+  return `<button class="nrow k-${k}" onclick="openEntry(${jsa(e.id)})"><span class="nic">${ic}</span><span class="nt"><b>${nTitle(e)}</b><small>${nSub(e,withDate)}</small>${kids.length?`<small class="nsplit">${splitLine(e,kids)}</small>`:''}</span><span class="na"><b class="num ${cls}">${amt}</b>${tag?`<i class="ntag ${cls}">${tag}</i>`:''}</span></button>`; }
 function npage(title, back, right){ return `<div class="nhead"><button class="nback" data-go="${back}" aria-label="Back">${svi('back')}</button><h2>${title}</h2>${right||''}</div>`; }
 function bindGo(root){ root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go)); bindTips(root);
   root.querySelectorAll('[data-bcat]').forEach(b=>b.onclick=()=>{ S.cat=b.dataset.bcat; S.txAll=false; go('cat'); });
@@ -2468,7 +2484,7 @@ function renderCal(){
   root.querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{ S.calV=b.dataset.cv; renderCal(); });
 }
 function renderDay(){
-  const ds=S.day||todayStr(), list=monthAll(ymOf(ds)).filter(e=>e.date===ds), outs=list.filter(e=>kindOf(e)==='out'), rest=list.filter(e=>kindOf(e)!=='out');
+  const ds=S.day||todayStr(), list=monthAll(ymOf(ds)).filter(e=>e.date===ds), outs=list.filter(e=>kindOf(e)==='out'), rest=list.filter(e=>kindOf(e)!=='out' && !foldedSplit(e));
   const d=new Date(ds+'T00:00:00').toLocaleDateString('en-SG',{weekday:'long',day:'numeric',month:'short'});
   let h=npage(esc(d),'cal')+`<div class="n2" style="margin-bottom:12px"><div class="ncard"><small class="muted">Spent</small><b class="nmid num">${sgd(dayOutOf(list))}</b></div><div class="ncard"><small class="muted">Not counted</small><b class="nmid num muted">${sgd(r2(rest.reduce((a,e)=>a+e.amt,0)))}</b></div></div>
     <div class="nlbl2">SPENDING</div><div class="ncard">${outs.length? outs.map(e=>nRow(e)).join('') : '<div class="small muted" style="padding:6px 0">No spending this day.</div>'}</div>
@@ -3717,7 +3733,7 @@ function renderSyncStatus(){
 /* ============ Cloud sync (private Google Apps Script in the user's own Google account) ============
    No files and no permission prompts: the app posts its data to the script, the script merges it with the
    copy in Google Drive (My Drive/Expenses App) and returns the merged result. Works the same on phone and Mac. */
-const APP_VERSION='v91';
+const APP_VERSION='v92';
 const CKEY='dailyExpenseTracker.cloud';
 /* Only the user's own Apps Script web app and a sane key are ever accepted (a crafted code/link can't redirect data elsewhere) */
 function okCloud(o){ return !!(o && typeof o.u==='string' && typeof o.k==='string' && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec$/.test(o.u) && /^[\x21-\x7e]{8,200}$/.test(o.k)); }
@@ -3752,7 +3768,7 @@ async function cloudSync(manual, poll){
     const was=cloudState; cloudState='ok'; DB.meta.lastCloud=Date.now();
     if(j.same){ setTimeout(autoSalary, 50); if(was!=='ok'){ renderSyncDot(); renderCloudStatus(); } else showLast(); if(manual){ syncLabel('Synced ✓'); toast('Synced — everything is up to date'); } return true; }
     const n = merge(j.data); cloudRev = j.rev||null; if(full) cloudFull=Date.now();
-    if(n){ try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
+    if(n){ try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()|safeCab()) save(); cleanupFunds(); ensureOpening(); }catch(e){} }
     persist(); setTimeout(autoSalary, 50);
     if(n) render(); else { renderSyncDot(); renderCloudStatus(); }
     if(manual){ syncLabel('Synced ✓'); toast(n?`Synced · ${n} update${n===1?'':'s'} from your other devices`:'Synced — everything is up to date'); }
@@ -4048,7 +4064,7 @@ window.addEventListener('storage',ev=>{ if(ev.key===KEY){ DB=loadDB(); render();
 try{ if(localStorage.getItem('dailyExpenseTracker.hideOnOpen')!=='0') localStorage.setItem('dailyExpenseTracker.showBal','0'); }catch(e){}
 applyTheme();
 renderProfileBtn();
-try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
+try{ if(layoutMigrate()|fixMariNov()|safeMove()|safeMcc()|safeCab()) save(); cleanupFunds(); ensureOpening(); }catch(e){}
 render();
 /* One-tap connect: opening the app link with #EXP1-… saves the code on this device, then removes it from the address bar. */
 /* A setup link never connects by itself: it only fills in the code on the Sync screen, and you tap Connect. */
